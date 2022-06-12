@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "events/*",
+    "server/*",
+    "client/*"
+]
