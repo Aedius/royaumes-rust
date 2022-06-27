@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use bevy::prelude::*;
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
 const GRAVITY_CONST: f32 = 0.0005;
 
@@ -8,6 +9,8 @@ fn main() {
     App::new()
         .insert_resource(ClearColor(Color::hex("1D2951").unwrap()))
         .add_plugins(DefaultPlugins)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_startup_system(setup)
         .add_system(sprite_movement)
         .run();
@@ -23,21 +26,6 @@ struct Speed {
 fn setup(mut commands: Commands, _: Res<AssetServer>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
-    commands
-        .spawn_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: Color::hex("e3a71a").unwrap(),
-                custom_size: Some(Vec2::new(10.0, 10.0)),
-                ..default()
-            },
-            transform: Transform::from_xyz(100., -100., 0.),
-            ..default()
-        })
-        .insert(Speed {
-            x: 25.,
-            y: 30.,
-            w: 5000000.,
-        });
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -54,6 +42,41 @@ fn setup(mut commands: Commands, _: Res<AssetServer>) {
             y: -10.,
             w: 20000000.,
         });
+
+    commands
+        .spawn_bundle(SpriteBundle {
+            sprite: Sprite {
+                color: Color::hex("e3a71a").unwrap(),
+                custom_size: Some(Vec2::new(10.0, 10.0)),
+                ..default()
+            },
+            transform: Transform::from_xyz(100., -100., 0.),
+            ..default()
+        })
+        .insert(Speed {
+            x: 25.,
+            y: 30.,
+            w: 4000000.,
+        });
+
+    for a in 0..200 {
+        let b = a as f32;
+        commands
+            .spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::hex("e3a71a").unwrap(),
+                    custom_size: Some(Vec2::new(2.0, 2.0)),
+                    ..default()
+                },
+                transform: Transform::from_xyz(100. - b, 100. - b, 0.),
+                ..default()
+            })
+            .insert(Speed {
+                x: 0.,
+                y: 0.,
+                w: 1000.,
+            });
+    }
 }
 
 fn sprite_movement(
