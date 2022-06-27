@@ -13,12 +13,12 @@ cargo install wasm-bindgen-cli
 ## run
 
 ```shell
-trunk --config client/public-cl/Trunk.toml serve client/public-cl/index.html
+trunk --config client/public/Trunk.toml serve client/public/index.html
 
 ```
 
 ## build
 
 ```shell
-trunk build --release client/public-cl/index.html
+trunk build --release client/public/index.html
 ```
