@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
@@ -33,7 +32,6 @@ struct Speed {
 
 fn setup(mut commands: Commands, _: Res<AssetServer>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-
 
     commands
         .spawn_bundle(SpriteBundle {
@@ -110,7 +108,7 @@ fn setup(mut commands: Commands, _: Res<AssetServer>) {
                         custom_size: Some(Vec2::new(2.0, 2.0)),
                         ..default()
                     },
-                    transform: Transform::from_xyz(x*10., y*10., 0.),
+                    transform: Transform::from_xyz(x * 10., y * 10., 0.),
                     ..default()
                 })
                 .insert(Speed {
@@ -133,18 +131,16 @@ fn sprite_movement(
         item.translation.y = angular.r * angular.delta.sin();
     }
 
-
     for (_, mut speed, mut item) in asteroides.iter_mut() {
-        let mut acc = (0. , 0.);
+        let mut acc = (0., 0.);
         for (_, ang_speed, bigs) in planetes.iter() {
-
             let direction = (
                 bigs.translation.x - item.translation.x,
                 bigs.translation.y - item.translation.y,
             );
             let distance = ((bigs.translation.x - item.translation.x).powi(2)
                 + (bigs.translation.y - item.translation.y).powi(2))
-                .sqrt();
+            .sqrt();
 
             let unit_direction = (direction.0 / distance, direction.1 / distance);
             let force_scalar = GRAVITY_CONST * speed.w * ang_speed.weight / distance.powi(2);
