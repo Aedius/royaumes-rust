@@ -1,5 +1,5 @@
 game-exe:
-	cd client/game && cargo run --features bevy/dynamic
+	cargo run --features bevy/dynamic --bin game
 
 game-web:
 	trunk --config client/game/Trunk.toml serve client/game/index.html

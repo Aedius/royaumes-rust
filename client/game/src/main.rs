@@ -1,4 +1,3 @@
-
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 
@@ -46,7 +45,7 @@ fn setup(mut commands: Commands, _: Res<AssetServer>) {
             r: 0.,
             delta: 0.,
             speed: 0.,
-            weight: 20000000.,
+            weight: 10_000_000.,
         });
 
     commands
@@ -62,7 +61,7 @@ fn setup(mut commands: Commands, _: Res<AssetServer>) {
             r: 100.,
             delta: 0.,
             speed: 0.1,
-            weight: 400000.,
+            weight: 400_000.,
         });
 
     commands
@@ -78,7 +77,7 @@ fn setup(mut commands: Commands, _: Res<AssetServer>) {
             r: 300.,
             delta: 30.,
             speed: 0.05,
-            weight: 300000.,
+            weight: 1_000_000.,
         });
 
     commands
@@ -94,7 +93,7 @@ fn setup(mut commands: Commands, _: Res<AssetServer>) {
             r: 600.,
             delta: 100.,
             speed: 0.02,
-            weight: 5000000.,
+            weight: 5_000_000.,
         });
 
     for a in -50..50 {
@@ -140,7 +139,7 @@ fn sprite_movement(
             );
             let distance = ((bigs.translation.x - item.translation.x).powi(2)
                 + (bigs.translation.y - item.translation.y).powi(2))
-            .sqrt();
+                .sqrt();
 
             let unit_direction = (direction.0 / distance, direction.1 / distance);
             let force_scalar = GRAVITY_CONST * speed.w * ang_speed.weight / distance.powi(2);
