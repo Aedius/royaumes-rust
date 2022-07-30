@@ -8,6 +8,7 @@ frontends needs trunk :
 ```shell
 cargo install trunk
 cargo install wasm-bindgen-cli
+cargo install cargo-watch
 ```
 
 ## run
