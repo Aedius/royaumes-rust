@@ -7,7 +7,7 @@ use crate::EventDb;
 use rocket::{Route, State};
 
 pub fn get_route() -> Vec<Route> {
-    routes![add, create, get, remove]
+    routes![add, create, get, remove, register]
 }
 
 #[get("/create/<name>")]
@@ -90,4 +90,22 @@ pub async fn get(db_state: &State<EventDb>, name: &str) -> String {
     }
 
     format!("get : {:?}", account)
+}
+
+#[get("/register")]
+pub async fn register(db_state: &State<EventDb>) -> String {
+    let db = db_state.db.clone();
+
+    let mut res = db
+        .read_stream("$et-AccountCreated", &Default::default())
+        .await
+        .unwrap();
+
+    let mut nb = 0;
+
+    while res.next().await.unwrap().is_some() {
+        nb += 1;
+    }
+
+    format!("number of register : {:?}", nb)
 }
