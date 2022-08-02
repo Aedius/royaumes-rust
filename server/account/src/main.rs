@@ -1,4 +1,3 @@
-
 #[macro_use]
 extern crate rocket;
 
@@ -19,10 +18,12 @@ impl EventDb {
 #[launch]
 fn rocket() -> _ {
     // Creates a client settings for a single node configuration.
-    let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false".parse().unwrap();
+    let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"
+        .parse()
+        .unwrap();
     let event_db = Client::new(settings).unwrap();
 
     rocket::build()
-        .manage(EventDb::new(event_db.clone()))
+        .manage(EventDb::new(event_db))
         .mount("/auth", auth::get_route())
 }

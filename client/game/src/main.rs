@@ -139,7 +139,7 @@ fn sprite_movement(
             );
             let distance = ((bigs.translation.x - item.translation.x).powi(2)
                 + (bigs.translation.y - item.translation.y).powi(2))
-                .sqrt();
+            .sqrt();
 
             let unit_direction = (direction.0 / distance, direction.1 / distance);
             let force_scalar = GRAVITY_CONST * speed.w * ang_speed.weight / distance.powi(2);
