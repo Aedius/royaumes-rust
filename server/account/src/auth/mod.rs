@@ -7,7 +7,7 @@ use crate::auth::event::{Created, AccountEvent, Quantity};
 use crate::auth::model::Account;
 
 pub fn get_route() -> Vec<Route> {
-    return routes![add, create, get];
+    return routes![add, create, get, remove];
 }
 
 #[get("/create/<name>")]
@@ -29,6 +29,22 @@ pub async fn create(db_state: &State<EventDb>, name: &str) -> String {
 
 #[get("/add/<name>/<nb>")]
 pub async fn add(db_state: &State<EventDb>, name: &str, nb: usize) -> String {
+    let db = db_state.db.clone();
+
+    let payload = AccountEvent::Added(Quantity {
+        nb
+    });
+
+    let _ = db
+        .append_to_stream(format!("account-{}", name), &Default::default(), payload.to_event_data())
+        .await
+        .unwrap();
+
+
+    format!("added {} in {}",nb, name)
+}
+#[get("/remove/<name>/<nb>")]
+pub async fn remove(db_state: &State<EventDb>, name: &str, nb: usize) -> String {
     let db = db_state.db.clone();
 
     let payload = AccountEvent::Added(Quantity {

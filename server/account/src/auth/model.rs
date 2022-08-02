@@ -14,8 +14,11 @@ impl Account{
                 self.name = created.name;
                 self.nb = 0;
             }
-            AccountEvent::Added(added) => {
-                self.nb += added.nb;
+            AccountEvent::Added(quantity) => {
+                self.nb += quantity.nb;
+            }
+            AccountEvent::Removed(quantity) => {
+                self.nb -= quantity.nb;
             }
         }
 

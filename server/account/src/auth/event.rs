@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum AccountEvent {
     Created(Created),
-    Added(Quantity)
+    Added(Quantity),
+    Removed(Quantity),
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -27,6 +28,9 @@ impl AccountEvent {
             }
             AccountEvent::Added(_) => {
                 EventData::json("QuantityAdded", &self).unwrap()
+            }
+            AccountEvent::Removed(_) => {
+                EventData::json("QuantityRemoved", &self).unwrap()
             }
         }
     }
