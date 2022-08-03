@@ -1,111 +1,57 @@
+mod command;
+mod error;
 mod event;
 mod model;
+mod query;
 
-use crate::auth::event::{AccountEvent, Created, Quantity};
+use crate::auth::command::{add, create, remove};
+use crate::auth::event::AccountEvent;
 use crate::auth::model::Account;
-use crate::EventDb;
-use rocket::{Route, State};
+use crate::auth::query::{get, register};
+use error::AuthError;
+use eventstore::Client;
+use rocket::Route;
 
 pub fn get_route() -> Vec<Route> {
     routes![add, create, get, remove, register]
 }
 
-#[get("/create/<name>")]
-pub async fn create(db_state: &State<EventDb>, name: &str) -> String {
-    let db = db_state.db.clone();
-
-    let payload = AccountEvent::Created(Created {
-        name: name.to_string(),
-    });
-
-    let _ = db
-        .append_to_stream(
-            format!("account-{}", name),
-            &Default::default(),
-            payload.to_event_data(),
-        )
-        .await
-        .unwrap();
-
-    format!("created {}", name)
-}
-
-#[get("/add/<name>/<nb>")]
-pub async fn add(db_state: &State<EventDb>, name: &str, nb: usize) -> String {
-    let db = db_state.db.clone();
-
-    let payload = AccountEvent::Added(Quantity { nb });
-
-    let _ = db
-        .append_to_stream(
-            format!("account-{}", name),
-            &Default::default(),
-            payload.to_event_data(),
-        )
-        .await
-        .unwrap();
-
-    format!("added {} in {}", nb, name)
-}
-
-#[get("/remove/<name>/<nb>")]
-pub async fn remove(db_state: &State<EventDb>, name: &str, nb: usize) -> String {
-    let db = db_state.db.clone();
-
-    let payload = AccountEvent::Removed(Quantity { nb });
-
-    let _ = db
-        .append_to_stream(
-            format!("account-{}", name),
-            &Default::default(),
-            payload.to_event_data(),
-        )
-        .await
-        .unwrap();
-
-    format!("added {} in {}", nb, name)
-}
-
-#[get("/get/<name>")]
-pub async fn get(db_state: &State<EventDb>, name: &str) -> String {
-    let db = db_state.db.clone();
-
-    let mut res = db
+async fn load_account(db: Client, name: &str) -> Result<Account, AuthError> {
+    let res = db
         .read_stream(format!("account-{}", name), &Default::default())
-        .await
-        .unwrap();
+        .await;
+
+    let mut stream = match res {
+        Ok(s) => s,
+        Err(err) => {
+            return Err(AuthError::Other(format!(
+                "Cannot connect to evenstore : {:?}",
+                err
+            )))
+        }
+    };
 
     let mut account = Account::default();
-
+    let mut exist = false;
     // region iterate-stream
-    while let Some(event) = res.next().await.unwrap() {
-        let test_event = event
-            .get_original_event()
-            .as_json::<AccountEvent>()
-            .unwrap();
+    while let Ok(Some(event)) = stream.next().await {
+        exist = true;
 
-        println!("event : {:?}", event);
-        println!("test_event : {:?}", test_event);
-        account.play_event(test_event).unwrap();
+        let account_event = event.get_original_event().as_json::<AccountEvent>();
+
+        match account_event {
+            Ok(account_event) => {
+                account.play_event(account_event);
+            }
+            Err(err) => {
+                warn!("Unable to json decode : {:?}, got error {:?}", event, err);
+            }
+        }
     }
 
-    format!("get : {:?}", account)
-}
-
-#[get("/register")]
-pub async fn register(db_state: &State<EventDb>) -> String {
-    let db = db_state.db.clone();
-
-    let mut res = db
-        .read_stream("$et-AccountCreated", &Default::default())
-        .await
-        .unwrap();
-
-    let mut nb = 0;
-
-    while res.next().await.unwrap().is_some() {
-        nb += 1;
+    if exist {
+        Ok(account)
+    } else {
+        Err(AuthError::NotFound(format!("account `{}` not found", name)))
     }
-
-    format!("number of register : {:?}", nb)
 }

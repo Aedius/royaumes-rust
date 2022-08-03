@@ -2,6 +2,7 @@
 extern crate rocket;
 
 use eventstore::Client;
+use rocket::response::content;
 
 mod auth;
 
@@ -26,4 +27,14 @@ fn rocket() -> _ {
     rocket::build()
         .manage(EventDb::new(event_db))
         .mount("/auth", auth::get_route())
+        .register("/", catchers![general_not_found])
+}
+
+#[catch(404)]
+fn general_not_found() -> content::RawHtml<&'static str> {
+    content::RawHtml(
+        r#"
+        <p>Hmm... This is not the droïd you are looking for</p>
+    "#,
+    )
 }
