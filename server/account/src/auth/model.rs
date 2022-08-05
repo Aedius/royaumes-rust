@@ -2,8 +2,8 @@ use crate::auth::event::AccountEvent;
 
 #[derive(Default, Debug)]
 pub struct Account {
-    name: String,
-    nb: usize,
+    pub name: String,
+    pub nb: usize,
 }
 
 impl Account {

@@ -6,7 +6,7 @@ use rocket::State;
 pub async fn get(db_state: &State<EventDb>, name: &str) -> Result<String, AuthError> {
     let db = db_state.db.clone();
 
-    let account = auth::load_account(db, name).await?;
+    let account = auth::load_account(&db, name).await?;
 
     Ok(format!("get : {:?}", account))
 }

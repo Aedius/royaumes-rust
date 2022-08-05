@@ -8,4 +8,4 @@ web-home:
 	trunk --config .trunk/web-home.toml watch client/web-home/index.html
 
 srv-account:
-	cargo watch -i client/*  -- cargo run --color=always -p account
+	cargo watch -i "client/*"  -- cargo run --color=always -p account
