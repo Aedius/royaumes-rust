@@ -1,19 +1,20 @@
 use crate::auth::error::AuthError;
+use crate::auth::Id;
 use crate::{auth, EventDb};
 use rocket::State;
 
-#[get("/get/<name>")]
-pub async fn get(db_state: &State<EventDb>, name: &str) -> Result<String, AuthError> {
-    let db = db_state.db.clone();
+#[get("/get/<id>")]
+pub async fn get(event_db: &State<EventDb>, id: Id) -> Result<String, AuthError> {
+    let db = event_db.db.clone();
 
-    let account = auth::load_account(&db, name).await?;
+    let account = auth::load_account(&db, &id).await?;
 
     Ok(format!("get : {:?}", account))
 }
 
 #[get("/register")]
-pub async fn register(db_state: &State<EventDb>) -> String {
-    let db = db_state.db.clone();
+pub async fn register(event_db: &State<EventDb>) -> String {
+    let db = event_db.db.clone();
 
     let mut res = db
         .read_stream("$et-AccountCreated", &Default::default())

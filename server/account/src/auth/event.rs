@@ -1,6 +1,6 @@
 use eventstore::EventData;
-
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum AccountEvent {
@@ -11,7 +11,7 @@ pub enum AccountEvent {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Created {
-    pub name: String,
+    pub uuid: Uuid,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

@@ -1,8 +1,9 @@
 use crate::auth::event::AccountEvent;
+use uuid::Uuid;
 
 #[derive(Default, Debug)]
 pub struct Account {
-    pub name: String,
+    pub uuid: Uuid,
     pub nb: usize,
 }
 
@@ -10,7 +11,7 @@ impl Account {
     pub fn play_event(&mut self, event: AccountEvent) {
         match event {
             AccountEvent::Created(created) => {
-                self.name = created.name;
+                self.uuid = created.uuid;
                 self.nb = 0;
             }
             AccountEvent::Added(quantity) => {

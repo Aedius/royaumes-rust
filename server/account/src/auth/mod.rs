@@ -11,6 +11,8 @@ use crate::auth::query::{get, register};
 use error::AuthError;
 use eventstore::{Client, ReadStream};
 use rocket::Route;
+use std::fmt::{Display, Formatter};
+use uuid::{Error as UuidError, Uuid};
 
 const STREAM_NAME: &str = "account";
 
@@ -18,14 +20,14 @@ pub fn get_route() -> Vec<Route> {
     routes![add, create, get, remove, register]
 }
 
-async fn account_exist(db: &Client, name: &str) -> Result<bool, AuthError> {
-    let mut stream = get_stream(db, name).await?;
+async fn account_exist(db: &Client, id: &Id) -> Result<bool, AuthError> {
+    let mut stream = get_stream(db, id).await?;
 
     Ok(stream.next().await.is_ok())
 }
 
-async fn load_account(db: &Client, name: &str) -> Result<Account, AuthError> {
-    let mut stream = get_stream(db, name).await?;
+async fn load_account(db: &Client, id: &Id) -> Result<Account, AuthError> {
+    let mut stream = get_stream(db, id).await?;
 
     let mut account = Account::default();
     let mut exist = false;
@@ -48,13 +50,13 @@ async fn load_account(db: &Client, name: &str) -> Result<Account, AuthError> {
     if exist {
         Ok(account)
     } else {
-        Err(AuthError::NotFound(format!("account `{}` not found", name)))
+        Err(AuthError::NotFound(format!("account `{}` not found", id)))
     }
 }
 
-async fn get_stream(db: &Client, name: &str) -> Result<ReadStream, AuthError> {
+async fn get_stream(db: &Client, id: &Id) -> Result<ReadStream, AuthError> {
     let res = db
-        .read_stream(format!("{}-{}", STREAM_NAME, name), &Default::default())
+        .read_stream(format!("{}-{}", STREAM_NAME, id), &Default::default())
         .await;
 
     let stream = match res {
@@ -69,10 +71,10 @@ async fn get_stream(db: &Client, name: &str) -> Result<ReadStream, AuthError> {
     Ok(stream)
 }
 
-async fn add_event(db: &Client, name: &str, event: AccountEvent) -> Result<(), AuthError> {
+async fn add_event(db: &Client, id: &Id, event: AccountEvent) -> Result<(), AuthError> {
     let added = db
         .append_to_stream(
-            format!("{}-{}", STREAM_NAME, name),
+            format!("{}-{}", STREAM_NAME, id),
             &Default::default(),
             event.to_event_data(),
         )
@@ -81,5 +83,43 @@ async fn add_event(db: &Client, name: &str, event: AccountEvent) -> Result<(), A
     match added {
         Ok(_) => Ok(()),
         Err(err) => Err(AuthError::Other(format!("Cannot add event : {:?}", err))),
+    }
+}
+
+use rocket::request::FromParam;
+
+pub struct Id {
+    uuid: String,
+}
+
+impl From<Uuid> for Id {
+    fn from(uuid: Uuid) -> Self {
+        Id {
+            uuid: uuid.to_string(),
+        }
+    }
+}
+impl TryInto<Uuid> for Id {
+    type Error = UuidError;
+
+    fn try_into(self) -> Result<Uuid, Self::Error> {
+        Uuid::parse_str(&self.uuid)
+    }
+}
+
+impl Display for Id {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.uuid)
+    }
+}
+
+impl<'r> FromParam<'r> for Id {
+    type Error = &'r str;
+
+    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
+        match Uuid::parse_str(param) {
+            Ok(uuid) => Ok(Id::from(uuid)),
+            Err(_) => Err(param),
+        }
     }
 }
