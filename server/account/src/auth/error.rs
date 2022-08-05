@@ -1,7 +1,8 @@
 use rocket::response::Responder;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Responder)]
-pub enum AuthError {
+#[derive(Responder, Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum AccountError {
     #[response(status = 404)]
     NotFound(String),
     #[response(status = 500)]

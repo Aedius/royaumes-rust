@@ -36,7 +36,7 @@ fn rocket() -> _ {
         .unwrap();
     let event_db = Client::new(settings).unwrap();
 
-    let mariadb_url = "mysql://root:password@localhost:3306/auth";
+    let mariadb_url = "mysql://root:password@localhost:3306/account";
 
     let pool = MySqlPool::connect_lazy(mariadb_url).unwrap();
 
