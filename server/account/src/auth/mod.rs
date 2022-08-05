@@ -12,7 +12,7 @@ use error::AuthError;
 use eventstore::{Client, ReadStream};
 use rocket::Route;
 use std::fmt::{Display, Formatter};
-use uuid::{Error as UuidError, Uuid};
+use uuid::Uuid;
 
 const STREAM_NAME: &str = "account";
 
@@ -97,13 +97,6 @@ impl From<Uuid> for Id {
         Id {
             uuid: uuid.to_string(),
         }
-    }
-}
-impl TryInto<Uuid> for Id {
-    type Error = UuidError;
-
-    fn try_into(self) -> Result<Uuid, Self::Error> {
-        Uuid::parse_str(&self.uuid)
     }
 }
 
