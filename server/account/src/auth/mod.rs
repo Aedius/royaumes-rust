@@ -73,14 +73,12 @@ async fn get_stream(db: &Client, id: &Id) -> Result<ReadStream, AccountError> {
     Ok(stream)
 }
 
-async fn add_event(db: &Client, id: &Id, events: Vec<Account>) -> Result<(), AccountError> {
-    let events_data: Vec<EventData> = events.into_iter().map(|e| e.to_event_data()).collect();
-
+async fn add_event(db: &Client, id: &Id, events: Vec<EventData>) -> Result<(), AccountError> {
     let added = db
         .append_to_stream(
             format!("{}-{}", STREAM_NAME, id),
             &Default::default(),
-            events_data,
+            events,
         )
         .await;
 
@@ -123,6 +121,12 @@ impl<'r> FromParam<'r> for Id {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Metadata {
+    #[serde(rename = "$correlationId")]
+    correlation_id: Uuid,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum Account {
     Event(AccountEvent),
     Command(AccountCommand),
@@ -130,34 +134,40 @@ pub enum Account {
 }
 
 impl Account {
-    pub fn to_event_data(&self) -> EventData {
+    pub fn event_name(&self) -> &str {
         match self {
             Account::Event(event) => match event {
-                AccountEvent::Created(_) => EventData::json("AccountCreated", &self).unwrap(),
-                AccountEvent::Added(_) => EventData::json("QuantityAdded", &self).unwrap(),
-                AccountEvent::Removed(_) => EventData::json("QuantityRemoved", &self).unwrap(),
+                AccountEvent::Created(_) => "AccountCreated",
+                AccountEvent::Added(_) => "QuantityAdded",
+                AccountEvent::Removed(_) => "QuantityRemoved",
             },
             Account::Command(command) => match command {
-                AccountCommand::CreateAccount(_) => {
-                    EventData::json("CreateAccount", &self).unwrap()
-                }
-                AccountCommand::AddQuantity(_) => EventData::json("AddQuantity", &self).unwrap(),
-                AccountCommand::RemoveQuantity(_) => {
-                    EventData::json("RemoveQuantity", &self).unwrap()
-                }
+                AccountCommand::CreateAccount(_) => "CreateAccount",
+                AccountCommand::AddQuantity(_) => "AddQuantity",
+                AccountCommand::RemoveQuantity(_) => "RemoveQuantity",
             },
             Account::Error(error) => match error {
-                AccountError::NotFound(_) => {
-                    EventData::json("ErrorAccountNotFound", &self).unwrap()
-                }
-                AccountError::AlreadyExist(_) => {
-                    EventData::json("ErrorAccountAlreadyExist", &self).unwrap()
-                }
-                AccountError::WrongQuantity(_) => {
-                    EventData::json("ErrorAccountWrongQuantity", &self).unwrap()
-                }
-                AccountError::Other(_) => EventData::json("ErrorAccountOther", &self).unwrap(),
+                AccountError::NotFound(_) => "ErrorAccountNotFound",
+                AccountError::AlreadyExist(_) => "ErrorAccountAlreadyExist",
+                AccountError::WrongQuantity(_) => "ErrorAccountWrongQuantity",
+                AccountError::Other(_) => "ErrorAccountOther",
             },
         }
+    }
+
+    pub fn to_event_data(&self, previous: Option<Uuid>) -> (EventData, Uuid) {
+        let id = Uuid::new_v4();
+        let mut event_data = EventData::json(self.event_name(), &self).unwrap();
+        event_data = event_data.id(id);
+
+        if let Some(previous_uuid) = previous {
+            event_data = event_data
+                .metadata_as_json(Metadata {
+                    correlation_id: previous_uuid,
+                })
+                .unwrap();
+        }
+
+        (event_data, id)
     }
 }

@@ -31,7 +31,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "urlencoding",
- "uuid 1.1.2",
+ "uuid",
 ]
 
 [[package]]
@@ -671,7 +671,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -726,7 +726,7 @@ dependencies = [
  "ron",
  "serde",
  "thiserror",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -847,7 +847,7 @@ dependencies = [
  "hashbrown 0.11.2",
  "instant",
  "tracing",
- "uuid 0.8.2",
+ "uuid",
 ]
 
 [[package]]
@@ -1665,7 +1665,7 @@ dependencies = [
  "tonic-build",
  "tonic-types",
  "urlencoding",
- "uuid 0.8.2",
+ "uuid",
  "webpki 0.21.4",
 ]
 
@@ -1936,7 +1936,7 @@ dependencies = [
  "fnv",
  "gilrs-core",
  "log",
- "uuid 0.8.2",
+ "uuid",
  "vec_map",
 ]
 
@@ -1955,7 +1955,7 @@ dependencies = [
  "nix",
  "rusty-xinput",
  "stdweb 0.4.20",
- "uuid 0.8.2",
+ "uuid",
  "vec_map",
  "web-sys",
  "winapi",
@@ -5057,17 +5057,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
 dependencies = [
  "getrandom",
- "serde",
-]
-
-[[package]]
-name = "uuid"
-version = "1.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
-dependencies = [
- "getrandom",
- "rand",
  "serde",
 ]
 

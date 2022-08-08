@@ -107,14 +107,21 @@ VALUES (?, ?, ?, ?, ?);
         )));
     }
 
-    let events = vec![
-        Account::Command(AccountCommand::CreateAccount(CreateAccount {
-            pseudo: cmd.pseudo,
-            email: cmd.email,
-            password: "***".to_string(),
-        })),
-        Account::Event(AccountEvent::Created(Created { uuid })),
-    ];
+    let mut events = Vec::new();
+
+    let command = Account::Command(AccountCommand::CreateAccount(CreateAccount {
+        pseudo: cmd.pseudo,
+        email: cmd.email,
+        password: "***".to_string(),
+    }))
+    .to_event_data(None);
+
+    events.push(command.0);
+
+    let created =
+        Account::Event(AccountEvent::Created(Created { uuid })).to_event_data(Some(command.1));
+
+    events.push(created.0);
 
     add_event(&db, &id, events).await?;
 
@@ -135,7 +142,7 @@ async fn add(event_db: &State<EventDb>, id: Id, nb: usize) -> Result<String, Acc
 
     let payload = Account::Event(AccountEvent::Added(Quantity { nb }));
 
-    add_event(&db, &id, vec![payload]).await?;
+    add_event(&db, &id, vec![payload.to_event_data(None).0]).await?;
 
     Ok(format!("added {} in {}", nb, id))
 }
@@ -154,7 +161,7 @@ async fn remove(event_db: &State<EventDb>, id: Id, nb: usize) -> Result<String, 
 
     let payload = Account::Event(AccountEvent::Removed(Quantity { nb }));
 
-    add_event(&db, &id, vec![payload]).await?;
+    add_event(&db, &id, vec![payload.to_event_data(None).0]).await?;
 
     Ok(format!("added {} in {}", nb, id))
 }
