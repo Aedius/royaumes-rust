@@ -1,5 +1,6 @@
 use crate::auth::event::AccountEvent;
 use crate::auth::Account;
+use api_account::AccountDto;
 use uuid::Uuid;
 
 #[derive(Default, Debug)]
@@ -25,6 +26,13 @@ impl AccountModel {
             },
             Account::Command(_) => {}
             Account::Error(_) => {}
+        }
+    }
+
+    pub fn dto(&self) -> AccountDto {
+        AccountDto {
+            uuid: self.uuid,
+            nb: self.nb,
         }
     }
 }

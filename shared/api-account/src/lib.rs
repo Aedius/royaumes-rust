@@ -1,14 +1,22 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right + 2
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AccountDto {
+    pub uuid: Uuid,
+    pub nb: usize,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct CreateAccount {
+    pub pseudo: String,
+    pub email: String,
+    pub password: String,
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum AccountCommand {
+    CreateAccount(CreateAccount),
+    AddQuantity(usize),
+    RemoveQuantity(usize),
 }

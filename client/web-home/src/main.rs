@@ -1,3 +1,4 @@
+use stylist::{css, yew::Global};
 use yew::prelude::*;
 
 enum Msg {
@@ -31,10 +32,29 @@ impl Component for Model {
         // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
         let link = ctx.link();
         html! {
-            <div>
-                <button onclick={link.callback(|_| Msg::AddOne)}>{ "+1" }</button>
-                <p>{ self.value }</p>
-            </div>
+            <>
+                 <Global css={css!(
+                    r#"
+                        html, body {
+                            font-family: sans-serif;
+                            padding: 0;
+                            margin: 0;
+                            min-height: 100vh;
+                            flex-direction: column;
+                            background-color: #333;
+                            color:white;
+                        }
+                    "#
+                )} />
+                <div>
+                    <h2>{"inscription"}</h2>
+                    <input placeholder={"pseudo"}/>
+                    <input placeholder={"email"}/>
+                    <input placeholder={"password"}/>
+                    <button onclick={link.callback(|_| Msg::AddOne)}>{ "let's go !" }</button>
+                    <p>{ self.value }</p>
+                </div>
+            </>
         }
     }
 }

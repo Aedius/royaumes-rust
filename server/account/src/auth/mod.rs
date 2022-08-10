@@ -4,7 +4,7 @@ mod event;
 mod model;
 mod query;
 
-use crate::auth::command::{handle, AccountCommand};
+use crate::auth::command::handle;
 use crate::auth::event::AccountEvent;
 use crate::auth::query::{get, register};
 use error::AccountError;
@@ -89,6 +89,7 @@ async fn add_event(db: &Client, id: &Id, events: Vec<EventData>) -> Result<(), A
 }
 
 use crate::auth::model::AccountModel;
+use api_account::AccountCommand;
 use rocket::request::FromParam;
 
 pub struct Id {

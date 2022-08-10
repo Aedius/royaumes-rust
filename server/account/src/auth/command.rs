@@ -4,22 +4,9 @@ use crate::auth::{account_exist, add_event, load_account, Account, Id};
 use crate::{EventDb, MariadDb};
 use rocket::serde::json::Json;
 use rocket::State;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct CreateAccount {
-    pseudo: String,
-    email: String,
-    password: String,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum AccountCommand {
-    CreateAccount(CreateAccount),
-    AddQuantity(usize),
-    RemoveQuantity(usize),
-}
+use api_account::{AccountCommand, CreateAccount};
 
 #[post("/<id>", format = "json", data = "<command>")]
 pub async fn handle(
