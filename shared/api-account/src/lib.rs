@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountDto {
-    pub uuid: Uuid,
+    pub uuid: String,
     pub nb: usize,
 }
 

@@ -31,7 +31,7 @@ impl AccountModel {
 
     pub fn dto(&self) -> AccountDto {
         AccountDto {
-            uuid: self.uuid,
+            uuid: self.uuid.to_string(),
             nb: self.nb,
         }
     }

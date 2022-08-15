@@ -1,38 +1,145 @@
+use bounce::{use_atom, use_atom_value, Atom, BounceRoot};
 use stylist::{css, yew::Global};
+use web_sys::HtmlInputElement;
+use weblog::*;
 use yew::prelude::*;
 
 enum Msg {
-    AddOne,
+    Pseudo(String),
+    Email(String),
+    Password(String),
+    PasswordVerify(String),
+    Send,
 }
 
-struct Model {
-    value: i64,
+#[derive(Eq, PartialEq, Atom)]
+struct Register {
+    pseudo: String,
+    email: String,
+    password: String,
+    password_ok: bool,
 }
 
-impl Component for Model {
+impl Default for Register {
+    fn default() -> Self {
+        Self {
+            pseudo: "".to_string(),
+            email: "".to_string(),
+            password: "".to_string(),
+            password_ok: false,
+        }
+    }
+}
+
+#[function_component(RegisterReader)]
+fn register_reader() -> Html {
+    let to_register = use_atom_value::<Register>();
+
+    html! {
+        <div>
+        {"Hello, "}{&to_register.pseudo}{", "}{&to_register.email}
+        </div>
+    }
+}
+
+#[function_component(RegisterSetter)]
+fn register_setter() -> Html {
+    let to_register = use_atom::<Register>();
+
+    let on_pseudo_input = {
+        let to_register = to_register.clone();
+
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            to_register.set(Register {
+                pseudo: input.value(),
+                email: to_register.email.clone(),
+                password: "".to_string(),
+                password_ok: false,
+            });
+        })
+    };
+    let on_email_input = {
+        let to_register = to_register.clone();
+
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            to_register.set(Register {
+                pseudo: to_register.pseudo.clone(),
+                email: input.value(),
+                password: "".to_string(),
+                password_ok: false,
+            });
+        })
+    };
+
+    html! {
+        <div>
+            <input type="text" oninput={on_pseudo_input} value={to_register.pseudo.to_string()} />
+            <input type="text" oninput={on_email_input} value={to_register.email.to_string()} />
+        </div>
+    }
+}
+
+impl Component for Register {
     type Message = Msg;
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self { value: 0 }
+        console_info!("Hello world");
+
+        Self {
+            pseudo: "aa".to_string(),
+            email: "".to_string(),
+            password: "".to_string(),
+            password_ok: false,
+        }
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::AddOne => {
-                self.value += 1;
-                // the value has changed so we need to
-                // re-render for it to appear on the page
-                true
+            Msg::Pseudo(p) => {
+                if p != self.pseudo {
+                    self.pseudo = p;
+                    true
+                } else {
+                    false
+                }
             }
+            Msg::Email(e) => {
+                if e != self.email {
+                    self.email = e;
+                    true
+                } else {
+                    false
+                }
+            }
+            Msg::Password(p) => {
+                if p != self.password {
+                    self.password = p;
+                    true
+                } else {
+                    false
+                }
+            }
+            Msg::PasswordVerify(p) => {
+                let verify = p == self.password;
+                if verify != self.password_ok {
+                    self.password_ok = verify;
+                    true
+                } else {
+                    false
+                }
+            }
+            Msg::Send => false,
         }
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        // This gives us a component's "`Scope`" which allows us to send messages, etc to the component.
-        let link = ctx.link();
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
-            <>
+            <BounceRoot>
                  <Global css={css!(
                     r#"
                         html, body {
@@ -48,17 +155,14 @@ impl Component for Model {
                 )} />
                 <div>
                     <h2>{"inscription"}</h2>
-                    <input placeholder={"pseudo"}/>
-                    <input placeholder={"email"}/>
-                    <input placeholder={"password"}/>
-                    <button onclick={link.callback(|_| Msg::AddOne)}>{ "let's go !" }</button>
-                    <p>{ self.value }</p>
+                    <RegisterSetter />
+                    <RegisterReader />
                 </div>
-            </>
+            </BounceRoot>
         }
     }
 }
 
 fn main() {
-    yew::start_app::<Model>();
+    yew::start_app::<Register>();
 }
