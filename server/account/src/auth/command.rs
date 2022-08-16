@@ -8,17 +8,35 @@ use uuid::Uuid;
 
 use api_account::{AccountCommand, CreateAccount};
 
-#[post("/<id>", format = "json", data = "<command>")]
-pub async fn handle(
+#[post("/", format = "json", data = "<command>")]
+pub async fn handle_anonymous(
     event_db: &State<EventDb>,
     maria_db: &State<MariadDb>,
-    id: Option<Id>,
     command: Json<AccountCommand>,
 ) -> Result<String, AccountError> {
     match command.0 {
         AccountCommand::CreateAccount(cmd) => create(event_db, maria_db, cmd).await,
-        AccountCommand::AddQuantity(cmd) => add(event_db, id.unwrap(), cmd).await,
-        AccountCommand::RemoveQuantity(cmd) => remove(event_db, id.unwrap(), cmd).await,
+        AccountCommand::AddQuantity(_) => Err(AccountError::Other(
+            "cannot add quantity without id".to_string(),
+        )),
+        AccountCommand::RemoveQuantity(_) => Err(AccountError::Other(
+            "cannot remove quantity without id".to_string(),
+        )),
+    }
+}
+
+#[post("/<id>", format = "json", data = "<command>")]
+pub async fn handle(
+    event_db: &State<EventDb>,
+    id: Id,
+    command: Json<AccountCommand>,
+) -> Result<String, AccountError> {
+    match command.0 {
+        AccountCommand::CreateAccount(_) => {
+            Err(AccountError::Other("cannot create with id".to_string()))
+        }
+        AccountCommand::AddQuantity(cmd) => add(event_db, id, cmd).await,
+        AccountCommand::RemoveQuantity(cmd) => remove(event_db, id, cmd).await,
     }
 }
 

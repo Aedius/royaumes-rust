@@ -4,7 +4,7 @@ mod event;
 mod model;
 mod query;
 
-use crate::auth::command::handle;
+use crate::auth::command::{handle, handle_anonymous};
 use crate::auth::event::AccountEvent;
 use crate::auth::query::{get, register};
 use error::AccountError;
@@ -16,7 +16,7 @@ use uuid::Uuid;
 const STREAM_NAME: &str = "account";
 
 pub fn get_route() -> Vec<Route> {
-    routes![get, handle, register]
+    routes![get, handle, handle_anonymous, register]
 }
 
 async fn account_exist(db: &Client, id: &Id) -> Result<bool, AccountError> {
