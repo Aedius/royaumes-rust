@@ -37,7 +37,7 @@ fn register_reader() -> Html {
 
     html! {
         <div>
-        {"Hello, "}{&to_register.pseudo}{", "}{&to_register.email}
+        {"Hello, "}{&to_register.pseudo}{", "}{&to_register.email}{" : "}{&to_register.password}
         </div>
     }
 }
@@ -55,7 +55,7 @@ fn register_setter() -> Html {
             to_register.set(Register {
                 pseudo: input.value(),
                 email: to_register.email.clone(),
-                password: "".to_string(),
+                password: to_register.password.clone(),
                 password_ok: false,
             });
         })
@@ -69,8 +69,37 @@ fn register_setter() -> Html {
             to_register.set(Register {
                 pseudo: to_register.pseudo.clone(),
                 email: input.value(),
-                password: "".to_string(),
+                password: to_register.password.clone(),
                 password_ok: false,
+            });
+        })
+    };
+    let on_password_input = {
+        let to_register = to_register.clone();
+
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            to_register.set(Register {
+                pseudo: to_register.pseudo.clone(),
+                email: to_register.email.clone(),
+                password: input.value(),
+                password_ok: false,
+            });
+        })
+    };
+
+    let on_password2_input = {
+        let to_register = to_register.clone();
+
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            to_register.set(Register {
+                pseudo: to_register.pseudo.clone(),
+                email: to_register.email.clone(),
+                password: to_register.password.clone(),
+                password_ok: to_register.password.clone() == input.value(),
             });
         })
     };
@@ -79,6 +108,13 @@ fn register_setter() -> Html {
         <div>
             <input type="text" oninput={on_pseudo_input} value={to_register.pseudo.to_string()} />
             <input type="text" oninput={on_email_input} value={to_register.email.to_string()} />
+            <input type="password" oninput={on_password_input} value={to_register.password.to_string()} />
+            <input type="password" oninput={on_password2_input} />
+            if to_register.password_ok {
+                {"✅"}
+            }else{
+                {"❌"}
+            }
         </div>
     }
 }

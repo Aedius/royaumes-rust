@@ -10,6 +10,9 @@ cargo install trunk
 cargo install wasm-bindgen-cli
 cargo install cargo-watch
 cargo install -f cargo-upgrades
+
+rustup target add wasm32-unknown-unknown
+aptitude install clang
 ```
 
 ## run
