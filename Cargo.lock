@@ -3154,6 +3154,7 @@ version = "0.1.0"
 dependencies = [
  "api-account",
  "bounce",
+ "gloo-storage",
  "reqwasm",
  "serde",
  "serde_json",

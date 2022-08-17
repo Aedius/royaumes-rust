@@ -2,8 +2,12 @@ use crate::auth::error::AccountError;
 use crate::auth::event::{AccountEvent, Created, Quantity};
 use crate::auth::{account_exist, add_event, load_account, Account, Id};
 use crate::{EventDb, MariadDb};
+use jsonwebtokens as jwt;
+use jsonwebtokens::{encode, AlgorithmID};
+use jwt::Algorithm;
 use rocket::serde::json::Json;
 use rocket::State;
+use serde_json::json;
 use uuid::Uuid;
 
 use api_account::{AccountCommand, CreateAccount};
@@ -116,7 +120,7 @@ VALUES (?, ?, ?, ?, ?);
 
     let command = Account::Command(AccountCommand::CreateAccount(CreateAccount {
         pseudo: cmd.pseudo,
-        email: cmd.email,
+        email: "***".to_string(),
         password: "***".to_string(),
     }))
     .to_event_data(None);
@@ -130,7 +134,13 @@ VALUES (?, ?, ?, ?, ?);
 
     add_event(&db, &id, events).await?;
 
-    Ok(format!("created {}", id))
+    // FIXME dont use unsecure xD
+    let alg = Algorithm::new_hmac(AlgorithmID::HS256, "secret").unwrap();
+    let header = json!({ "alg": alg.name() });
+    let claims = json!({ "uuid": id.to_string() });
+    let token = encode(&header, &claims, &alg).unwrap();
+
+    Ok(token)
 }
 
 async fn add(event_db: &State<EventDb>, id: Id, nb: usize) -> Result<String, AccountError> {
