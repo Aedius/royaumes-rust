@@ -6,7 +6,7 @@ mod query;
 
 use crate::auth::command::{handle, handle_anonymous};
 use crate::auth::event::AccountEvent;
-use crate::auth::query::{get, register};
+use crate::auth::query::{account, get, register};
 use error::AccountError;
 use eventstore::{Client, EventData, ReadStream};
 use rocket::Route;
@@ -16,7 +16,7 @@ use uuid::Uuid;
 const STREAM_NAME: &str = "account";
 
 pub fn get_route() -> Vec<Route> {
-    routes![get, handle, handle_anonymous, register]
+    routes![account, get, handle, handle_anonymous, register]
 }
 
 async fn account_exist(db: &Client, id: &Id) -> Result<bool, AccountError> {

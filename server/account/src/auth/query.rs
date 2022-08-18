@@ -12,7 +12,17 @@ pub async fn get(event_db: &State<EventDb>, id: Id) -> Result<String, AccountErr
     Ok(format!("get : {:?}", account))
 }
 
-#[get("/register")]
+#[get("/account")]
+pub async fn account(_event_db: &State<EventDb>) -> Result<String, AccountError> {
+    todo!("wip")
+    // let db = event_db.db.clone();
+    //
+    // let account = auth::load_account(&db, &id).await?;
+    //
+    // Ok(format!("get : {:?}", account))
+}
+
+#[get("/register-count")]
 pub async fn register(event_db: &State<EventDb>) -> String {
     let db = event_db.db.clone();
 

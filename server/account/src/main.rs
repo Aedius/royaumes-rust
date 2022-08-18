@@ -42,7 +42,7 @@ fn rocket() -> _ {
 
     let pool = MySqlPool::connect_lazy(mariadb_url).unwrap();
 
-    let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3100/"]);
+    let allowed_origins = AllowedOrigins::some_exact(&["http://127.0.0.1:3100/"]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
