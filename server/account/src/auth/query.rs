@@ -1,4 +1,5 @@
 use crate::auth::error::AccountError;
+use crate::auth::jwt_guard::JwtToken;
 use crate::auth::Id;
 use crate::{auth, EventDb};
 use rocket::State;
@@ -13,13 +14,13 @@ pub async fn get(event_db: &State<EventDb>, id: Id) -> Result<String, AccountErr
 }
 
 #[get("/account")]
-pub async fn account(_event_db: &State<EventDb>) -> Result<String, AccountError> {
-    todo!("wip")
-    // let db = event_db.db.clone();
-    //
-    // let account = auth::load_account(&db, &id).await?;
-    //
-    // Ok(format!("get : {:?}", account))
+pub async fn account(event_db: &State<EventDb>, token: JwtToken) -> Result<String, AccountError> {
+    let db = event_db.db.clone();
+    let id = Id { uuid: token.uuid };
+
+    let account = auth::load_account(&db, &id).await?;
+
+    Ok(format!("get : {:?}", account))
 }
 
 #[get("/register-count")]

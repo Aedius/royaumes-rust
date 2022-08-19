@@ -1,6 +1,7 @@
 mod command;
 mod error;
 mod event;
+mod jwt_guard;
 mod model;
 mod query;
 
@@ -172,3 +173,6 @@ impl Account {
         (event_data, id)
     }
 }
+
+const JWT_SECRET: &str = "secret";
+const JWT_ISSUER: &str = "royaumes-rs";

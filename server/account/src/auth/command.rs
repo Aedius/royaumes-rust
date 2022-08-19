@@ -1,6 +1,6 @@
 use crate::auth::error::AccountError;
 use crate::auth::event::{AccountEvent, Created, Quantity};
-use crate::auth::{account_exist, add_event, load_account, Account, Id};
+use crate::auth::{account_exist, add_event, load_account, Account, Id, JWT_ISSUER, JWT_SECRET};
 use crate::{EventDb, MariadDb};
 use jsonwebtokens as jwt;
 use jsonwebtokens::{encode, AlgorithmID};
@@ -10,6 +10,7 @@ use rocket::State;
 use serde_json::json;
 use uuid::Uuid;
 
+use crate::auth::jwt_guard::JwtToken;
 use api_account::{AccountCommand, CreateAccount};
 
 #[post("/", format = "json", data = "<command>")]
@@ -134,10 +135,12 @@ VALUES (?, ?, ?, ?, ?);
 
     add_event(&db, &id, events).await?;
 
-    // FIXME dont use unsecure xD
-    let alg = Algorithm::new_hmac(AlgorithmID::HS256, "secret").unwrap();
+    let alg = Algorithm::new_hmac(AlgorithmID::HS256, JWT_SECRET).unwrap();
     let header = json!({ "alg": alg.name() });
-    let claims = json!({ "uuid": id.to_string() });
+    let claims = json!(JwtToken {
+        uuid: id.to_string(),
+        issuer: JWT_ISSUER.to_string()
+    });
     let token = encode(&header, &claims, &alg).unwrap();
 
     Ok(token)

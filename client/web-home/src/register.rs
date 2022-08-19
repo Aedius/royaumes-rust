@@ -112,7 +112,7 @@ pub fn register_setter() -> Html {
 
             let to_register = to_register.clone();
             spawn_local(async move {
-                let resp = Request::post("http://localhost:8000/auth/")
+                let resp = Request::post("http://127.0.0.1:8000/auth/")
                     .body(serde_json::to_string(&create_account).unwrap())
                     .header("Content-Type", "application/json")
                     .send()
