@@ -5,29 +5,31 @@ mod jwt_guard;
 mod model;
 mod query;
 
-use crate::auth::command::{handle, handle_anonymous};
+use crate::auth::command::handle_anonymous;
 use crate::auth::event::AccountEvent;
-use crate::auth::query::{account, get, register};
+use crate::auth::model::AccountModel;
+use crate::auth::query::{account, register};
+use api_account::AccountCommand;
 use error::AccountError;
 use eventstore::{Client, EventData, ReadStream};
 use rocket::Route;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
 use uuid::Uuid;
+
 const STREAM_NAME: &str = "account";
 
 pub fn get_route() -> Vec<Route> {
-    routes![account, get, handle, handle_anonymous, register]
+    routes![account, handle_anonymous, register]
 }
 
-async fn account_exist(db: &Client, id: &Id) -> Result<bool, AccountError> {
+async fn account_exist(db: &Client, id: String) -> Result<bool, AccountError> {
     let mut stream = get_stream(db, id).await?;
 
     Ok(stream.next().await.is_ok())
 }
 
-async fn load_account(db: &Client, id: &Id) -> Result<AccountModel, AccountError> {
-    let mut stream = get_stream(db, id).await?;
+async fn load_account(db: &Client, id: String) -> Result<AccountModel, AccountError> {
+    let mut stream = get_stream(db, id.clone()).await?;
 
     let mut account = AccountModel::default();
     let mut exist = false;
@@ -57,7 +59,7 @@ async fn load_account(db: &Client, id: &Id) -> Result<AccountModel, AccountError
     }
 }
 
-async fn get_stream(db: &Client, id: &Id) -> Result<ReadStream, AccountError> {
+async fn get_stream(db: &Client, id: String) -> Result<ReadStream, AccountError> {
     let res = db
         .read_stream(format!("{}-{}", STREAM_NAME, id), &Default::default())
         .await;
@@ -74,7 +76,7 @@ async fn get_stream(db: &Client, id: &Id) -> Result<ReadStream, AccountError> {
     Ok(stream)
 }
 
-async fn add_event(db: &Client, id: &Id, events: Vec<EventData>) -> Result<(), AccountError> {
+async fn add_event(db: &Client, id: String, events: Vec<EventData>) -> Result<(), AccountError> {
     let added = db
         .append_to_stream(
             format!("{}-{}", STREAM_NAME, id),
@@ -86,39 +88,6 @@ async fn add_event(db: &Client, id: &Id, events: Vec<EventData>) -> Result<(), A
     match added {
         Ok(_) => Ok(()),
         Err(err) => Err(AccountError::Other(format!("Cannot add event : {:?}", err))),
-    }
-}
-
-use crate::auth::model::AccountModel;
-use api_account::AccountCommand;
-use rocket::request::FromParam;
-
-pub struct Id {
-    uuid: String,
-}
-
-impl From<Uuid> for Id {
-    fn from(uuid: Uuid) -> Self {
-        Id {
-            uuid: uuid.to_string(),
-        }
-    }
-}
-
-impl Display for Id {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.uuid)
-    }
-}
-
-impl<'r> FromParam<'r> for Id {
-    type Error = &'r str;
-
-    fn from_param(param: &'r str) -> Result<Self, Self::Error> {
-        match Uuid::parse_str(param) {
-            Ok(uuid) => Ok(Id::from(uuid)),
-            Err(_) => Err(param),
-        }
     }
 }
 
@@ -147,6 +116,7 @@ impl Account {
                 AccountCommand::CreateAccount(_) => "CreateAccount",
                 AccountCommand::AddQuantity(_) => "AddQuantity",
                 AccountCommand::RemoveQuantity(_) => "RemoveQuantity",
+                AccountCommand::Login(_) => "Login",
             },
             Account::Error(error) => match error {
                 AccountError::NotFound(_) => "ErrorAccountNotFound",

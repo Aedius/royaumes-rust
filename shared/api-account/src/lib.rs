@@ -14,8 +14,15 @@ pub struct CreateAccount {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Login {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum AccountCommand {
     CreateAccount(CreateAccount),
+    Login(Login),
     AddQuantity(usize),
     RemoveQuantity(usize),
 }

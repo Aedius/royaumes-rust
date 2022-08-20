@@ -3,6 +3,7 @@ use api_account::{AccountCommand, CreateAccount};
 use bounce::{use_atom, Atom};
 use gloo_storage::{LocalStorage, Storage};
 use wasm_bindgen_futures::spawn_local;
+use web_sys::window;
 use web_sys::{HtmlInputElement, InputEvent, MouseEvent};
 use yew::prelude::*;
 use yew::Callback;
@@ -13,22 +14,15 @@ struct Register {
     email: String,
     password: String,
     password_ok: bool,
-    token: Option<String>,
 }
 
 impl Default for Register {
     fn default() -> Self {
-        let token = match LocalStorage::get::<String>("token") {
-            Ok(s) => Some(s),
-            Err(_) => None,
-        };
-
         Self {
             pseudo: "".to_string(),
             email: "".to_string(),
             password: "".to_string(),
             password_ok: false,
-            token,
         }
     }
 }
@@ -48,7 +42,6 @@ pub fn register_setter() -> Html {
                 email: to_register.email.clone(),
                 password: to_register.password.clone(),
                 password_ok: false,
-                token: to_register.token.clone(),
             });
         })
     };
@@ -63,7 +56,6 @@ pub fn register_setter() -> Html {
                 email: input.value(),
                 password: to_register.password.clone(),
                 password_ok: false,
-                token: to_register.token.clone(),
             });
         })
     };
@@ -78,7 +70,6 @@ pub fn register_setter() -> Html {
                 email: to_register.email.clone(),
                 password: input.value(),
                 password_ok: false,
-                token: to_register.token.clone(),
             });
         })
     };
@@ -96,7 +87,6 @@ pub fn register_setter() -> Html {
                 email: to_register.email.clone(),
                 password: to_register.password.clone(),
                 password_ok: ok,
-                token: to_register.token.clone(),
             });
         })
     };
@@ -110,7 +100,6 @@ pub fn register_setter() -> Html {
                 password: to_register.password.clone(),
             });
 
-            let to_register = to_register.clone();
             spawn_local(async move {
                 let resp = Request::post("http://127.0.0.1:8000/auth/")
                     .body(serde_json::to_string(&create_account).unwrap())
@@ -121,15 +110,10 @@ pub fn register_setter() -> Html {
 
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
-                    LocalStorage::set("token", token.clone()).unwrap();
+                    LocalStorage::set("token", token).unwrap();
 
-                    to_register.set(Register {
-                        pseudo: to_register.pseudo.clone(),
-                        email: to_register.email.clone(),
-                        password: to_register.password.clone(),
-                        password_ok: to_register.password_ok,
-                        token: Some(token),
-                    });
+                    let window = window().unwrap();
+                    window.location().reload().unwrap();
                 }
             });
         })
@@ -142,31 +126,28 @@ pub fn register_setter() -> Html {
 
     html! {
         <div>
-            if to_register.token.is_some(){
-                <p>{"You have to logout to create an account."}</p>
+            <label>{"pseudo"}<br/>
+                <input type="text" oninput={on_pseudo_input} value={to_register.pseudo.to_string()} />
+            </label><br/>
+            <label>{"email"}<br/>
+                <input type="text" oninput={on_email_input} value={to_register.email.to_string()} />
+            </label><br/>
+            <label>{"password"}<br/>
+                <input type="password" oninput={on_password_input} value={to_register.password.to_string()} />
+            </label><br/>
+            <label>{"password check"}<br/>
+                <input type="password" oninput={on_password_check_input} />
+            </label>
+            if to_register.password_ok {
+                {"✅"}
             }else{
-                <label>{"pseudo"}<br/>
-                    <input type="text" oninput={on_pseudo_input} value={to_register.pseudo.to_string()} />
-                </label><br/>
-                <label>{"email"}<br/>
-                    <input type="text" oninput={on_email_input} value={to_register.email.to_string()} />
-                </label><br/>
-                <label>{"password"}<br/>
-                    <input type="password" oninput={on_password_input} value={to_register.password.to_string()} />
-                </label><br/>
-                <label>{"password check"}<br/>
-                    <input type="password" oninput={on_password_check_input} />
-                </label>
-                if to_register.password_ok {
-                    {"✅"}
-                }else{
-                    {"❌"}
-                }
-                <br/>
-                if can_register{
-                    <button onclick={on_register}>{"go"}</button>
-                }
+                {"❌"}
             }
+            <br/>
+            if can_register{
+                <button onclick={on_register}>{"go"}</button>
+            }
+
         </div>
     }
 }

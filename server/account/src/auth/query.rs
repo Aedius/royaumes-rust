@@ -1,29 +1,18 @@
 use crate::auth::error::AccountError;
 use crate::auth::jwt_guard::JwtToken;
-use crate::auth::Id;
 use crate::{auth, EventDb};
 use rocket::State;
-
-#[get("/get/<id>")]
-pub async fn get(event_db: &State<EventDb>, id: Id) -> Result<String, AccountError> {
-    let db = event_db.db.clone();
-
-    let account = auth::load_account(&db, &id).await?;
-
-    Ok(format!("get : {:?}", account))
-}
 
 #[get("/account")]
 pub async fn account(event_db: &State<EventDb>, token: JwtToken) -> Result<String, AccountError> {
     let db = event_db.db.clone();
-    let id = Id { uuid: token.uuid };
 
-    let account = auth::load_account(&db, &id).await?;
+    let account = auth::load_account(&db, token.uuid).await?;
 
     Ok(format!("get : {:?}", account))
 }
 
-#[get("/register-count")]
+#[get("/header-count")]
 pub async fn register(event_db: &State<EventDb>) -> String {
     let db = event_db.db.clone();
 
@@ -38,5 +27,5 @@ pub async fn register(event_db: &State<EventDb>) -> String {
         nb += 1;
     }
 
-    format!("number of register : {:?}", nb)
+    format!("number of header : {:?}", nb)
 }
