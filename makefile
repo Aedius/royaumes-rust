@@ -1,5 +1,8 @@
-web-home:
-	trunk --config client/web-home/Trunk.toml serve client/web-home/index.html
+public:
+	trunk --config public/Trunk.toml serve public/index.html
 
-srv-account:
-	cargo watch -i "client/*"  -- cargo run --color=always -p account
+account-client:
+	cargo watch -w account/client -- trunk --config account/client/Trunk.toml build account/client/index.html
+
+account-server:
+	cargo watch -w account/server -i account/server/web -- cargo run --color=always -p account-server

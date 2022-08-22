@@ -18,12 +18,12 @@ aptitude install clang
 ## run
 
 ```shell
-trunk --config client/public/Trunk.toml serve client/public/index.html
+trunk --config public/public/Trunk.toml serve public/public/index.html
 
 ```
 
 ## build
 
 ```shell
-trunk build --release client/public/index.html
+trunk build --release public/public/index.html
 ```

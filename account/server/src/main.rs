@@ -2,6 +2,7 @@
 extern crate rocket;
 
 use eventstore::Client;
+use rocket::fs::{relative, FileServer};
 use rocket::http::Method;
 use rocket::response::content;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
@@ -32,7 +33,7 @@ impl MariadDb {
 
 #[launch]
 fn rocket() -> _ {
-    // Creates a client settings for a single node configuration.
+    // Creates a public settings for a single node configuration.
     let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"
         .parse()
         .unwrap();
@@ -60,7 +61,8 @@ fn rocket() -> _ {
     rocket::build()
         .manage(EventDb::new(event_db))
         .manage(MariadDb::new(pool))
-        .mount("/auth", auth::get_route())
+        .mount("/api", auth::get_route())
+        .mount("/", FileServer::from(relative!("web")))
         .attach(cors)
         .register("/", catchers![general_not_found])
 }

@@ -1,6 +1,6 @@
 use crate::auth::event::AccountEvent;
 use crate::auth::Account;
-use api_account::AccountDto;
+use account_api::AccountDto;
 use uuid::Uuid;
 
 #[derive(Default, Debug)]

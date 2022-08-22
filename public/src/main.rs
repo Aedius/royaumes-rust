@@ -27,6 +27,7 @@ fn body() -> Html {
                     "#
             )} />
             <Header />
+            <ce-yew></ce-yew>
         </BounceRoot>
     }
 }

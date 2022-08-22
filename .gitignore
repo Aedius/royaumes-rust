@@ -1,3 +1,4 @@
 /target
 .env
-/client/*/dist/
+/public/dist/
+/account/server/web/

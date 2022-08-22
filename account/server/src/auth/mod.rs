@@ -9,7 +9,7 @@ use crate::auth::command::handle_anonymous;
 use crate::auth::event::AccountEvent;
 use crate::auth::model::AccountModel;
 use crate::auth::query::{account, register};
-use api_account::AccountCommand;
+use account_api::AccountCommand;
 use error::AccountError;
 use eventstore::{Client, EventData, ReadStream};
 use rocket::Route;

@@ -11,7 +11,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::auth::jwt_guard::JwtToken;
-use api_account::{AccountCommand, CreateAccount, Login};
+use account_api::{AccountCommand, CreateAccount, Login};
 
 #[post("/", format = "json", data = "<command>")]
 pub async fn handle_anonymous(

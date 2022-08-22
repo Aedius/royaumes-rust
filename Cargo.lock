@@ -3,10 +3,24 @@
 version = 3
 
 [[package]]
-name = "account"
+name = "account-api"
 version = "0.1.0"
 dependencies = [
- "api-account",
+ "serde",
+]
+
+[[package]]
+name = "account-client"
+version = "0.1.0"
+dependencies = [
+ "yew",
+]
+
+[[package]]
+name = "account-server"
+version = "0.1.0"
+dependencies = [
+ "account-api",
  "eventstore",
  "jsonwebtokens",
  "reqwest",
@@ -103,13 +117,6 @@ name = "anymap2"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d301b3b94cb4b2f23d7917810addbbaff90738e0ca2be692bd027e70d7e0330c"
-
-[[package]]
-name = "api-account"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "async-stream"
@@ -1768,6 +1775,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "public"
+version = "0.1.0"
+dependencies = [
+ "account-api",
+ "bounce",
+ "gloo-storage",
+ "reqwasm",
+ "serde",
+ "serde_json",
+ "stylist",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
+ "yew",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3147,24 +3172,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6598dd0bd3c7d51095ff6531a5b23e02acdc81804e30d8f07afb77b7215a140a"
-
-[[package]]
-name = "web-home"
-version = "0.1.0"
-dependencies = [
- "api-account",
- "bounce",
- "gloo-storage",
- "reqwasm",
- "serde",
- "serde_json",
- "stylist",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "weblog",
- "yew",
-]
 
 [[package]]
 name = "web-sys"

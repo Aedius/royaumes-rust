@@ -1,5 +1,5 @@
 use crate::{function_component, Request};
-use api_account::{AccountCommand, CreateAccount};
+use account_api::{AccountCommand, CreateAccount};
 use bounce::{use_atom, Atom};
 use gloo_storage::{LocalStorage, Storage};
 use wasm_bindgen_futures::spawn_local;
