@@ -13,6 +13,7 @@ dependencies = [
 name = "account-client"
 version = "0.1.0"
 dependencies = [
+ "gloo-utils",
  "yew",
 ]
 
@@ -1781,6 +1782,7 @@ dependencies = [
  "account-api",
  "bounce",
  "gloo-storage",
+ "gloo-utils",
  "reqwasm",
  "serde",
  "serde_json",

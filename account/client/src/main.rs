@@ -8,5 +8,7 @@ fn app() -> Html {
 }
 
 fn main() {
-    yew::start_app::<App>();
+    let document = gloo_utils::document();
+    let element = document.query_selector(".second-app").unwrap().unwrap();
+    yew::start_app_in_element::<App>(element);
 }

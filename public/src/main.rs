@@ -27,11 +27,16 @@ fn body() -> Html {
                     "#
             )} />
             <Header />
-            <ce-yew></ce-yew>
+
+            <div class={"second-app"}></div>
+            <script type={"module"}>{"import init from 'http://127.0.0.1:8000/account-client.js';init('http://127.0.0.1:8000/account-client_bg.wasm');"}</script>
+
         </BounceRoot>
     }
 }
 
 fn main() {
-    yew::start_app::<Body>();
+    let document = gloo_utils::document();
+    let element = document.query_selector(".first-app").unwrap().unwrap();
+    yew::start_app_in_element::<Body>(element);
 }
