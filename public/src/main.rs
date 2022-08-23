@@ -1,13 +1,7 @@
 use bounce::BounceRoot;
 
-use reqwasm::http::Request;
 use stylist::{css, yew::Global};
-
-use crate::header::Header;
-use weblog::console_info;
 use yew::prelude::*;
-
-mod header;
 
 #[function_component(Body)]
 fn body() -> Html {
@@ -26,17 +20,12 @@ fn body() -> Html {
                         }
                     "#
             )} />
-            <Header />
-
-            <div class={"second-app"}></div>
-            <script type={"module"}>{"import init from 'http://127.0.0.1:8000/account-client.js';init('http://127.0.0.1:8000/account-client_bg.wasm');"}</script>
+            <account-login></account-login>
 
         </BounceRoot>
     }
 }
 
 fn main() {
-    let document = gloo_utils::document();
-    let element = document.query_selector(".first-app").unwrap().unwrap();
-    yew::start_app_in_element::<Body>(element);
+    yew::start_app::<Body>();
 }

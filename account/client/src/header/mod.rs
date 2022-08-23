@@ -3,10 +3,12 @@ mod register;
 
 use crate::header::login::LoginForm;
 use crate::header::register::RegisterForm;
-use crate::{console_info, Request};
+use bounce::BounceRoot;
 use gloo_storage::{LocalStorage, Storage};
+use reqwasm::http::Request;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
+use weblog::console_info;
 use yew::prelude::*;
 
 pub struct Header {
@@ -35,14 +37,11 @@ impl Component for Header {
             Err(_) => None,
         };
 
-        console_info!(format!(
-            "Hello {}",
-            token.clone().unwrap_or_else(|| "world".to_string())
-        ));
+        console_info!("hello world");
         if token.is_some() {
             let token = token.clone().unwrap();
             spawn_local(async move {
-                let message = Request::get("http://127.0.0.1:8000/auth/account")
+                let message = Request::get("http://127.0.0.1:8000/api/account")
                     .header("Authorization", format!("Bearer {}", token).as_str())
                     .send()
                     .await
@@ -65,7 +64,6 @@ impl Component for Header {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Logout => {
-                console_info!("logout !!!");
                 LocalStorage::clear();
                 self.token = None;
                 let window = window().unwrap();
@@ -115,7 +113,7 @@ impl Component for Header {
         };
 
         html! {
-            <>
+            <BounceRoot>
                 if self.token.is_some(){
                     <div>
                         {"Hello bob !"}
@@ -127,7 +125,7 @@ impl Component for Header {
                         {menu}
                     </div>
                 }
-            </>
+            </BounceRoot>
         }
     }
 }

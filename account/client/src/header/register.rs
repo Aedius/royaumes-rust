@@ -1,7 +1,7 @@
-use crate::{function_component, Request};
 use account_api::{AccountCommand, CreateAccount};
 use bounce::{use_atom, Atom};
 use gloo_storage::{LocalStorage, Storage};
+use reqwasm::http::Request;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
 use web_sys::{HtmlInputElement, InputEvent, MouseEvent};
@@ -101,7 +101,7 @@ pub fn register_setter() -> Html {
             });
 
             spawn_local(async move {
-                let resp = Request::post("http://127.0.0.1:8000/auth/")
+                let resp = Request::post("http://127.0.0.1:8000/api/")
                     .body(serde_json::to_string(&create_account).unwrap())
                     .header("Content-Type", "application/json")
                     .send()
