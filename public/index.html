@@ -4,12 +4,20 @@
     <meta charset="utf-8" />
     <title>Royaumes-rs</title>
 
-    <link rel="preload" href="http://127.0.0.1:8000/account-client_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-    <link rel="modulepreload" href="http://127.0.0.1:8000/account-client.js"></head>
+    <script type="module">
+        import init, { run } from 'http://127.0.0.1:8000/account.js';
+        async function main() {
+            await init();
+            run();
+        }
+        main();
+    </script>
 </head>
 <body>
 
 <div class="first-app"></div>
-
+<ce-yew></ce-yew>
+<ce-yew></ce-yew>
+<ce-yew></ce-yew>
 </body>
 </html>

@@ -10,7 +10,7 @@ cargo install trunk
 cargo install wasm-bindgen-cli
 cargo install cargo-watch
 cargo install -f cargo-upgrades
-
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 rustup target add wasm32-unknown-unknown
 aptitude install clang
 ```
