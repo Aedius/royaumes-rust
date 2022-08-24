@@ -11,6 +11,7 @@ pub enum AccountEvent {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Created {
     pub uuid: Uuid,
+    pub pseudo: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

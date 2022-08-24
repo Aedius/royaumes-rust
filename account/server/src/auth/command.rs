@@ -141,7 +141,7 @@ VALUES (?, ?, ?, ?, ?);
     let mut events = Vec::new();
 
     let command = Account::Command(AccountCommand::CreateAccount(CreateAccount {
-        pseudo: cmd.pseudo,
+        pseudo: cmd.pseudo.clone(),
         email: "***".to_string(),
         password: "***".to_string(),
     }))
@@ -149,8 +149,11 @@ VALUES (?, ?, ?, ?, ?);
 
     events.push(command.0);
 
-    let created =
-        Account::Event(AccountEvent::Created(Created { uuid })).to_event_data(Some(command.1));
+    let created = Account::Event(AccountEvent::Created(Created {
+        uuid,
+        pseudo: cmd.pseudo,
+    }))
+    .to_event_data(Some(command.1));
 
     events.push(created.0);
 

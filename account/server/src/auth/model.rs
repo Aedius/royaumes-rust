@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Default, Debug)]
 pub struct AccountModel {
     pub uuid: Uuid,
+    pub pseudo: String,
     pub nb: usize,
 }
 
@@ -15,6 +16,7 @@ impl AccountModel {
             Account::Event(event) => match event {
                 AccountEvent::Created(created) => {
                     self.uuid = created.uuid;
+                    self.pseudo = created.pseudo;
                     self.nb = 0;
                 }
                 AccountEvent::Added(quantity) => {
@@ -32,6 +34,7 @@ impl AccountModel {
     pub fn dto(&self) -> AccountDto {
         AccountDto {
             uuid: self.uuid.to_string(),
+            pseudo: self.pseudo.clone(),
             nb: self.nb,
         }
     }

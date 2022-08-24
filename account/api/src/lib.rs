@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountDto {
     pub uuid: String,
+    pub pseudo: String,
     pub nb: usize,
 }
 
