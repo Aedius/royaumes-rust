@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum AccountEvent {
+    Logged(LoggedIn),
     Created(Created),
     Added(Quantity),
     Removed(Quantity),
@@ -18,3 +19,9 @@ pub struct Created {
 pub struct Quantity {
     pub nb: usize,
 }
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct LoggedIn {
+    pub time: u64,
+}
+

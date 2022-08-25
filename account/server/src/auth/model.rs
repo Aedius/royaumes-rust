@@ -1,12 +1,15 @@
+
 use crate::auth::event::AccountEvent;
 use crate::auth::Account;
 use account_api::AccountDto;
 use uuid::Uuid;
+use chrono::{ TimeZone, Utc};
 
 #[derive(Default, Debug)]
 pub struct AccountModel {
     pub uuid: Uuid,
     pub pseudo: String,
+    pub last_login: String,
     pub nb: usize,
 }
 
@@ -25,6 +28,12 @@ impl AccountModel {
                 AccountEvent::Removed(quantity) => {
                     self.nb = self.nb.saturating_sub(quantity.nb);
                 }
+                AccountEvent::Logged(log) => {
+
+                    let date = Utc.timestamp(log.time.try_into().expect("timestamp is too big"), 0);
+
+                    self.last_login =date.to_rfc2822()
+                }
             },
             Account::Command(_) => {}
             Account::Error(_) => {}
@@ -33,7 +42,6 @@ impl AccountModel {
 
     pub fn dto(&self) -> AccountDto {
         AccountDto {
-            uuid: self.uuid.to_string(),
             pseudo: self.pseudo.clone(),
             nb: self.nb,
         }

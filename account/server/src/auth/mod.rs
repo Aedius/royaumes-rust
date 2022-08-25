@@ -111,6 +111,7 @@ impl Account {
                 AccountEvent::Created(_) => "AccountCreated",
                 AccountEvent::Added(_) => "QuantityAdded",
                 AccountEvent::Removed(_) => "QuantityRemoved",
+                AccountEvent::Logged(_) => "Logged"
             },
             Account::Command(command) => match command {
                 AccountCommand::CreateAccount(_) => "CreateAccount",

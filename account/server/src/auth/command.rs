@@ -1,5 +1,7 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+use eventstore::EventData;
 use crate::auth::error::AccountError;
-use crate::auth::event::{AccountEvent, Created, Quantity};
+use crate::auth::event::{AccountEvent, Created, LoggedIn, Quantity};
 use crate::auth::{account_exist, add_event, load_account, Account, JWT_ISSUER, JWT_SECRET};
 use crate::{EventDb, MariadDb};
 use jsonwebtokens as jwt;
@@ -23,7 +25,7 @@ pub async fn handle_anonymous(
     match token {
         None => match command.0 {
             AccountCommand::CreateAccount(cmd) => create(event_db, maria_db, cmd).await,
-            AccountCommand::Login(cmd) => login(maria_db, cmd).await,
+            AccountCommand::Login(cmd) => login(event_db, maria_db, cmd).await,
             AccountCommand::AddQuantity(_) => Err(AccountError::Other(
                 "cannot add quantity without id".to_string(),
             )),
@@ -44,7 +46,7 @@ pub async fn handle_anonymous(
     }
 }
 
-async fn login(maria_db: &State<MariadDb>, cmd: Login) -> Result<String, AccountError> {
+async fn login( event_db: &State<EventDb>,maria_db: &State<MariadDb>, cmd: Login) -> Result<String, AccountError> {
     let mariadb = maria_db.db.clone();
 
     let exists = sqlx::query!(
@@ -61,9 +63,40 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
         return Err(AccountError::Other("sql error".to_string()));
     }
 
+    let db = event_db.db.clone();
     let exists = exists.unwrap();
 
+    let mut events = Vec::new();
+
+    let command = Account::Command(AccountCommand::Login(Login{
+        email: "***".to_string(),
+        password: "***".to_string()
+    }))
+        .to_event_data(None);
+
+    let correlation_id = command.clone().1;
+
+    events.push(command.0);
+
+    let logged_in = logged_in(correlation_id);
+
+    events.push(logged_in.0);
+
+    add_event(&db, exists.uuid.clone(), events).await?;
+
     Ok(create_token(exists.uuid))
+}
+
+fn logged_in(correlation_id:  Uuid) -> (EventData, Uuid) {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH).expect("Time is dead");
+
+    let logged_in = Account::Event(AccountEvent::Logged(LoggedIn {
+        time: since_the_epoch.as_secs(),
+    }))
+        .to_event_data(Some(correlation_id));
+    logged_in
 }
 
 async fn create(
@@ -147,15 +180,21 @@ VALUES (?, ?, ?, ?, ?);
     }))
     .to_event_data(None);
 
+    let correlation_id = command.clone().1;
+
     events.push(command.0);
 
     let created = Account::Event(AccountEvent::Created(Created {
         uuid,
         pseudo: cmd.pseudo,
     }))
-    .to_event_data(Some(command.1));
+    .to_event_data(Some(correlation_id));
 
     events.push(created.0);
+
+    let logged_in = logged_in(correlation_id);
+
+    events.push(logged_in.0);
 
     add_event(&db, id.clone(), events).await?;
 
