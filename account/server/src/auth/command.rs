@@ -1,11 +1,11 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use eventstore::EventData;
-use crate::auth::error::AccountError;
-use crate::auth::event::{AccountEvent, Created, LoggedIn, Quantity};
-use crate::auth::{account_exist, add_event, load_account, Account, JWT_ISSUER, JWT_SECRET};
+use account_model::error::AccountError;
+use account_model::event::{AccountEvent, Created, LoggedIn, Quantity};
+use crate::auth::{account_exist, add_event, JWT_ISSUER, JWT_SECRET, load_account};
 use crate::{EventDb, MariadDb};
 use jsonwebtokens as jwt;
-use jsonwebtokens::{encode, AlgorithmID};
+use jsonwebtokens::{AlgorithmID, encode};
 use jwt::Algorithm;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::auth::jwt_guard::JwtToken;
 use account_api::{AccountCommand, CreateAccount, Login};
+use account_model::Account;
 
 #[post("/", format = "json", data = "<command>")]
 pub async fn handle_anonymous(

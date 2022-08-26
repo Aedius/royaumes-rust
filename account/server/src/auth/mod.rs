@@ -1,20 +1,17 @@
 mod command;
-mod error;
-mod event;
 mod jwt_guard;
-mod model;
 mod query;
 
 use crate::auth::command::handle_anonymous;
-use crate::auth::event::AccountEvent;
-use crate::auth::model::AccountModel;
+
+use account_model::model::AccountModel;
 use crate::auth::query::{account, register};
-use account_api::AccountCommand;
-use error::AccountError;
+
 use eventstore::{Client, EventData, ReadStream};
 use rocket::Route;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use account_model::Account;
+use account_model::error::AccountError;
+
 
 const STREAM_NAME: &str = "account";
 
@@ -88,60 +85,6 @@ async fn add_event(db: &Client, id: String, events: Vec<EventData>) -> Result<()
     match added {
         Ok(_) => Ok(()),
         Err(err) => Err(AccountError::Other(format!("Cannot add event : {:?}", err))),
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Metadata {
-    #[serde(rename = "$correlationId")]
-    correlation_id: Uuid,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum Account {
-    Event(AccountEvent),
-    Command(AccountCommand),
-    Error(AccountError),
-}
-
-impl Account {
-    pub fn event_name(&self) -> &str {
-        match self {
-            Account::Event(event) => match event {
-                AccountEvent::Created(_) => "AccountCreated",
-                AccountEvent::Added(_) => "QuantityAdded",
-                AccountEvent::Removed(_) => "QuantityRemoved",
-                AccountEvent::Logged(_) => "Logged"
-            },
-            Account::Command(command) => match command {
-                AccountCommand::CreateAccount(_) => "CreateAccount",
-                AccountCommand::AddQuantity(_) => "AddQuantity",
-                AccountCommand::RemoveQuantity(_) => "RemoveQuantity",
-                AccountCommand::Login(_) => "Login",
-            },
-            Account::Error(error) => match error {
-                AccountError::NotFound(_) => "ErrorAccountNotFound",
-                AccountError::AlreadyExist(_) => "ErrorAccountAlreadyExist",
-                AccountError::WrongQuantity(_) => "ErrorAccountWrongQuantity",
-                AccountError::Other(_) => "ErrorAccountOther",
-            },
-        }
-    }
-
-    pub fn to_event_data(&self, previous: Option<Uuid>) -> (EventData, Uuid) {
-        let id = Uuid::new_v4();
-        let mut event_data = EventData::json(self.event_name(), &self).unwrap();
-        event_data = event_data.id(id);
-
-        if let Some(previous_uuid) = previous {
-            event_data = event_data
-                .metadata_as_json(Metadata {
-                    correlation_id: previous_uuid,
-                })
-                .unwrap();
-        }
-
-        (event_data, id)
     }
 }
 

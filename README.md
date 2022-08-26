@@ -27,3 +27,10 @@ trunk --config public/public/Trunk.toml serve public/public/index.html
 ```shell
 trunk build --release public/public/index.html
 ```
+
+## tests :
+
+they are done with : https://cucumber-rs.github.io/cucumber/current/quickstart.html
+```
+cargo test --test model
+```

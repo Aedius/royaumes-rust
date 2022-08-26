@@ -1,9 +1,9 @@
 
-use crate::auth::event::AccountEvent;
-use crate::auth::Account;
+
 use account_api::AccountDto;
 use uuid::Uuid;
 use chrono::{ TimeZone, Utc};
+use crate::{Account, AccountEvent};
 
 #[derive(Default, Debug)]
 pub struct AccountModel {
