@@ -24,4 +24,3 @@ pub struct Quantity {
 pub struct LoggedIn {
     pub time: u64,
 }
-

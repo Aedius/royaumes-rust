@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 yew = "0.19"
-bounce = "0.3"
+bounce = {version="0.3", features = ["helmet"]}
 stylist = {version = "0.10", features = ["yew_integration"] }

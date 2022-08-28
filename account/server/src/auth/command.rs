@@ -1,15 +1,15 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-use eventstore::EventData;
 use account_model::error::AccountError;
 use account_model::event::{AccountEvent, Created, LoggedIn, Quantity};
 use crate::auth::{account_exist, add_event, JWT_ISSUER, JWT_SECRET, load_account};
 use crate::{EventDb, MariadDb};
+use eventstore::EventData;
 use jsonwebtokens as jwt;
-use jsonwebtokens::{AlgorithmID, encode};
+use jsonwebtokens::{encode, AlgorithmID};
 use jwt::Algorithm;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde_json::json;
+use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use crate::auth::jwt_guard::JwtToken;
