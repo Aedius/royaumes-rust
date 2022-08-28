@@ -1,0 +1,89 @@
+{
+  "db": "MySQL",
+  "0545236afb4d9069872669138ee7f509d9a0d2e1be627eeb1dbbf109f7fb1bc0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "email",
+          "ordinal": 0,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4101
+            },
+            "max_size": 1020,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "pseudo",
+          "ordinal": 1,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4101
+            },
+            "max_size": 200,
+            "type": "VarString"
+          }
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 2
+      }
+    },
+    "query": "\nSELECT email, pseudo FROM `user` WHERE email like ? OR pseudo LIKE ?;\n        "
+  },
+  "3918f6e43555947e9b2b6bcbc0f5c7cf907a11573802a30c51dcf9fb8e64b631": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4099
+            },
+            "max_size": 160,
+            "type": "String"
+          }
+        },
+        {
+          "name": "pseudo",
+          "ordinal": 1,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4101
+            },
+            "max_size": 200,
+            "type": "VarString"
+          }
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 2
+      }
+    },
+    "query": "\nSELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;\n        "
+  },
+  "a26c4dadc64883ec212b5f8251ccf54d44c2560236a792d75181cdf5c26e6bf3": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 5
+      }
+    },
+    "query": "\nINSERT INTO `user`\n(`uuid`, `email`, `pseudo`, `password`, `admin`)\nVALUES (?, ?, ?, ?, ?);\n        "
+  }
+}
