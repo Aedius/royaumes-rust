@@ -1,9 +1,7 @@
+use crate::{Account, AccountEvent};
 use account_api::AccountDto;
 use chrono::{TimeZone, Utc};
 use uuid::Uuid;
-use uuid::Uuid;
-use chrono::{ TimeZone, Utc};
-use crate::{Account, AccountEvent};
 
 #[derive(Default, Debug)]
 pub struct AccountModel {
@@ -29,10 +27,9 @@ impl AccountModel {
                     self.nb = self.nb.saturating_sub(quantity.nb);
                 }
                 AccountEvent::Logged(log) => {
-
                     let date = Utc.timestamp(log.time.try_into().expect("timestamp is too big"), 0);
 
-                    self.last_login =date.to_rfc2822()
+                    self.last_login = date.to_rfc2822()
                 }
             },
             Account::Command(_) => {}

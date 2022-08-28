@@ -1,9 +1,9 @@
-use account_api::AccountCommand;
-use uuid::Uuid;
-use eventstore::EventData;
-use serde::{Deserialize, Serialize};
 use crate::error::AccountError;
 use crate::event::AccountEvent;
+use account_api::AccountCommand;
+use eventstore::EventData;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub mod error;
 pub mod event;
@@ -29,7 +29,7 @@ impl Account {
                 AccountEvent::Created(_) => "AccountCreated",
                 AccountEvent::Added(_) => "QuantityAdded",
                 AccountEvent::Removed(_) => "QuantityRemoved",
-                AccountEvent::Logged(_) => "Logged"
+                AccountEvent::Logged(_) => "Logged",
             },
             Account::Command(command) => match command {
                 AccountCommand::CreateAccount(_) => "CreateAccount",

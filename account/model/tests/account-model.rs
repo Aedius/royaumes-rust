@@ -1,13 +1,12 @@
-use std::convert::Infallible;
-use rocket::futures;
-use account_model::Account::Event;
 use account_model::event::AccountEvent::Added;
 use account_model::event::Quantity;
 use account_model::model::AccountModel;
+use account_model::Account::Event;
+use rocket::futures;
+use std::convert::Infallible;
 
 use async_trait::async_trait;
-use cucumber::{when, then, given, World, WorldInit};
-
+use cucumber::{given, then, when, World, WorldInit};
 
 // `World` is your shared, likely mutable state.
 #[derive(Debug, WorldInit)]
@@ -21,7 +20,7 @@ impl World for AccountWorld {
 
     async fn new() -> Result<Self, Self::Error> {
         Ok(Self {
-            model: AccountModel::default()
+            model: AccountModel::default(),
         })
     }
 }

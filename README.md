@@ -17,20 +17,11 @@ aptitude install clang
 
 ## run
 
-```shell
-trunk --config public/public/Trunk.toml serve public/public/index.html
-
-```
-
-## build
-
-```shell
-trunk build --release public/public/index.html
-```
+see the [makefile](makefile)
 
 ## tests :
 
 they are done with : https://cucumber-rs.github.io/cucumber/current/quickstart.html
 ```
-cargo test --test model
+cargo test -p account-model --test account-model
 ```

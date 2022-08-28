@@ -4,14 +4,13 @@ mod query;
 
 use crate::auth::command::handle_anonymous;
 
-use account_model::model::AccountModel;
 use crate::auth::query::{account, register};
+use account_model::model::AccountModel;
 
+use account_model::error::AccountError;
+use account_model::Account;
 use eventstore::{Client, EventData, ReadStream};
 use rocket::Route;
-use account_model::Account;
-use account_model::error::AccountError;
-
 
 const STREAM_NAME: &str = "account";
 

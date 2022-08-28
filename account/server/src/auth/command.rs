@@ -1,7 +1,7 @@
+use crate::auth::{account_exist, add_event, load_account, JWT_ISSUER, JWT_SECRET};
+use crate::{EventDb, MariadDb};
 use account_model::error::AccountError;
 use account_model::event::{AccountEvent, Created, LoggedIn, Quantity};
-use crate::auth::{account_exist, add_event, JWT_ISSUER, JWT_SECRET, load_account};
-use crate::{EventDb, MariadDb};
 use eventstore::EventData;
 use jsonwebtokens as jwt;
 use jsonwebtokens::{encode, AlgorithmID};
@@ -47,7 +47,11 @@ pub async fn handle_anonymous(
     }
 }
 
-async fn login( event_db: &State<EventDb>,maria_db: &State<MariadDb>, cmd: Login) -> Result<String, AccountError> {
+async fn login(
+    event_db: &State<EventDb>,
+    maria_db: &State<MariadDb>,
+    cmd: Login,
+) -> Result<String, AccountError> {
     let mariadb = maria_db.db.clone();
 
     let exists = sqlx::query!(
@@ -69,11 +73,11 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
 
     let mut events = Vec::new();
 
-    let command = Account::Command(AccountCommand::Login(Login{
+    let command = Account::Command(AccountCommand::Login(Login {
         email: "***".to_string(),
-        password: "***".to_string()
+        password: "***".to_string(),
     }))
-        .to_event_data(None);
+    .to_event_data(None);
 
     let correlation_id = command.clone().1;
 
@@ -88,16 +92,14 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
     Ok(create_token(exists.uuid))
 }
 
-fn logged_in(correlation_id:  Uuid) -> (EventData, Uuid) {
+fn logged_in(correlation_id: Uuid) -> (EventData, Uuid) {
     let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH).expect("Time is dead");
+    let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("Time is dead");
 
-    let logged_in = Account::Event(AccountEvent::Logged(LoggedIn {
+    Account::Event(AccountEvent::Logged(LoggedIn {
         time: since_the_epoch.as_secs(),
     }))
-        .to_event_data(Some(correlation_id));
-    logged_in
+    .to_event_data(Some(correlation_id))
 }
 
 async fn create(
