@@ -1500,6 +1500,15 @@ version = "0.1.0"
 [[package]]
 name = "hero-client"
 version = "0.1.0"
+dependencies = [
+ "custom-elements",
+ "hero-api",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
+ "yew",
+]
 
 [[package]]
 name = "hero-model"
@@ -1508,6 +1517,13 @@ version = "0.1.0"
 [[package]]
 name = "hero-server"
 version = "0.1.0"
+dependencies = [
+ "eventstore",
+ "hero-api",
+ "hero-model",
+ "rocket",
+ "rocket_cors",
+]
 
 [[package]]
 name = "hex"

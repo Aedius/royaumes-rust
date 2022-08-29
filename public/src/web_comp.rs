@@ -15,6 +15,7 @@ impl Component for WebComp {
         html! {
             <Helmet>
                 { Self::script("http://127.0.0.1:8000/account.js") }
+                { Self::script("http://127.0.0.1:8001/hero.js") }
             </Helmet>
         }
     }

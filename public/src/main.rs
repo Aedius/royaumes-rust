@@ -26,6 +26,7 @@ fn body() -> Html {
             "#
             )} />
             <account-login></account-login>
+            <hero-start></hero-start>
 
         </BounceRoot>
     }
