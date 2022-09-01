@@ -8,7 +8,6 @@ use std::convert::Infallible;
 use async_trait::async_trait;
 use cucumber::{given, then, when, World, WorldInit};
 
-// `World` is your shared, likely mutable state.
 #[derive(Debug, WorldInit)]
 pub struct AccountWorld {
     model: AccountModel,

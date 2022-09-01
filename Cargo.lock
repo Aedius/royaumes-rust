@@ -2495,7 +2495,13 @@ name = "public"
 version = "0.1.0"
 dependencies = [
  "bounce",
+ "gloo-storage",
+ "js-sys",
  "stylist",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
  "yew",
 ]
 

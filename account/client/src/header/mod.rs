@@ -7,7 +7,6 @@ use bounce::BounceRoot;
 use gloo_storage::{LocalStorage, Storage};
 use reqwasm::http::Request;
 use wasm_bindgen_futures::spawn_local;
-use web_sys::window;
 use weblog::console_info;
 use yew::prelude::*;
 
@@ -17,6 +16,7 @@ pub struct Header {
 }
 
 pub enum Msg {
+    TokenChange(Option<String>),
     Logout,
     Menu(Menu),
 }
@@ -51,6 +51,7 @@ impl Component for Header {
                     console_info!(message.text().await.unwrap());
                 } else {
                     LocalStorage::clear();
+                    LocalStorage::set("reload", "1").unwrap();
                 }
             });
         }
@@ -65,13 +66,17 @@ impl Component for Header {
         match msg {
             Msg::Logout => {
                 LocalStorage::clear();
+                LocalStorage::set("reload", "1").unwrap();
                 self.token = None;
-                let window = window().unwrap();
-                window.location().reload().unwrap();
                 false
             }
             Msg::Menu(menu) => {
                 self.menu = menu;
+                true
+            }
+            Msg::TokenChange(token) => {
+                self.token = token.clone();
+                console_info!(format!("new token receive `{:?}`", token));
                 true
             }
         }

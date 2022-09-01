@@ -3,7 +3,6 @@ use bounce::{use_atom, Atom};
 use gloo_storage::{LocalStorage, Storage};
 use reqwasm::http::Request;
 use wasm_bindgen_futures::spawn_local;
-use web_sys::window;
 use web_sys::{HtmlInputElement, InputEvent, MouseEvent};
 use yew::prelude::*;
 use yew::Callback;
@@ -111,9 +110,7 @@ pub fn register_setter() -> Html {
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
                     LocalStorage::set("token", token).unwrap();
-
-                    let window = window().unwrap();
-                    window.location().reload().unwrap();
+                    LocalStorage::set("reload", "1").unwrap();
                 }
             });
         })
