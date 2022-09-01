@@ -68,8 +68,6 @@ impl Component for Header {
                 LocalStorage::clear();
                 LocalStorage::set("reload", "1").unwrap();
                 self.token = None;
-                // let window = window().unwrap();
-                // window.location().reload().unwrap();
                 false
             }
             Msg::Menu(menu) => {
