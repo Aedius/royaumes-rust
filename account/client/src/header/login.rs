@@ -70,6 +70,7 @@ pub fn login_setter() -> Html {
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
                     LocalStorage::set("token", token).unwrap();
+                    LocalStorage::set("reload", "1").unwrap();
                 }
             });
         })

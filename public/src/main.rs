@@ -4,19 +4,22 @@ use bounce::helmet::HelmetBridge;
 use bounce::BounceRoot;
 use stylist::{css, yew::Global};
 use web_comp::WebComp;
-use yew::prelude::*;
 use web_sys::window;
-use js_sys::Function;
-use weblog::console_info;
-use js_function_promisify::Callback;
-use wasm_bindgen::JsValue;
+use yew::prelude::*;
 
-struct Body{
-    callback: Callback<dyn FnMut()->()>
+use wasm_bindgen::closure::Closure;
+use weblog::console_info;
+
+use gloo_storage::{LocalStorage, Storage};
+use wasm_bindgen::JsCast;
+
+struct Body {
+    _callback: Closure<dyn Fn()>,
+    token: String,
 }
 
 enum Msg {
-    Reload
+    Reload,
 }
 
 impl Component for Body {
@@ -24,32 +27,52 @@ impl Component for Body {
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
+        let cb = ctx.link().callback(|_| Msg::Reload);
 
-        let future = Callback::new(|| {
-            console_info!("call !");
-            Ok("".into())
-        });
+        let closure =
+            Closure::<dyn Fn()>::new(move || match LocalStorage::get::<String>("reload") {
+                Ok(val) => {
+                    if val == "1" {
+                        LocalStorage::set("reload", "0").unwrap();
+                        cb.emit(());
+                    }
+                }
+                Err(err) => {
+                    console_info!(format!("{:?}", err));
+                }
+            });
 
         let window = window().unwrap();
-        window.set_onstorage(Some(future.as_function().as_ref()));
+        window
+            .set_interval_with_callback_and_timeout_and_arguments_0(
+                closure.as_ref().unchecked_ref(),
+                100,
+            )
+            .unwrap();
 
-        Self{
-            callback: future
+        Self {
+            _callback: closure,
+            token: LocalStorage::get::<String>("token").unwrap_or_else(|_| "".to_string()),
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Reload => {
-                console_info!("RELOADDDD");
+                let new_token =
+                    LocalStorage::get::<String>("token").unwrap_or_else(|_| "".to_string());
+
+                if self.token != new_token {
+                    self.token = new_token;
+                    console_info!("has change !!");
+                    return true;
+                }
             }
         }
         false
     }
 
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
         <BounceRoot>
             <HelmetBridge default_title="Royaumes-rs"/>
@@ -67,14 +90,15 @@ impl Component for Body {
                 }
             "#
             )} />
-            <account-login></account-login>
-            <hero-start></hero-start>
+            <account-login token={self.token.clone()}></account-login>
+            if !self.token.is_empty() {
+                <hero-start></hero-start>
+            }
 
         </BounceRoot>
         }
     }
 }
-
 
 fn main() {
     yew::start_app::<Body>();

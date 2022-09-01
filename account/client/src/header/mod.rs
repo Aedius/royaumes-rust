@@ -16,6 +16,7 @@ pub struct Header {
 }
 
 pub enum Msg {
+    TokenChange(Option<String>),
     Logout,
     Menu(Menu),
 }
@@ -50,6 +51,7 @@ impl Component for Header {
                     console_info!(message.text().await.unwrap());
                 } else {
                     LocalStorage::clear();
+                    LocalStorage::set("reload", "1").unwrap();
                 }
             });
         }
@@ -64,6 +66,7 @@ impl Component for Header {
         match msg {
             Msg::Logout => {
                 LocalStorage::clear();
+                LocalStorage::set("reload", "1").unwrap();
                 self.token = None;
                 // let window = window().unwrap();
                 // window.location().reload().unwrap();
@@ -71,6 +74,11 @@ impl Component for Header {
             }
             Msg::Menu(menu) => {
                 self.menu = menu;
+                true
+            }
+            Msg::TokenChange(token) => {
+                self.token = token.clone();
+                console_info!(format!("new token receive `{:?}`", token));
                 true
             }
         }

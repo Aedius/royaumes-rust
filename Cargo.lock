@@ -1760,16 +1760,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8af84674fe1f223a982c933a0ee1086ac4d4052aa0fb8060c12c6ad838e754"
 
 [[package]]
-name = "js-function-promisify"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32d338c2311e9908b885ca45ad2c37d3669c86b2a4eabf11fdeda4f8f1f10bec"
-dependencies = [
- "js-sys",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "js-sys"
 version = "0.3.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2505,7 +2495,7 @@ name = "public"
 version = "0.1.0"
 dependencies = [
  "bounce",
- "js-function-promisify",
+ "gloo-storage",
  "js-sys",
  "stylist",
  "wasm-bindgen",

@@ -1,6 +1,6 @@
 mod header;
 
-use crate::header::Header;
+use crate::header::{Header, Msg};
 use custom_elements::CustomElement;
 use wasm_bindgen::prelude::*;
 
@@ -20,6 +20,28 @@ impl CustomElement for ComponentWrapper {
 
     fn shadow() -> bool {
         false
+    }
+
+    fn observed_attributes() -> &'static [&'static str] {
+        &["token"]
+    }
+
+    fn attribute_changed_callback(
+        &mut self,
+        _this: &HtmlElement,
+        name: String,
+        _old_value: Option<String>,
+        new_value: Option<String>,
+    ) {
+        if name == "token" {
+            if let Some(content) = &self.content {
+                if new_value == Some("".to_string()) {
+                    content.send_message(Msg::TokenChange(None));
+                } else {
+                    content.send_message(Msg::TokenChange(new_value));
+                }
+            }
+        }
     }
 
     fn connected_callback(&mut self, _this: &HtmlElement) {

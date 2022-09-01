@@ -110,6 +110,7 @@ pub fn register_setter() -> Html {
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
                     LocalStorage::set("token", token).unwrap();
+                    LocalStorage::set("reload", "1").unwrap();
                     //
                     // let window = window().unwrap();
                     // window.location().reload().unwrap();
