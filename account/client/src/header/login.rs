@@ -5,7 +5,7 @@ use reqwasm::http::Request;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::{HtmlInputElement, InputEvent, MouseEvent};
 use yew::prelude::*;
-use yew::Callback;
+use yew::{function_component, html, Callback, Properties};
 
 #[derive(Eq, PartialEq, Atom)]
 struct Login {
@@ -22,8 +22,13 @@ impl Default for Login {
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub on_token_change: Callback<Option<String>>,
+}
+
 #[function_component(LoginForm)]
-pub fn login_setter() -> Html {
+pub fn login_setter(props: &Props) -> Html {
     let to_login = use_atom::<Login>();
 
     let on_email_input = {
@@ -53,12 +58,15 @@ pub fn login_setter() -> Html {
 
     let on_login = {
         let to_login = to_login.clone();
+        let on_token_change = props.on_token_change.clone();
+
         Callback::from(move |_: MouseEvent| {
             let login_account = AccountCommand::Login(LoginCmd {
                 email: to_login.email.clone(),
                 password: to_login.password.clone(),
             });
 
+            let on_token_change = on_token_change.clone();
             spawn_local(async move {
                 let resp = Request::post("http://127.0.0.1:8000/api/")
                     .body(serde_json::to_string(&login_account).unwrap())
@@ -69,8 +77,10 @@ pub fn login_setter() -> Html {
 
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
-                    LocalStorage::set("token", token).unwrap();
+                    LocalStorage::set("token", token.clone()).unwrap();
                     LocalStorage::set("reload", "1").unwrap();
+
+                    on_token_change.emit(Some(token));
                 }
             });
         })

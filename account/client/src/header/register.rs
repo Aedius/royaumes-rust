@@ -26,8 +26,13 @@ impl Default for Register {
     }
 }
 
+#[derive(Properties, PartialEq)]
+pub struct Props {
+    pub on_token_change: Callback<Option<String>>,
+}
+
 #[function_component(RegisterForm)]
-pub fn register_setter() -> Html {
+pub fn register_setter(props: &Props) -> Html {
     let to_register = use_atom::<Register>();
 
     let on_pseudo_input = {
@@ -92,6 +97,8 @@ pub fn register_setter() -> Html {
 
     let on_register = {
         let to_register = to_register.clone();
+        let on_token_change = props.on_token_change.clone();
+
         Callback::from(move |_: MouseEvent| {
             let create_account = AccountCommand::CreateAccount(CreateAccount {
                 pseudo: to_register.pseudo.clone(),
@@ -99,6 +106,7 @@ pub fn register_setter() -> Html {
                 password: to_register.password.clone(),
             });
 
+            let on_token_change = on_token_change.clone();
             spawn_local(async move {
                 let resp = Request::post("http://127.0.0.1:8000/api/")
                     .body(serde_json::to_string(&create_account).unwrap())
@@ -109,8 +117,10 @@ pub fn register_setter() -> Html {
 
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
-                    LocalStorage::set("token", token).unwrap();
+                    LocalStorage::set("token", token.clone()).unwrap();
                     LocalStorage::set("reload", "1").unwrap();
+
+                    on_token_change.emit(Some(token));
                 }
             });
         })

@@ -48,7 +48,7 @@ impl Account {
 
     pub fn to_event_data(&self, previous: Option<Uuid>) -> (EventData, Uuid) {
         let id = Uuid::new_v4();
-        let mut event_data = EventData::json(self.event_name(), &self).unwrap();
+        let mut event_data = EventData::json(self.event_name(), self).unwrap();
         event_data = event_data.id(id);
 
         if let Some(previous_uuid) = previous {

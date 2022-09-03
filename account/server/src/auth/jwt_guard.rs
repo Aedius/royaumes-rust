@@ -37,7 +37,7 @@ impl<'r> FromRequest<'r> for JwtToken {
                     .build()
                     .unwrap();
 
-                let claims: Result<Value, Error> = verifier.verify(&key, &alg);
+                let claims: Result<Value, Error> = verifier.verify(key, &alg);
 
                 match claims {
                     Ok(claims) => {

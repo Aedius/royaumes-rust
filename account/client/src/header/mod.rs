@@ -37,7 +37,6 @@ impl Component for Header {
             Err(_) => None,
         };
 
-        console_info!("hello world");
         if token.is_some() {
             let token = token.clone().unwrap();
             spawn_local(async move {
@@ -68,15 +67,14 @@ impl Component for Header {
                 LocalStorage::clear();
                 LocalStorage::set("reload", "1").unwrap();
                 self.token = None;
-                false
+                true
             }
             Msg::Menu(menu) => {
                 self.menu = menu;
                 true
             }
             Msg::TokenChange(token) => {
-                self.token = token.clone();
-                console_info!(format!("new token receive `{:?}`", token));
+                self.token = token;
                 true
             }
         }
@@ -87,6 +85,8 @@ impl Component for Header {
         let no_menu_click = ctx.link().callback(|_| Msg::Menu(Menu::None));
         let login_click = ctx.link().callback(|_| Msg::Menu(Menu::Login));
         let register_click = ctx.link().callback(|_| Msg::Menu(Menu::Register));
+
+        let on_token_change: Callback<Option<String>> = ctx.link().callback(Msg::TokenChange);
 
         let menu = match self.menu {
             Menu::None => {
@@ -102,7 +102,7 @@ impl Component for Header {
                     <>
                         <button onclick={no_menu_click}>{ "close" }</button>
                         <button onclick={register_click}>{ "register" }</button>
-                        <LoginForm />
+                        <LoginForm {on_token_change}/>
                     </>
                 }
             }
@@ -111,7 +111,7 @@ impl Component for Header {
                     <>
                         <button onclick={no_menu_click}>{ "close" }</button>
                         <button onclick={login_click}>{ "login" }</button>
-                        <RegisterForm />
+                        <RegisterForm {on_token_change}/>
                     </>
                 }
             }

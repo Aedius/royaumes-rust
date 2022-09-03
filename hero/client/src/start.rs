@@ -1,21 +1,51 @@
-use yew::prelude::*;
+use weblog::console_info;
+use yew::{html, Component, Context, Html, Properties};
 
-pub struct Start;
+pub struct Start {
+    token: Option<String>,
+}
 
-pub enum Msg {}
+pub enum Msg {
+    TokenChange(Option<String>),
+}
+
+#[derive(PartialEq, Eq, Properties)]
+#[allow(dead_code)]
+pub struct Props {
+    pub token: Option<String>,
+}
 
 impl Component for Start {
     type Message = Msg;
-    type Properties = ();
+    type Properties = Props;
 
-    fn create(_ctx: &Context<Self>) -> Self {
-        Self
+    fn create(ctx: &Context<Self>) -> Self {
+        match &ctx.props().token {
+            None => Self { token: None },
+            Some(t) => Self {
+                token: Some(t.clone()),
+            },
+        }
+    }
+
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Msg::TokenChange(token) => {
+                self.token = token;
+                console_info!("hero TokenChange");
+                true
+            }
+        }
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <p>
-             {"Lorem Ipsum"}
+            if self.token.is_some(){
+                {self.token.clone().unwrap()}
+            }else{
+                {"no token yet"}
+            }
             </p>
         }
     }

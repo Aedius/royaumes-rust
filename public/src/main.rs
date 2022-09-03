@@ -1,17 +1,16 @@
-mod web_comp;
-
 use bounce::helmet::HelmetBridge;
 use bounce::BounceRoot;
+use gloo_storage::{LocalStorage, Storage};
 use stylist::{css, yew::Global};
-use web_comp::WebComp;
+use wasm_bindgen::closure::Closure;
+use wasm_bindgen::JsCast;
 use web_sys::window;
+use weblog::console_info;
 use yew::prelude::*;
 
-use wasm_bindgen::closure::Closure;
-use weblog::console_info;
+use web_comp::WebComp;
 
-use gloo_storage::{LocalStorage, Storage};
-use wasm_bindgen::JsCast;
+mod web_comp;
 
 struct Body {
     _callback: Closure<dyn Fn()>,
@@ -42,6 +41,7 @@ impl Component for Body {
                 }
             });
 
+        // FIXME need to find a better way
         let window = window().unwrap();
         window
             .set_interval_with_callback_and_timeout_and_arguments_0(
@@ -76,7 +76,7 @@ impl Component for Body {
         html! {
         <BounceRoot>
             <HelmetBridge default_title="Royaumes-rs"/>
-            <WebComp></WebComp>
+            <WebComp />
             <Global css={css!(
             r#"
                 html, body {
@@ -90,9 +90,9 @@ impl Component for Body {
                 }
             "#
             )} />
-            <account-login token={self.token.clone()}></account-login>
+            <account-login></account-login>
             if !self.token.is_empty() {
-                <hero-start></hero-start>
+                <hero-start token={self.token.clone()}></hero-start>
             }
 
         </BounceRoot>
