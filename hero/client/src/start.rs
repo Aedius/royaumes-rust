@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use weblog::console_info;
 use yew::{html, Component, Context, Html, Properties};
 
@@ -10,7 +13,6 @@ pub enum Msg {
 }
 
 #[derive(PartialEq, Eq, Properties)]
-#[allow(dead_code)]
 pub struct Props {
     pub token: Option<String>,
 }

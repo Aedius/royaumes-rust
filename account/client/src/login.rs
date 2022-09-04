@@ -78,7 +78,6 @@ pub fn login_setter(props: &Props) -> Html {
                 if resp.ok() {
                     let token = resp.text().await.unwrap();
                     LocalStorage::set("token", token.clone()).unwrap();
-                    LocalStorage::set("reload", "1").unwrap();
 
                     on_token_change.emit(Some(token));
                 }
