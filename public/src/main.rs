@@ -26,18 +26,11 @@ impl Component for Body {
             <Global css={css!(
             r#"
                 html, body {
-                    font-family: sans-serif;
-                    padding: 0;
-                    margin: 0;
-                    min-height: 100vh;
-                    flex-direction: column;
-                    background-color: #333;
-                    color:white;
+
                 }
             "#
             )} />
             <Game />
-
 
         </BounceRoot>
         }

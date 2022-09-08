@@ -89,13 +89,22 @@ pub fn login_setter(props: &Props) -> Html {
 
     html! {
         <div>
-
-            <label>{"email"}<br/>
-                <input type="text" oninput={on_email_input} value={to_login.email.to_string()} />
-            </label><br/>
-            <label>{"password"}<br/>
-                <input type="password" oninput={on_password_input} value={to_login.password.to_string()} />
-            </label><br/>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                    <p class="m-0">{"Email :"}</p>
+                </div>
+                <div class="col-xs-9 level-item">
+                    <input type="email" oninput={on_email_input} value={to_login.email.to_string()} />
+                </div>
+            </div>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                    <p class="m-0">{"Password:"}</p>
+                </div>
+                <div class="col-xs-9 level-item">
+                    <input type="password" oninput={on_password_input} value={to_login.password.to_string()} />
+                </div>
+            </div>
 
             if can_login{
                 <button onclick={on_login}>{"go"}</button>

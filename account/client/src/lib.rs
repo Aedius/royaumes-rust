@@ -92,17 +92,41 @@ impl Component for Game {
         let menu = match self.menu {
             Menu::None => {
                 html! {
+                    <ul>
+                        <li><div class="tab-item-content" onclick={login_click}>{ "login" }</div></li>
+                        <li><div class="tab-item-content" onclick={register_click}>{ "register" }</div></li>
+                    </ul>
+                }
+            }
+            Menu::Login => {
+                html! {
+                    <ul>
+                        <li class="selected"><div class="tab-item-content" onclick={no_menu_click}>{ "login" }</div></li>
+                        <li><div class="tab-item-content" onclick={register_click}>{ "register" }</div></li>
+
+                    </ul>
+                }
+            }
+            Menu::Register => {
+                html! {
+                    <ul>
+                        <li><div class="tab-item-content" onclick={login_click}>{ "login" }</div></li>
+                        <li class="selected"><div class="tab-item-content" onclick={no_menu_click}>{ "register" }</div></li>
+                    </ul>
+                }
+            }
+        };
+
+        let content = match self.menu {
+            Menu::None => {
+                html! {
                     <>
-                        <button onclick={login_click}>{ "login" }</button>
-                        <button onclick={register_click}>{ "register" }</button>
                     </>
                 }
             }
             Menu::Login => {
                 html! {
                     <>
-                        <button onclick={no_menu_click}>{ "close" }</button>
-                        <button onclick={register_click}>{ "register" }</button>
                         <LoginForm {on_token_change}/>
                     </>
                 }
@@ -110,20 +134,22 @@ impl Component for Game {
             Menu::Register => {
                 html! {
                     <>
-                        <button onclick={no_menu_click}>{ "close" }</button>
-                        <button onclick={login_click}>{ "login" }</button>
                         <RegisterForm {on_token_change}/>
                     </>
                 }
             }
         };
 
+        let data = self.pseudo.as_ref().map(|p| (get_initial(p), p));
+
         html! {
             <BounceRoot>
                 if self.token.is_some(){
                     <div>
-                        if let Some(p) = &self.pseudo{
-                            {"Hello "}{p}{" !!"}
+                        if let Some(d) = data{
+                            <div class="avatar avatar--xs text-gray-000"  data-text={d.0}>
+                            </div>
+                            {"Hello "}{d.1}{" !!"}
                         }else{
                             {"🕰 loading 🕰"}
                         }
@@ -132,13 +158,34 @@ impl Component for Game {
                     </div>
                 }else{
                     <div>
-                        <h2>{"inscription"}</h2>
-                        {menu}
+                        <div class="tab-container tabs--right">
+                             {menu}
+                        </div>
+
+                        {content}
                     </div>
                 }
             </BounceRoot>
         }
     }
+}
+
+fn get_initial(s: &str) -> String {
+    let mut res: Vec<String> = Vec::new();
+
+    let chars: Vec<char> = s.chars().collect();
+    let windows = chars.windows(2);
+
+    for w in windows {
+        println! {"[{}, {}]", w[0], w[1]};
+        if res.is_empty() {
+            res.push(w[0].to_uppercase().to_string());
+        } else if w[0] == ' ' {
+            res.push(w[1].to_lowercase().to_string());
+        }
+    }
+
+    return res.join("");
 }
 
 impl Game {

@@ -132,18 +132,39 @@ pub fn register_setter(props: &Props) -> Html {
 
     html! {
         <div>
-            <label>{"pseudo"}<br/>
-                <input type="text" oninput={on_pseudo_input} value={to_register.pseudo.to_string()} />
-            </label><br/>
-            <label>{"email"}<br/>
-                <input type="text" oninput={on_email_input} value={to_register.email.to_string()} />
-            </label><br/>
-            <label>{"password"}<br/>
-                <input type="password" oninput={on_password_input} value={to_register.password.to_string()} />
-            </label><br/>
-            <label>{"password check"}<br/>
-                <input type="password" oninput={on_password_check_input} />
-            </label>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                    <p class="m-0">{"Pseudo :"}</p>
+                </div>
+                <div class="col-xs-9 level-item">
+                    <input type="name" oninput={on_pseudo_input} value={to_register.pseudo.to_string()} />
+                </div>
+            </div>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                    <p class="m-0">{"Email :"}</p>
+                </div>
+                <div class="col-xs-9 level-item">
+                    <input type="email" oninput={on_email_input} value={to_register.email.to_string()} />
+                </div>
+            </div>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                    <p class="m-0">{"Password :"}</p>
+                </div>
+                <div class="col-xs-9 level-item">
+                    <input type="password" oninput={on_password_input} value={to_register.password.to_string()} />
+                </div>
+            </div>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                    <p class="m-0">{"Password check :"}</p>
+                </div>
+                <div class="col-xs-9 level-item">
+                    <input type="password" oninput={on_password_check_input} value={to_register.password.to_string()} />
+                </div>
+            </div>
+
             if to_register.password_ok {
                 {"✅"}
             }else{
