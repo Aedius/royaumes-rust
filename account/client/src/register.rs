@@ -161,20 +161,22 @@ pub fn register_setter(props: &Props) -> Html {
                     <p class="m-0">{"Password check :"}</p>
                 </div>
                 <div class="col-xs-9 level-item">
-                    <input type="password" oninput={on_password_check_input} value={to_register.password.to_string()} />
+                    if to_register.password_ok {
+                        <input class="text-success input-success" type="password" oninput={on_password_check_input} />
+                    }else{
+                        <input class="text-danger input-error" type="password" oninput={on_password_check_input} />
+                    }
                 </div>
             </div>
-
-            if to_register.password_ok {
-                {"✅"}
-            }else{
-                {"❌"}
-            }
-            <br/>
-            if can_register{
-                <button onclick={on_register}>{"go"}</button>
-            }
-
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                </div>
+                <div class="col-xs-9 level-item">
+                    if can_register{
+                        <button class="outline btn-primary" onclick={on_register}>{"register"}</button>
+                    }
+                </div>
+            </div>
         </div>
     }
 }

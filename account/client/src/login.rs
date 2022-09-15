@@ -105,10 +105,16 @@ pub fn login_setter(props: &Props) -> Html {
                     <input type="password" oninput={on_password_input} value={to_login.password.to_string()} />
                 </div>
             </div>
+            <div class="row level">
+                <div class="col-xs-3 level-item">
+                </div>
+                <div class="col-xs-9 level-item">
+                    if can_login{
+                        <button class="outline btn-primary" onclick={on_login}>{"log me in"}</button>
+                    }
+                </div>
+            </div>
 
-            if can_login{
-                <button onclick={on_login}>{"go"}</button>
-            }
         </div>
     }
 }

@@ -146,14 +146,33 @@ impl Component for Game {
             <BounceRoot>
                 if self.token.is_some(){
                     <div>
+                        <div class="tab-container tabs--right">
+                            <ul>
+                                <li>
+                                    if let Some(d) = data.clone(){
+                                        <div class="avatar avatar--sm text-gray-000" data-text={d.0}></div>
+                                    }else{
+                                        <div class="card u-flex u-items-center u-justify-center">
+                                            <div class="animated loading hide-text">
+                                                <p>{"🕰 loading 🕰"}</p>
+                                            </div>
+                                        </div>
+                                    }
+                                </li>
+                                <li><div class="tab-item-content" onclick={logout_click}>{ "log out" }</div></li>
+                            </ul>
+                        </div>
+
                         if let Some(d) = data{
-                            <div class="avatar avatar--xs text-gray-000"  data-text={d.0}>
-                            </div>
                             {"Hello "}{d.1}{" !!"}
                         }else{
-                            {"🕰 loading 🕰"}
+                            <div class="card u-flex u-items-center u-justify-center">
+                                <div class="animated loading hide-text">
+                                    <p>{"🕰 loading 🕰"}</p>
+                                </div>
+                            </div>
                         }
-                        <button onclick={logout_click}>{ "Logout !" }</button>
+
                         <hero-start token={self.token.clone()}></hero-start>
                     </div>
                 }else{
