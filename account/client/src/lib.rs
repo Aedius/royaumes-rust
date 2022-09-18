@@ -204,7 +204,7 @@ fn get_initial(s: &str) -> String {
         }
     }
 
-    return res.join("");
+    res.join("")
 }
 
 impl Game {
