@@ -2,6 +2,7 @@
 extern crate rocket;
 
 use eventstore::Client;
+use rocket::fs::{relative, FileServer};
 use rocket::http::Method;
 use rocket::response::content;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
@@ -61,6 +62,7 @@ fn rocket() -> _ {
         .manage(EventDb::new(event_db))
         .manage(MariadDb::new(pool))
         .mount("/api", auth::get_route())
+        .mount("/", FileServer::from(relative!("web")))
         .attach(cors)
         .register("/", catchers![general_not_found])
 }
