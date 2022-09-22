@@ -1,5 +1,5 @@
 [package]
-name = "hero-server"
+name = "solar-system-server"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 eventstore = "2.1"
-hero-api = { path = "../api" }
-hero-model = { path = "../model" }
+solar-system-api = { path = "../api" }
+solar-system-model = { path = "../model" }
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 rocket_cors = { git = "https://github.com/lawliet89/rocket_cors.git", rev = "54fae070"  }

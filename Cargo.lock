@@ -1127,6 +1127,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "game-api"
+version = "0.1.0"
+
+[[package]]
+name = "game-client"
+version = "0.1.0"
+dependencies = [
+ "custom-elements",
+ "game-api",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
+ "yew",
+]
+
+[[package]]
+name = "game-model"
+version = "0.1.0"
+
+[[package]]
+name = "game-server"
+version = "0.1.0"
+dependencies = [
+ "eventstore",
+ "game-api",
+ "game-model",
+ "rocket",
+ "rocket_cors",
+]
+
+[[package]]
 name = "generator"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1491,38 +1523,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62b467343b94ba476dcb2500d242dadbb39557df889310ac77c5d99100aaac33"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "hero-api"
-version = "0.1.0"
-
-[[package]]
-name = "hero-client"
-version = "0.1.0"
-dependencies = [
- "custom-elements",
- "hero-api",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "weblog",
- "yew",
-]
-
-[[package]]
-name = "hero-model"
-version = "0.1.0"
-
-[[package]]
-name = "hero-server"
-version = "0.1.0"
-dependencies = [
- "eventstore",
- "hero-api",
- "hero-model",
- "rocket",
- "rocket_cors",
 ]
 
 [[package]]
@@ -2365,6 +2365,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
+name = "planet-api"
+version = "0.1.0"
+
+[[package]]
+name = "planet-client"
+version = "0.1.0"
+dependencies = [
+ "custom-elements",
+ "planet-api",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
+ "yew",
+]
+
+[[package]]
+name = "planet-model"
+version = "0.1.0"
+
+[[package]]
+name = "planet-server"
+version = "0.1.0"
+dependencies = [
+ "eventstore",
+ "planet-api",
+ "planet-model",
+ "rocket",
+ "rocket_cors",
+]
+
+[[package]]
 name = "polyval"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3202,6 +3234,38 @@ checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "solar-system-api"
+version = "0.1.0"
+
+[[package]]
+name = "solar-system-client"
+version = "0.1.0"
+dependencies = [
+ "custom-elements",
+ "solar-system-api",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
+ "yew",
+]
+
+[[package]]
+name = "solar-system-model"
+version = "0.1.0"
+
+[[package]]
+name = "solar-system-server"
+version = "0.1.0"
+dependencies = [
+ "eventstore",
+ "rocket",
+ "rocket_cors",
+ "solar-system-api",
+ "solar-system-model",
 ]
 
 [[package]]

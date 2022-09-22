@@ -1,5 +1,5 @@
 [package]
-name = "hero-api"
+name = "solar-system-api"
 version = "0.1.0"
 edition = "2021"
 

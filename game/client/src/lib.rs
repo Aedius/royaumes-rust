@@ -64,5 +64,5 @@ impl CustomElement for ComponentWrapper {
 
 #[wasm_bindgen]
 pub fn run() {
-    ComponentWrapper::define("hero-start");
+    ComponentWrapper::define("game-start");
 }

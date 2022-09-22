@@ -173,7 +173,7 @@ impl Component for Header {
                             </div>
                         }
 
-                        <hero-start token={self.token.clone()}></hero-start>
+                        <game-start></hero-start>
                     </div>
                 }else{
                     <div>

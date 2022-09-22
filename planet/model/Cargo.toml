@@ -1,5 +1,5 @@
 [package]
-name = "hero-model"
+name = "planet-model"
 version = "0.1.0"
 edition = "2021"
 
