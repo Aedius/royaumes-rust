@@ -33,6 +33,12 @@ pub async fn handle_anonymous(
             AccountCommand::RemoveQuantity(_) => Err(AccountError::Other(
                 "cannot remove quantity without id".to_string(),
             )),
+            AccountCommand::Join(_) => {
+                todo!();
+            }
+            AccountCommand::Leave(_) => {
+                todo!();
+            }
         },
         Some(token) => match command.0 {
             AccountCommand::CreateAccount(_) => {
@@ -43,6 +49,12 @@ pub async fn handle_anonymous(
             }
             AccountCommand::AddQuantity(cmd) => add(event_db, token.uuid, cmd).await,
             AccountCommand::RemoveQuantity(cmd) => remove(event_db, token.uuid, cmd).await,
+            AccountCommand::Join(_) => {
+                todo!();
+            }
+            AccountCommand::Leave(_) => {
+                todo!();
+            }
         },
     }
 }
@@ -76,6 +88,7 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
     let command = Account::Command(AccountCommand::Login(Login {
         email: "***".to_string(),
         password: "***".to_string(),
+        time: 0,
     }))
     .to_event_data(None);
 
@@ -219,14 +232,14 @@ async fn add(event_db: &State<EventDb>, id: String, nb: usize) -> Result<String,
 
     let account = load_account(&db, id.clone()).await?;
 
-    if account.nb.checked_add(nb).is_none() {
+    if account.nb_account_allowed.checked_add(nb).is_none() {
         return Err(AccountError::WrongQuantity(format!(
             "cannot add {} to {}",
-            nb, account.nb
+            nb, account.nb_account_allowed
         )));
     }
 
-    let payload = Account::Event(AccountEvent::Added(Quantity { nb }));
+    let payload = Account::Event(AccountEvent::AccountAdded(Quantity { nb }));
 
     add_event(&db, id.clone(), vec![payload.to_event_data(None).0]).await?;
 
@@ -238,14 +251,14 @@ async fn remove(event_db: &State<EventDb>, id: String, nb: usize) -> Result<Stri
 
     let account = load_account(&db, id.clone()).await?;
 
-    if nb > account.nb {
+    if nb > account.nb_account_allowed {
         return Err(AccountError::WrongQuantity(format!(
             "cannot remove {} from {}",
-            nb, account.nb
+            nb, account.nb_account_allowed
         )));
     }
 
-    let payload = Account::Event(AccountEvent::Removed(Quantity { nb }));
+    let payload = Account::Event(AccountEvent::AccountRemoved(Quantity { nb }));
 
     add_event(&db, id.clone(), vec![payload.to_event_data(None).0]).await?;
 

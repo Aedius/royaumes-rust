@@ -17,6 +17,12 @@ pub struct CreateAccount {
 pub struct Login {
     pub email: String,
     pub password: String,
+    pub time: u64,
+}
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct ServerAccount {
+    pub server_id: String,
+    pub account_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -25,4 +31,6 @@ pub enum AccountCommand {
     Login(Login),
     AddQuantity(usize),
     RemoveQuantity(usize),
+    Join(ServerAccount),
+    Leave(ServerAccount),
 }

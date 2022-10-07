@@ -173,7 +173,7 @@ impl Component for Header {
                             </div>
                         }
 
-                        <game-start></hero-start>
+                        <game-start></game-start>
                     </div>
                 }else{
                     <div>

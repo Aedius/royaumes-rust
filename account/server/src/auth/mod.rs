@@ -33,12 +33,16 @@ async fn load_account(db: &Client, id: String) -> Result<AccountModel, AccountEr
     while let Ok(Some(event)) = stream.next().await {
         exist = true;
 
-        let account_event = event.get_original_event().as_json::<Account>();
+        let account_operation = event.get_original_event().as_json::<Account>();
 
-        match account_event {
-            Ok(account_event) => {
-                account.play_event(account_event);
-            }
+        match account_operation {
+            Ok(account_operation) => match account_operation {
+                Account::Event(account_event) => {
+                    account.play_event(account_event);
+                }
+                Account::Command(_) => {}
+                Account::Error(_) => {}
+            },
             Err(err) => {
                 warn!("Unable to json decode : {:?}, got error {:?}", event, err);
             }

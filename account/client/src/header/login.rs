@@ -64,6 +64,7 @@ pub fn login_setter(props: &Props) -> Html {
             let login_account = AccountCommand::Login(LoginCmd {
                 email: to_login.email.clone(),
                 password: to_login.password.clone(),
+                time: 0,
             });
 
             let on_token_change = on_token_change.clone();

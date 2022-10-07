@@ -27,15 +27,19 @@ impl Account {
         match self {
             Account::Event(event) => match event {
                 AccountEvent::Created(_) => "AccountCreated",
-                AccountEvent::Added(_) => "QuantityAdded",
-                AccountEvent::Removed(_) => "QuantityRemoved",
+                AccountEvent::AccountAdded(_) => "QuantityAdded",
+                AccountEvent::AccountRemoved(_) => "QuantityRemoved",
                 AccountEvent::Logged(_) => "Logged",
+                AccountEvent::Joined(_) => "JoinedServer",
+                AccountEvent::Leaved(_) => "LeavedServer",
             },
             Account::Command(command) => match command {
                 AccountCommand::CreateAccount(_) => "CreateAccount",
                 AccountCommand::AddQuantity(_) => "AddQuantity",
                 AccountCommand::RemoveQuantity(_) => "RemoveQuantity",
                 AccountCommand::Login(_) => "Login",
+                AccountCommand::Join(_) => "JoinServer",
+                AccountCommand::Leave(_) => "LeaveServer",
             },
             Account::Error(error) => match error {
                 AccountError::NotFound(_) => "ErrorAccountNotFound",

@@ -1,46 +1,73 @@
-use account_model::event::AccountEvent::Added;
-use account_model::event::Quantity;
+use account_model::event::AccountEvent::{AccountAdded, Joined};
+use account_model::event::{Quantity, ServerAccount};
 use account_model::model::AccountModel;
-use account_model::Account::Event;
-use rocket::futures;
-use std::convert::Infallible;
 
-use async_trait::async_trait;
-use cucumber::{given, then, when, World, WorldInit};
+use account_api::{AccountCommand, ServerAccount as SA};
+use cucumber::{given, then, when, World};
 
-#[derive(Debug, WorldInit)]
+#[derive(cucumber::World, Debug, Default)]
 pub struct AccountWorld {
     model: AccountModel,
 }
 
-#[async_trait(? Send)]
-impl World for AccountWorld {
-    type Error = Infallible;
-
-    async fn new() -> Result<Self, Self::Error> {
-        Ok(Self {
-            model: AccountModel::default(),
-        })
-    }
+#[given(regex = r"^a model with nb (\d+)$")]
+fn with_number(world: &mut AccountWorld, account: usize) {
+    world.model.nb_account_allowed = account;
 }
 
-#[given("a model with nb 20")]
-fn with_number(world: &mut AccountWorld) {
-    world.model.nb = 20;
+#[when(regex = r"^i add the nb (\d+)$")]
+fn add_number(world: &mut AccountWorld, account: usize) {
+    world
+        .model
+        .play_event(AccountAdded(Quantity { nb: account }));
 }
 
-#[when("i add the nb 22")]
-fn add_number(world: &mut AccountWorld) {
-    let event = Event(Added(Quantity { nb: 22 }));
-
-    world.model.play_event(event);
+#[when(regex = r"^i have joined the server (.*) with account (.*)$")]
+fn join_server(world: &mut AccountWorld, server_id: String, account_id: String) {
+    world.model.play_event(Joined(ServerAccount {
+        server_id,
+        account_id,
+    }));
 }
 
-#[then("nb is 42")]
-fn check_number(world: &mut AccountWorld) {
-    assert_eq!(42, world.model.nb)
+#[then(regex = r"^nb is (\d+)$")]
+fn check_number(world: &mut AccountWorld, account: usize) {
+    assert_eq!(account, world.model.nb_account_allowed())
 }
 
-fn main() {
-    futures::executor::block_on(AccountWorld::run("tests/book"));
+#[then(regex = r"^i have joined (\d+) server$")]
+fn joined(world: &mut AccountWorld, account: usize) {
+    assert_eq!(account, world.model.nb_accounts())
+}
+
+#[then(regex = r"^i can leave the server (.*) with account (.*)$")]
+fn can_leave(world: &mut AccountWorld, server_id: String, account_id: String) {
+    let res = match world.model.try_command(AccountCommand::Leave(SA {
+        server_id,
+        account_id,
+    })) {
+        Ok(_) => 1,
+        Err(_e) => 2,
+    };
+
+    assert_eq!(res, 1)
+}
+
+#[then(regex = r"^i cant join the server (.*) with account (.*)$")]
+fn cant_join(world: &mut AccountWorld, server_id: String, account_id: String) {
+    println!("W : {:?}", world.model);
+    let res = match world.model.try_command(AccountCommand::Join(SA {
+        server_id,
+        account_id,
+    })) {
+        Ok(_) => 1,
+        Err(_e) => 2,
+    };
+
+    assert_eq!(res, 2)
+}
+
+#[tokio::main]
+async fn main() {
+    AccountWorld::run("tests/book").await;
 }

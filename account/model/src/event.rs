@@ -5,8 +5,10 @@ use uuid::Uuid;
 pub enum AccountEvent {
     Logged(LoggedIn),
     Created(Created),
-    Added(Quantity),
-    Removed(Quantity),
+    AccountAdded(Quantity),
+    AccountRemoved(Quantity),
+    Joined(ServerAccount),
+    Leaved(ServerAccount),
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -23,4 +25,10 @@ pub struct Quantity {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct LoggedIn {
     pub time: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct ServerAccount {
+    pub server_id: String,
+    pub account_id: String,
 }
