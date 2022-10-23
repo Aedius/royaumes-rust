@@ -11,13 +11,13 @@ account-server:
 	cargo watch -w account/server -w account/api -w account/model -i account/server/web -- cargo run --color=always -p account-server
 
 
-## game
+## server
 
-game-client:
-	cargo watch -w game/client -w game/api -- wasm-pack build game/client --target web --out-dir ../server/web --out-name game
+server-client:
+	cargo watch -w server/client -w server/api -- wasm-pack build server/client --target web --out-dir ../server/web --out-name server
 
-game-server:
-	cargo watch -w game/server -w game/api -w game/model -i game/server/web -- cargo run --color=always -p game-server
+server-server:
+	cargo watch -w server/server -w server/api -w server/model -i server/server/web -- cargo run --color=always -p server-server
 
 
 ## sqlx

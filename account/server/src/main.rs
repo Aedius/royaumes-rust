@@ -2,6 +2,8 @@
 extern crate rocket;
 
 use eventstore::Client;
+use global_config::Components::Public;
+use global_config::Config;
 use rocket::fs::{relative, FileServer};
 use rocket::http::Method;
 use rocket::response::content;
@@ -33,17 +35,17 @@ impl MariadDb {
 
 #[launch]
 fn rocket() -> _ {
+    let config = Config::load();
+
     // Creates a public settings for a single node configuration.
-    let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"
-        .parse()
-        .unwrap();
+    let settings = config.event_store().parse().unwrap();
     let event_db = Client::new(settings).unwrap();
 
-    let mariadb_url = "mysql://root:password@localhost:3306/account";
+    let mariadb_url = format!("{}/account", config.mysql());
 
-    let pool = MySqlPool::connect_lazy(mariadb_url).unwrap();
+    let pool = MySqlPool::connect_lazy(&mariadb_url).unwrap();
 
-    let allowed_origins = AllowedOrigins::some_exact(&["http://127.0.0.1:3100/"]);
+    let allowed_origins = AllowedOrigins::some_exact(&[config.get_uri(Public).unwrap()]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,

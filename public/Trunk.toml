@@ -11,7 +11,7 @@ public_url = "/"
 filehash = true
 
 [watch]
-watch = ["../account/client/"]
+watch = ["src"]
 ignore = []
 
 [serve]

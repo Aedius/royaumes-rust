@@ -36,11 +36,11 @@ impl CustomElement for ComponentWrapper {
     }
 
     fn connected_callback(&mut self, _this: &HtmlElement) {
-        console_info!("connected hero");
+        console_info!("connected planet");
     }
 
     fn disconnected_callback(&mut self, _this: &HtmlElement) {
-        console_info!("disconnected hero");
+        console_info!("disconnected planet");
     }
 
     fn attribute_changed_callback(

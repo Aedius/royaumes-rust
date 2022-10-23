@@ -1,7 +1,29 @@
 # royaumes-rust
 implementing an old school webgame
 
-## requirements
+## lib:
+
+an [auth](lib/auth/README.md) lib to share the jwt token check to all component.
+
+## components :
+
+a [public](public/README.md) component to handle anonymous traffic, present the game.
+
+an [account](account/README.md) component with : 
+- webcomponent to register / login
+
+a [server](server/README.md) component with :
+- tbd
+
+a [planet](planet/README.md) component with :
+- tbd
+
+an [army](army/README.md) component with :
+- tbd
+
+## Development
+
+### requirements
 
 frontends needs trunk :
 
@@ -16,11 +38,11 @@ rustup target add wasm32-unknown-unknown
 aptitude install clang
 ```
 
-## run
+### run
 
 see the [makefile](makefile)
 
-## tests :
+### tests :
 
 they are done with : https://cucumber-rs.github.io/cucumber/current/quickstart.html
 ```

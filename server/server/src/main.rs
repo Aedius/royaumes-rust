@@ -2,6 +2,8 @@
 extern crate rocket;
 
 use eventstore::Client;
+use global_config::Components::{Public, Server};
+use global_config::Config;
 use rocket::fs::{relative, FileServer};
 use rocket::http::Method;
 use rocket::response::content;
@@ -19,13 +21,12 @@ impl EventDb {
 
 #[launch]
 fn rocket() -> _ {
+    let config = Config::load();
     // Creates a public settings for a single node configuration.
-    let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"
-        .parse()
-        .unwrap();
+    let settings = config.event_store().parse().unwrap();
     let event_db = Client::new(settings).unwrap();
 
-    let allowed_origins = AllowedOrigins::some_exact(&["http://127.0.0.1:3100/"]);
+    let allowed_origins = AllowedOrigins::some_exact(&[config.get_uri(Public).unwrap()]);
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
@@ -40,7 +41,7 @@ fn rocket() -> _ {
     .to_cors()
     .unwrap();
 
-    let figment = rocket::Config::figment().merge(("port", 8001));
+    let figment = rocket::Config::figment().merge(("port", config.get_port(Server)));
 
     rocket::custom(figment)
         .manage(EventDb::new(event_db))

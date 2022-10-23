@@ -2,9 +2,8 @@
 resolver = "2"
 members = [
     "account/*",
-    "game/*",
     "lib/*",
     "planet/*",
     "public",
-    "solar-system/*",
+    "server/*",
 ]

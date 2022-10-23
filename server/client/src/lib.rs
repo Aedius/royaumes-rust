@@ -36,11 +36,11 @@ impl CustomElement for ComponentWrapper {
     }
 
     fn connected_callback(&mut self, _this: &HtmlElement) {
-        console_info!("connected hero");
+        console_info!("connected server");
     }
 
     fn disconnected_callback(&mut self, _this: &HtmlElement) {
-        console_info!("disconnected hero");
+        console_info!("disconnected server");
     }
 
     fn attribute_changed_callback(
@@ -64,5 +64,5 @@ impl CustomElement for ComponentWrapper {
 
 #[wasm_bindgen]
 pub fn run() {
-    ComponentWrapper::define("game-start");
+    ComponentWrapper::define("server-start");
 }

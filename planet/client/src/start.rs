@@ -34,7 +34,7 @@ impl Component for Start {
         match msg {
             Msg::TokenChange(token) => {
                 self.token = token;
-                console_info!("hero TokenChange");
+                console_info!("planet TokenChange");
                 true
             }
         }
