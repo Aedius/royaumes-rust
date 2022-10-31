@@ -28,7 +28,7 @@ services:
     environment:
       MARIADB_ROOT_PASSWORD: password
     ports:
-      - 3306:3306
+      - "3306:3306"
     volumes:
       - type: volume
         source: mariadb-volume-data
@@ -37,7 +37,13 @@ services:
   adminer:
     image: adminer
     ports:
-      - 8080:8080
+      - "8080:8080"
+
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+
 
 volumes:
   eventstore-volume-data:

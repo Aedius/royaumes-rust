@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0"
 eventstore = "2.1"
-uuid = {version = "0.8", features = ["v4", "serde"]}
+redis= { version = "0.22", features = ["tokio-native-tls-comp"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
+uuid = {version = "0.8", features = ["v4", "serde"]}
