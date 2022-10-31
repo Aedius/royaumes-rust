@@ -3,10 +3,11 @@ use eventstore::{
     AppendToStreamOptions, Client as EventDb, EventData, ExpectedRevision, ReadStreamOptions,
     StreamPosition,
 };
-use redis::{Client as CacheDb, FromRedisValue};
-use redis::{Commands, ToRedisArgs};
+use redis::Client as CacheDb;
+use redis::Commands;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -15,6 +16,8 @@ pub struct Metadata {
     correlation_id: Uuid,
     #[serde(rename = "$causationId")]
     causation_id: Uuid,
+    #[serde(rename = "is_event")]
+    is_event: bool,
 }
 
 pub trait Command: Serialize + DeserializeOwned {
@@ -29,6 +32,7 @@ pub trait Command: Serialize + DeserializeOwned {
             .metadata_as_json(Metadata {
                 correlation_id: id,
                 causation_id: id,
+                is_event: false,
             })
             .unwrap();
 
@@ -48,6 +52,7 @@ pub trait Event: Serialize + DeserializeOwned {
             .metadata_as_json(Metadata {
                 correlation_id: command,
                 causation_id: previous,
+                is_event: true,
             })
             .unwrap();
 
@@ -55,7 +60,7 @@ pub trait Event: Serialize + DeserializeOwned {
     }
 }
 
-pub trait ModelEvent: FromRedisValue + Default + ToRedisArgs {
+pub trait ModelEvent: Default + Serialize + DeserializeOwned + Debug {
     type Event: Event;
     type Command: Command;
 
@@ -64,6 +69,8 @@ pub trait ModelEvent: FromRedisValue + Default + ToRedisArgs {
     fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>>;
 
     fn get_position(&self) -> u64;
+
+    fn set_position(&mut self, pos: u64);
 }
 
 pub struct ModelKey {
@@ -103,10 +110,15 @@ impl ModelRepository {
             .cache_db
             .get_connection()
             .context("connect to cache db")?;
-        let mut value: T = cache_connection.get(key.format()).unwrap_or_default();
+        let data: String = cache_connection
+            .get(key.format())
+            .context("get from cache")
+            .unwrap_or_default();
+
+        let mut value: T = serde_json::from_str(data.as_str()).unwrap_or_default();
 
         let options = ReadStreamOptions::default();
-        let options = options.position(StreamPosition::Position(value.get_position()));
+        let options = options.position(StreamPosition::Position(value.get_position() + 1));
 
         let mut stream = self
             .event_db
@@ -117,18 +129,28 @@ impl ModelRepository {
         let mut has_changed = false;
 
         while let Ok(Some(json_event)) = stream.next().await {
-            has_changed = true;
+            let original_event = json_event.get_original_event();
 
-            let event = json_event
-                .get_original_event()
-                .as_json::<E>()
-                .context("decode event")?;
-            value.play_event(&event);
+            let metadata: Metadata = serde_json::from_str(
+                std::str::from_utf8(original_event.custom_metadata.as_ref()).unwrap_or_default(),
+            )
+            .unwrap();
+
+            if metadata.is_event {
+                let event = json_event
+                    .get_original_event()
+                    .as_json::<E>()
+                    .context(format!("decode event : {:?}", json_event))?;
+
+                value.play_event(&event);
+                has_changed = true;
+            }
+            value.set_position(original_event.revision)
         }
 
         if has_changed {
             cache_connection
-                .set(key.format(), &value)
+                .set(key.format(), serde_json::to_string(&value)?)
                 .context("set cache value")?;
         }
 
@@ -145,8 +167,12 @@ impl ModelRepository {
 
         let events = model.try_command(&command).context("try command")?;
 
-        let options = AppendToStreamOptions::default()
-            .expected_revision(ExpectedRevision::Exact(model.get_position()));
+        let position = model.get_position();
+        let options = if position == 0 {
+            AppendToStreamOptions::default().expected_revision(ExpectedRevision::NoStream)
+        } else {
+            AppendToStreamOptions::default().expected_revision(ExpectedRevision::Exact(position))
+        };
 
         let (command_data, command_uuid) = command.to_event_data();
 
