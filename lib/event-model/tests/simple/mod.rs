@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use event_model::{Command, Event, ModelEvent};
+use event_model::{Command, Event, State};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -10,6 +10,10 @@ pub enum SimpleCommand {
 }
 
 impl Command for SimpleCommand {
+    fn name_prefix() -> &'static str {
+        "simple"
+    }
+
     fn command_name(&self) -> &str {
         match &self {
             SimpleCommand::Add(_) => "Add",
@@ -26,6 +30,10 @@ pub enum SimpleEvent {
 }
 
 impl Event for SimpleEvent {
+    fn name_prefix() -> &'static str {
+        "simple"
+    }
+
     fn event_name(&self) -> &str {
         match &self {
             SimpleEvent::Added(_) => "added",
@@ -35,12 +43,12 @@ impl Event for SimpleEvent {
 }
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
-pub struct SimpleModel {
+pub struct SimpleState {
     pub nb: u32,
     pub position: u64,
 }
 
-impl ModelEvent for SimpleModel {
+impl State for SimpleState {
     type Event = SimpleEvent;
     type Command = SimpleCommand;
 
@@ -79,5 +87,9 @@ impl ModelEvent for SimpleModel {
 
     fn set_position(&mut self, pos: u64) {
         self.position = pos;
+    }
+
+    fn state_cache_interval() -> Option<u64> {
+        Some(1)
     }
 }
