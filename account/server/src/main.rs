@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+use event_model::StateRepository;
 use eventstore::Client;
 use global_config::Components::Public;
 use global_config::Config;
@@ -12,16 +13,6 @@ use sqlx::mysql::MySqlPool;
 use sqlx::{MySql, Pool};
 
 mod auth;
-
-pub struct EventDb {
-    pub db: Client,
-}
-
-impl EventDb {
-    pub fn new(db: Client) -> EventDb {
-        EventDb { db }
-    }
-}
 
 pub struct MariadDb {
     pub db: Pool<MySql>,
@@ -41,8 +32,11 @@ fn rocket() -> _ {
     let settings = config.event_store().parse().unwrap();
     let event_db = Client::new(settings).unwrap();
 
-    let mariadb_url = format!("{}/account", config.mysql());
+    let cache_db = redis::Client::open(config.redis()).unwrap();
 
+    let state_repository = StateRepository::new(event_db, cache_db);
+
+    let mariadb_url = format!("{}/account", config.mysql());
     let pool = MySqlPool::connect_lazy(&mariadb_url).unwrap();
 
     let allowed_origins = AllowedOrigins::some_exact(&[config.get_uri(Public).unwrap()]);
@@ -61,7 +55,7 @@ fn rocket() -> _ {
     .unwrap();
 
     rocket::build()
-        .manage(EventDb::new(event_db))
+        .manage(state_repository)
         .manage(MariadDb::new(pool))
         .mount("/api", auth::get_route())
         .mount("/", FileServer::from(relative!("web")))

@@ -6,7 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+event-model = { path = "../../lib/event-model" }
 account-api = { path = "../api" }
+anyhow= "1.0"
 chrono= "0.4"
 eventstore = "2.1"
 jsonwebtokens = "1.1"

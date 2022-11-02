@@ -5,26 +5,33 @@ use rocket::form::validate::Contains;
 use uuid::Uuid;
 
 use account_api::{AccountCommand, AccountDto};
+use anyhow::{anyhow, Result};
+use event_model::State;
+use rocket::serde::{Deserialize, Serialize};
 
 use crate::event::{Created, LoggedIn, Quantity, ServerAccount};
 use crate::{AccountError, AccountEvent};
 
-#[derive(Default, Debug)]
-pub struct AccountModel {
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct AccountState {
     pub uuid: Uuid,
     pub pseudo: String,
     pub last_login: String,
     pub nb_account_allowed: usize,
     pub accounts: HashMap<String, Vec<String>>,
     pub nb_accounts: usize,
+    pub position: u64,
 }
 
-impl AccountModel {
-    pub fn play_event(&mut self, event: AccountEvent) {
+impl State for AccountState {
+    type Event = AccountEvent;
+    type Command = AccountCommand;
+
+    fn play_event(&mut self, event: &Self::Event) {
         match event {
             AccountEvent::Created(created) => {
                 self.uuid = created.uuid;
-                self.pseudo = created.pseudo;
+                self.pseudo = created.pseudo.clone();
                 self.nb_account_allowed = 0;
             }
             AccountEvent::AccountAdded(quantity) => {
@@ -44,10 +51,11 @@ impl AccountModel {
             AccountEvent::Joined(sa) => {
                 match self.accounts.get_mut(&*sa.server_id) {
                     None => {
-                        self.accounts.insert(sa.server_id, vec![sa.account_id]);
+                        self.accounts
+                            .insert(sa.server_id.clone(), vec![sa.account_id]);
                     }
                     Some(list) => {
-                        list.push(sa.account_id);
+                        list.push(sa.account_id.clone());
                     }
                 }
                 self.nb_accounts += 1;
@@ -61,17 +69,17 @@ impl AccountModel {
         }
     }
 
-    pub fn try_command(&self, command: AccountCommand) -> Result<Vec<AccountEvent>, AccountError> {
+    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
         match command {
             AccountCommand::CreateAccount(create) => {
                 if !self.pseudo.is_empty() {
-                    Err(AccountError::Other(
+                    Err(anyhow!(AccountError::Other(
                         "account already has a pseudo".to_string(),
-                    ))
+                    )))
                 } else {
                     Ok(vec![AccountEvent::Created(Created {
                         uuid: Uuid::new_v4(),
-                        pseudo: create.pseudo,
+                        pseudo: create.pseudo.clone(),
                     })])
                 }
             }
@@ -79,42 +87,44 @@ impl AccountModel {
                 Ok(vec![AccountEvent::Logged(LoggedIn { time: login.time })])
             }
             AccountCommand::AddQuantity(nb) => {
-                if self.nb_account_allowed.checked_add(nb).is_none() {
-                    Err(AccountError::WrongQuantity(format!(
+                if self.nb_account_allowed.checked_add(*nb).is_none() {
+                    Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot add {} to {}",
                         nb, self.nb_account_allowed
-                    )))
+                    ))))
                 } else {
-                    Ok(vec![AccountEvent::AccountAdded(Quantity { nb })])
+                    Ok(vec![AccountEvent::AccountAdded(Quantity { nb: *nb })])
                 }
             }
             AccountCommand::RemoveQuantity(nb) => {
-                if nb > self.nb_account_allowed {
-                    Err(AccountError::WrongQuantity(format!(
+                if nb > *self.nb_account_allowed {
+                    Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot remove {} from {}",
                         nb, self.nb_account_allowed
-                    )))
+                    ))))
                 } else {
-                    Ok(vec![AccountEvent::AccountRemoved(Quantity { nb })])
+                    Ok(vec![AccountEvent::AccountRemoved(Quantity { nb: *nb })])
                 }
             }
             AccountCommand::Join(join) => {
                 if self.nb_accounts >= self.nb_account_allowed {
-                    return Err(AccountError::Other("already maximum accounts".to_string()));
+                    return Err(anyhow!(AccountError::Other(
+                        "already maximum accounts".to_string()
+                    )));
                 }
 
                 match self.accounts.get(&*join.server_id) {
                     None => Ok(vec![AccountEvent::Joined(ServerAccount {
-                        server_id: join.server_id,
-                        account_id: join.account_id,
+                        server_id: join.server_id.clone(),
+                        account_id: join.account_id.clone(),
                     })]),
                     Some(list) => {
                         if list.contains(join.account_id.clone()) {
-                            Err(AccountError::Other("Already joined".to_string()))
+                            Err(anyhow!(AccountError::Other("Already joined".to_string())))
                         } else {
                             Ok(vec![AccountEvent::Joined(ServerAccount {
-                                server_id: join.server_id,
-                                account_id: join.account_id,
+                                server_id: join.server_id.clone(),
+                                account_id: join.account_id.clone(),
                             })])
                         }
                     }
@@ -122,47 +132,38 @@ impl AccountModel {
             }
             AccountCommand::Leave(leave) => {
                 if self.nb_accounts == 0 {
-                    return Err(AccountError::Other("No account yet".to_string()));
+                    return Err(anyhow!(AccountError::Other("No account yet".to_string())));
                 }
                 match self.accounts.get(&*leave.server_id) {
                     Some(list) => {
                         if list.contains(leave.account_id.clone()) {
                             Ok(vec![AccountEvent::Leaved(ServerAccount {
-                                server_id: leave.server_id,
-                                account_id: leave.account_id,
+                                server_id: leave.server_id.clone(),
+                                account_id: leave.account_id.clone(),
                             })])
                         } else {
-                            Err(AccountError::Other("account not found".to_string()))
+                            Err(anyhow!(AccountError::Other(
+                                "account not found".to_string()
+                            )))
                         }
                     }
-                    None => Err(AccountError::Other("no account on the server".to_string())),
+                    None => Err(anyhow!(AccountError::Other(
+                        "no account on the server".to_string()
+                    ))),
                 }
             }
         }
     }
 
-    pub fn dto(&self) -> AccountDto {
-        AccountDto {
-            pseudo: self.pseudo.clone(),
-            nb: self.nb_account_allowed,
-        }
+    fn get_position(&self) -> u64 {
+        self.position
     }
-    pub fn uuid(&self) -> Uuid {
-        self.uuid
+
+    fn set_position(&mut self, pos: u64) {
+        self.position = pos;
     }
-    pub fn pseudo(&self) -> &str {
-        &self.pseudo
-    }
-    pub fn last_login(&self) -> &str {
-        &self.last_login
-    }
-    pub fn nb_account_allowed(&self) -> usize {
-        self.nb_account_allowed
-    }
-    pub fn nb_accounts(&self) -> usize {
-        self.nb_accounts
-    }
-    pub fn accounts(&self) -> &HashMap<String, Vec<String>> {
-        &self.accounts
+
+    fn state_cache_interval() -> Option<u64> {
+        Some(20)
     }
 }

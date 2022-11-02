@@ -5,7 +5,7 @@ mod query;
 use crate::auth::command::handle_anonymous;
 
 use crate::auth::query::{account, register};
-use account_model::model::AccountModel;
+use account_model::model::AccountState;
 
 use account_model::error::AccountError;
 use account_model::Account;
@@ -24,10 +24,10 @@ async fn account_exist(db: &Client, id: String) -> Result<bool, AccountError> {
     Ok(stream.next().await.is_ok())
 }
 
-async fn load_account(db: &Client, id: String) -> Result<AccountModel, AccountError> {
+async fn load_account(db: &Client, id: String) -> Result<AccountState, AccountError> {
     let mut stream = get_stream(db, id.clone()).await?;
 
-    let mut account = AccountModel::default();
+    let mut account = AccountState::default();
     let mut exist = false;
     // region iterate-stream
     while let Ok(Some(event)) = stream.next().await {

@@ -7,7 +7,7 @@ use rocket::State;
 
 #[get("/account")]
 pub async fn account(
-    event_db: &State<EventDb>,
+    state_repository: &State<StateRepository>,
     token: JwtToken,
 ) -> Result<Json<AccountDto>, AccountError> {
     let db = event_db.db.clone();
@@ -18,7 +18,7 @@ pub async fn account(
 }
 
 #[get("/header-count")]
-pub async fn register(event_db: &State<EventDb>) -> String {
+pub async fn register(state_repository: &State<StateRepository>) -> String {
     let db = event_db.db.clone();
 
     let mut res = db

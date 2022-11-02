@@ -1,13 +1,13 @@
 use account_model::event::AccountEvent::{AccountAdded, Joined};
 use account_model::event::{Quantity, ServerAccount};
-use account_model::model::AccountModel;
+use account_model::model::AccountState;
 
 use account_api::{AccountCommand, ServerAccount as SA};
 use cucumber::{given, then, when, World};
 
 #[derive(cucumber::World, Debug, Default)]
 pub struct AccountWorld {
-    model: AccountModel,
+    model: AccountState,
 }
 
 #[given(regex = r"^a model with nb (\d+)$")]

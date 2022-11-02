@@ -14,19 +14,21 @@ use uuid::Uuid;
 
 use crate::auth::jwt_guard::JwtToken;
 use account_api::{AccountCommand, CreateAccount, Login};
+use account_model::model::AccountState;
 use account_model::Account;
+use event_model::{ModelKey, StateRepository};
 
 #[post("/", format = "json", data = "<command>")]
 pub async fn handle_anonymous(
-    event_db: &State<EventDb>,
+    state_repository: &State<StateRepository>,
     maria_db: &State<MariadDb>,
     command: Json<AccountCommand>,
     token: Option<JwtToken>,
 ) -> Result<String, AccountError> {
     match token {
         None => match command.0 {
-            AccountCommand::CreateAccount(cmd) => create(event_db, maria_db, cmd).await,
-            AccountCommand::Login(cmd) => login(event_db, maria_db, cmd).await,
+            AccountCommand::CreateAccount(cmd) => create(state_repository, maria_db, cmd).await,
+            AccountCommand::Login(cmd) => login(state_repository, maria_db, cmd).await,
             AccountCommand::AddQuantity(_) => Err(AccountError::Other(
                 "cannot add quantity without id".to_string(),
             )),
@@ -47,8 +49,26 @@ pub async fn handle_anonymous(
             AccountCommand::Login(_) => {
                 Err(AccountError::Other("cannot login with id".to_string()))
             }
-            AccountCommand::AddQuantity(cmd) => add(event_db, token.uuid, cmd).await,
-            AccountCommand::RemoveQuantity(cmd) => remove(event_db, token.uuid, cmd).await,
+            AccountCommand::AddQuantity(cmd) => {
+                let key = ModelKey::new("account".to_string(), token.uuid.clone());
+                state_repository
+                    .add_command::<AccountCommand, AccountEvent, AccountState>(
+                        &key,
+                        AccountCommand::AddQuantity(cmd),
+                    )
+                    .await?;
+                Ok("added".to_string())
+            }
+            AccountCommand::RemoveQuantity(cmd) => {
+                let key = ModelKey::new("account".to_string(), token.uuid.clone());
+                state_repository
+                    .add_command::<AccountCommand, AccountEvent, AccountState>(
+                        &key,
+                        AccountCommand::RemoveQuantity(cmd),
+                    )
+                    .await?;
+                Ok("removed".to_string())
+            }
             AccountCommand::Join(_) => {
                 todo!();
             }
@@ -60,7 +80,7 @@ pub async fn handle_anonymous(
 }
 
 async fn login(
-    event_db: &State<EventDb>,
+    state_repository: &State<StateRepository>,
     maria_db: &State<MariadDb>,
     cmd: Login,
 ) -> Result<String, AccountError> {
@@ -116,7 +136,7 @@ fn logged_in(correlation_id: Uuid) -> (EventData, Uuid) {
 }
 
 async fn create(
-    event_db: &State<EventDb>,
+    state_repository: &State<StateRepository>,
     maria_db: &State<MariadDb>,
     cmd: CreateAccount,
 ) -> Result<String, AccountError> {
@@ -177,42 +197,17 @@ VALUES (?, ?, ?, ?, ?);
         return Err(AccountError::Other(format!("sql error : {e}")));
     }
 
-    let db = event_db.db.clone();
+    let key = ModelKey::new("account".to_string(), id.clone());
 
-    let exist = account_exist(&db, id.clone()).await?;
-    if exist {
-        return Err(AccountError::AlreadyExist(format!(
-            "account {} already exist ( TODO : send to sentry )",
-            id
-        )));
-    }
-
-    let mut events = Vec::new();
-
-    let command = Account::Command(AccountCommand::CreateAccount(CreateAccount {
+    let command = AccountCommand::CreateAccount(CreateAccount {
         pseudo: cmd.pseudo.clone(),
         email: "***".to_string(),
         password: "***".to_string(),
-    }))
-    .to_event_data(None);
+    });
 
-    let correlation_id = command.clone().1;
-
-    events.push(command.0);
-
-    let created = Account::Event(AccountEvent::Created(Created {
-        uuid,
-        pseudo: cmd.pseudo,
-    }))
-    .to_event_data(Some(correlation_id));
-
-    events.push(created.0);
-
-    let logged_in = logged_in(correlation_id);
-
-    events.push(logged_in.0);
-
-    add_event(&db, id.clone(), events).await?;
+    let state = state_repository
+        .add_command::<AccountCommand, AccountEvent, AccountState>(&key, command)
+        .await?;
 
     Ok(create_token(id))
 }
@@ -225,42 +220,4 @@ fn create_token(id: String) -> String {
         issuer: JWT_ISSUER.to_string()
     });
     encode(&header, &claims, &alg).unwrap()
-}
-
-async fn add(event_db: &State<EventDb>, id: String, nb: usize) -> Result<String, AccountError> {
-    let db = event_db.db.clone();
-
-    let account = load_account(&db, id.clone()).await?;
-
-    if account.nb_account_allowed.checked_add(nb).is_none() {
-        return Err(AccountError::WrongQuantity(format!(
-            "cannot add {} to {}",
-            nb, account.nb_account_allowed
-        )));
-    }
-
-    let payload = Account::Event(AccountEvent::AccountAdded(Quantity { nb }));
-
-    add_event(&db, id.clone(), vec![payload.to_event_data(None).0]).await?;
-
-    Ok(format!("added {} in {}", nb, id))
-}
-
-async fn remove(event_db: &State<EventDb>, id: String, nb: usize) -> Result<String, AccountError> {
-    let db = event_db.db.clone();
-
-    let account = load_account(&db, id.clone()).await?;
-
-    if nb > account.nb_account_allowed {
-        return Err(AccountError::WrongQuantity(format!(
-            "cannot remove {} from {}",
-            nb, account.nb_account_allowed
-        )));
-    }
-
-    let payload = Account::Event(AccountEvent::AccountRemoved(Quantity { nb }));
-
-    add_event(&db, id.clone(), vec![payload.to_event_data(None).0]).await?;
-
-    Ok(format!("added {} in {}", nb, id))
 }

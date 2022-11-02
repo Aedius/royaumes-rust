@@ -6,9 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-global-config = { path = "../../lib/global-config" }
 account-api = { path = "../api" }
 account-model = { path = "../model" }
+event-model = { path = "../../lib/event-model" }
+global-config = { path = "../../lib/global-config" }
 chrono= "0.4"
 eventstore = "2.1"
 jsonwebtokens = "1.1"
