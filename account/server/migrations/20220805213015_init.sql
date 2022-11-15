@@ -1,6 +1,3 @@
-CREATE database `account`;
-
-USE `account`;
 
 CREATE TABLE `user` (
   `uuid` char(40) NOT NULL,

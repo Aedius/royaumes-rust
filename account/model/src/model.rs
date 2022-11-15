@@ -4,7 +4,7 @@ use chrono::{TimeZone, Utc};
 use rocket::form::validate::Contains;
 use uuid::Uuid;
 
-use account_api::{AccountCommand};
+use account_api::{AccountCommand, AccountDto};
 use anyhow::{anyhow, Result};
 use event_model::State;
 use rocket::serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use rocket::serde::{Deserialize, Serialize};
 use crate::event::{Created, LoggedIn, Quantity, ServerAccount};
 use crate::{AccountError, AccountEvent};
 
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountState {
     pub uuid: Uuid,
     pub pseudo: String,
@@ -21,6 +21,15 @@ pub struct AccountState {
     pub accounts: HashMap<String, Vec<String>>,
     pub nb_accounts: usize,
     pub position: u64,
+}
+
+impl AccountState {
+    pub fn dto(&self) -> AccountDto {
+        AccountDto {
+            pseudo: self.pseudo.clone(),
+            nb: self.nb_accounts,
+        }
+    }
 }
 
 impl State for AccountState {

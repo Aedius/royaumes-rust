@@ -1,9 +1,8 @@
 use anyhow::Result;
 
 use serde::de::DeserializeOwned;
-use serde::{Serialize};
+use serde::Serialize;
 use std::fmt::Debug;
-
 
 pub trait Command: Serialize + DeserializeOwned {
     fn name_prefix() -> &'static str;

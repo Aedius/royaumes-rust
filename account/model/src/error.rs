@@ -1,6 +1,7 @@
+use anyhow::Error;
+use derive_more::Display;
 use rocket::response::Responder;
 use serde::{Deserialize, Serialize};
-use derive_more::{Display};
 
 #[derive(Responder, Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Display)]
 pub enum AccountError {
@@ -14,3 +15,8 @@ pub enum AccountError {
     Other(String),
 }
 
+impl From<anyhow::Error> for AccountError {
+    fn from(_: Error) -> Self {
+        Self::Other("Oupsi".to_string())
+    }
+}

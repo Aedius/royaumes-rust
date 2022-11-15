@@ -1,20 +1,18 @@
-use crate::auth::{account_exist, add_event, load_account, JWT_ISSUER, JWT_SECRET};
+use crate::auth::{get_key, JWT_ISSUER, JWT_SECRET};
 use account_model::error::AccountError;
-use account_model::event::{AccountEvent, Created, LoggedIn, Quantity};
-use eventstore::EventData;
+use account_model::event::AccountEvent;
 use jsonwebtokens as jwt;
 use jsonwebtokens::{encode, AlgorithmID};
 use jwt::Algorithm;
 use rocket::serde::json::Json;
 use rocket::State;
 use serde_json::json;
-use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use crate::auth::jwt_guard::JwtToken;
+use crate::MariadDb;
 use account_api::{AccountCommand, CreateAccount, Login};
 use account_model::model::AccountState;
-use account_model::Account;
 use event_repository::{ModelKey, StateRepository};
 
 #[post("/", format = "json", data = "<command>")]
@@ -98,40 +96,22 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
     if exists.is_err() {
         return Err(AccountError::Other("sql error".to_string()));
     }
-
-    let db = event_db.db.clone();
     let exists = exists.unwrap();
 
-    let mut events = Vec::new();
-
-    let command = Account::Command(AccountCommand::Login(Login {
+    let command = AccountCommand::Login(Login {
         email: "***".to_string(),
         password: "***".to_string(),
         time: 0,
-    }))
-    .to_event_data(None);
+    });
 
-    let correlation_id = command.clone().1;
-
-    events.push(command.0);
-
-    let logged_in = logged_in(correlation_id);
-
-    events.push(logged_in.0);
-
-    add_event(&db, exists.uuid.clone(), events).await?;
+    state_repository
+        .add_command::<AccountCommand, AccountEvent, AccountState>(
+            &get_key(Some(exists.uuid.clone())),
+            command,
+        )
+        .await?;
 
     Ok(create_token(exists.uuid))
-}
-
-fn logged_in(correlation_id: Uuid) -> (EventData, Uuid) {
-    let start = SystemTime::now();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH).expect("Time is dead");
-
-    Account::Event(AccountEvent::Logged(LoggedIn {
-        time: since_the_epoch.as_secs(),
-    }))
-    .to_event_data(Some(correlation_id))
 }
 
 async fn create(
@@ -204,7 +184,7 @@ VALUES (?, ?, ?, ?, ?);
         password: "***".to_string(),
     });
 
-    let state = state_repository
+    state_repository
         .add_command::<AccountCommand, AccountEvent, AccountState>(&key, command)
         .await?;
 
