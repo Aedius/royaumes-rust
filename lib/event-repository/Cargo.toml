@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+event-model = { path = "../event-model" }
 anyhow = "1.0"
 eventstore = "2.1"
 redis= { version = "0.22", features = ["tokio-native-tls-comp"] }

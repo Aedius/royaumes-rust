@@ -5,10 +5,10 @@ use eventstore::{
 };
 use redis::Client as CacheDb;
 use redis::Commands;
-use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use uuid::Uuid;
+use event_model::{Event, Command, State};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Metadata {
@@ -20,69 +20,44 @@ pub struct Metadata {
     is_event: bool,
 }
 
-pub trait Command: Serialize + DeserializeOwned {
-    fn name_prefix() -> &'static str;
-    fn command_name(&self) -> &str;
-
-    fn to_event_data(&self) -> (EventData, Uuid) {
-        let id = Uuid::new_v4();
-        let mut event_data = EventData::json(
-            format!("{}.{}", Self::name_prefix(), self.command_name()),
-            self,
-        )
+pub fn to_command_data<T: Command>(command: &T) -> (EventData, Uuid) {
+    let id = Uuid::new_v4();
+    let mut event_data = EventData::json(
+        format!("{}.{}", T::name_prefix(), command.command_name()),
+        command,
+    )
         .unwrap();
-        event_data = event_data.id(id);
+    event_data = event_data.id(id);
 
-        event_data = event_data
-            .metadata_as_json(Metadata {
-                correlation_id: id,
-                causation_id: id,
-                is_event: false,
-            })
-            .unwrap();
+    event_data = event_data
+        .metadata_as_json(Metadata {
+            correlation_id: id,
+            causation_id: id,
+            is_event: false,
+        })
+        .unwrap();
 
-        (event_data, id)
-    }
+    (event_data, id)
 }
 
-pub trait Event: Serialize + DeserializeOwned {
-    fn name_prefix() -> &'static str;
-    fn event_name(&self) -> &str;
-
-    fn to_event_data(&self, command: Uuid, previous: Uuid) -> (EventData, Uuid) {
-        let id = Uuid::new_v4();
-        let mut event_data = EventData::json(
-            format!("{}.{}", Self::name_prefix(), self.event_name()),
-            self,
-        )
+pub fn to_event_data<T:Event>(event: &T, command_id: Uuid, previous: Uuid) -> (EventData, Uuid) {
+    let id = Uuid::new_v4();
+    let mut event_data = EventData::json(
+        format!("{}.{}", T::name_prefix(), event.event_name()),
+        event,
+    )
         .unwrap();
-        event_data = event_data.id(id);
+    event_data = event_data.id(id);
 
-        event_data = event_data
-            .metadata_as_json(Metadata {
-                correlation_id: command,
-                causation_id: previous,
-                is_event: true,
-            })
-            .unwrap();
+    event_data = event_data
+        .metadata_as_json(Metadata {
+            correlation_id: command_id,
+            causation_id: previous,
+            is_event: true,
+        })
+        .unwrap();
 
-        (event_data, id)
-    }
-}
-
-pub trait State: Default + Serialize + DeserializeOwned + Debug {
-    type Event: Event;
-    type Command: Command;
-
-    fn play_event(&mut self, event: &Self::Event);
-
-    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>>;
-
-    fn get_position(&self) -> u64;
-
-    fn set_position(&mut self, pos: u64);
-
-    fn state_cache_interval() -> Option<u64>;
+    (event_data, id)
 }
 
 pub struct ModelKey {
@@ -113,10 +88,10 @@ impl StateRepository {
         Self { event_db, cache_db }
     }
     pub async fn get_model<C, E, T>(&self, key: &ModelKey) -> Result<T>
-    where
-        C: Command,
-        E: Event,
-        T: State<Command = C, Event = E>,
+        where
+            C: Command,
+            E: Event,
+            T: State<Command=C, Event=E>,
     {
         let mut value: T;
         if T::state_cache_interval().is_some() {
@@ -151,7 +126,7 @@ impl StateRepository {
             let metadata: Metadata = serde_json::from_str(
                 std::str::from_utf8(original_event.custom_metadata.as_ref()).unwrap_or_default(),
             )
-            .unwrap();
+                .unwrap();
 
             if metadata.is_event {
                 let event = json_event
@@ -180,10 +155,10 @@ impl StateRepository {
     }
 
     pub async fn add_command<C, E, T>(&self, key: &ModelKey, command: C) -> Result<T>
-    where
-        C: Command,
-        E: Event,
-        T: State<Command = C, Event = E>,
+        where
+            C: Command,
+            E: Event,
+            T: State<Command=C, Event=E>,
     {
         let mut model: T;
         let events: Vec<E>;
@@ -207,10 +182,10 @@ impl StateRepository {
     }
 
     async fn try_append<C, E, T>(&self, key: &ModelKey, command: &C) -> Result<(T, Vec<E>, bool)>
-    where
-        C: Command,
-        E: Event,
-        T: State<Command = C, Event = E>,
+        where
+            C: Command,
+            E: Event,
+            T: State<Command=C, Event=E>,
     {
         let model: T = self.get_model(key).await.context("adding command")?;
 
@@ -223,14 +198,14 @@ impl StateRepository {
             AppendToStreamOptions::default().expected_revision(ExpectedRevision::Exact(position))
         };
 
-        let (command_data, command_uuid) = command.to_event_data();
+        let (command_data, command_uuid) = to_command_data(command);
 
         let mut events_data = vec![command_data];
 
         let mut previous_uuid = command_uuid;
 
         for event in &events {
-            let (event_data, uuid) = event.to_event_data(command_uuid, previous_uuid);
+            let (event_data, uuid) = to_event_data(event,command_uuid, previous_uuid);
             events_data.push(event_data);
             previous_uuid = uuid;
         }

@@ -1,19 +1,9 @@
 use anyhow::Result;
 
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use std::fmt::Debug;
-use uuid::Uuid;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Metadata {
-    #[serde(rename = "$correlationId")]
-    correlation_id: Uuid,
-    #[serde(rename = "$causationId")]
-    causation_id: Uuid,
-    #[serde(rename = "is_event")]
-    is_event: bool,
-}
 
 pub trait Command: Serialize + DeserializeOwned {
     fn name_prefix() -> &'static str;
