@@ -1005,6 +1005,16 @@ name = "event-model"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "serde",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
+name = "event-repository"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "eventstore",
  "redis",
  "serde",
@@ -1271,8 +1281,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c05aeb6a22b8f62540c194aac980f2115af067bfe15a0734d7277a768d396b31"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
+ "wasm-bindgen",
 ]
 
 [[package]]
