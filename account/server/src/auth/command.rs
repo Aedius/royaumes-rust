@@ -1,5 +1,4 @@
 use crate::auth::{account_exist, add_event, load_account, JWT_ISSUER, JWT_SECRET};
-use crate::{EventDb, MariadDb};
 use account_model::error::AccountError;
 use account_model::event::{AccountEvent, Created, LoggedIn, Quantity};
 use eventstore::EventData;
@@ -16,7 +15,7 @@ use crate::auth::jwt_guard::JwtToken;
 use account_api::{AccountCommand, CreateAccount, Login};
 use account_model::model::AccountState;
 use account_model::Account;
-use event_model::{ModelKey, StateRepository};
+use event_repository::{ModelKey, StateRepository};
 
 #[post("/", format = "json", data = "<command>")]
 pub async fn handle_anonymous(

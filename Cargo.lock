@@ -37,6 +37,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "cucumber",
+ "derive_more",
  "event-model",
  "eventstore",
  "jsonwebtokens",
@@ -59,6 +60,7 @@ dependencies = [
  "account-model",
  "chrono",
  "event-model",
+ "event-repository",
  "eventstore",
  "global-config",
  "jsonwebtokens",
@@ -551,6 +553,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4c78c047431fee22c1a7bb92e00ad095a02a983affe4d8a72e2a2c62c1b94f3"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "cookie"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -831,8 +839,10 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
+ "convert_case",
  "proc-macro2",
  "quote",
+ "rustc_version",
  "syn",
 ]
 
@@ -3015,6 +3025,15 @@ dependencies = [
  "smallvec",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rustc_version"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
+dependencies = [
+ "semver",
 ]
 
 [[package]]

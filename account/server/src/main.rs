@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
-use event_model::StateRepository;
+use event_repository::StateRepository;
 use eventstore::Client;
 use global_config::Components::Public;
 use global_config::Config;

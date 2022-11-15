@@ -4,7 +4,7 @@ use chrono::{TimeZone, Utc};
 use rocket::form::validate::Contains;
 use uuid::Uuid;
 
-use account_api::{AccountCommand, AccountDto};
+use account_api::{AccountCommand};
 use anyhow::{anyhow, Result};
 use event_model::State;
 use rocket::serde::{Deserialize, Serialize};
@@ -52,7 +52,7 @@ impl State for AccountState {
                 match self.accounts.get_mut(&*sa.server_id) {
                     None => {
                         self.accounts
-                            .insert(sa.server_id.clone(), vec![sa.account_id]);
+                            .insert(sa.server_id.clone(), vec![sa.account_id.clone()]);
                     }
                     Some(list) => {
                         list.push(sa.account_id.clone());
@@ -97,7 +97,7 @@ impl State for AccountState {
                 }
             }
             AccountCommand::RemoveQuantity(nb) => {
-                if nb > *self.nb_account_allowed {
+                if nb > &self.nb_account_allowed {
                     Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot remove {} from {}",
                         nb, self.nb_account_allowed

@@ -9,6 +9,7 @@ edition = "2021"
 account-api = { path = "../api" }
 account-model = { path = "../model" }
 event-model = { path = "../../lib/event-model" }
+event-repository = { path = "../../lib/event-repository" }
 global-config = { path = "../../lib/global-config" }
 chrono= "0.4"
 eventstore = "2.1"

@@ -1,9 +1,10 @@
 use crate::auth::jwt_guard::JwtToken;
-use crate::{auth, EventDb};
+use crate::{auth};
 use account_api::AccountDto;
 use account_model::error::AccountError;
 use rocket::serde::json::Json;
 use rocket::State;
+use event_repository::StateRepository;
 
 #[get("/account")]
 pub async fn account(
