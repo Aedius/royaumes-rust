@@ -1,6 +1,9 @@
 public-serve:
 	trunk --config public/Trunk.toml serve public/index.html
 
+private-serve:
+	trunk --config private/Trunk.toml serve private/index.html
+
 
 ## 	account
 

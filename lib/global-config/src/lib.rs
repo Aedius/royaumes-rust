@@ -1,12 +1,11 @@
-use crate::Components::{Account, Public, Server};
+use crate::Components::{Account, Private, Public};
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub enum Components {
     Account,
-    Planet,
+    Private,
     Public,
-    Server,
 }
 
 #[derive(Clone)]
@@ -50,11 +49,11 @@ impl Config {
             },
         );
         hosts.insert(
-            Server,
+            Private,
             Parts {
                 is_https: false,
                 host: "127.0.0.1".to_string(),
-                port: Some(8001u16),
+                port: Some(3131u16),
             },
         );
         hosts.insert(
@@ -67,7 +66,6 @@ impl Config {
         );
 
         scripts.insert(Account, vec!["account.js".to_string()]);
-        scripts.insert(Server, vec!["server.js".to_string()]);
 
         Config {
             hosts,
