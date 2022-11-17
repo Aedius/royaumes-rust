@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 account-api = { path = "../api" }
 account-model = { path = "../model" }
-event-model = { path = "../../lib/event-model" }
-event-repository = { path = "../../lib/event-repository" }
+state = { path = "../../lib/state" }
+state-repository = { path = "../../lib/state-repository" }
 global-config = { path = "../../lib/global-config" }
 
 anyhow = "1.0"

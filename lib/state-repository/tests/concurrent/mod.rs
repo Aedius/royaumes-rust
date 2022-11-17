@@ -1,6 +1,6 @@
 use crate::concurrent::ConcurrentEvent::TimeTaken;
-use event_model::{Command, Event, State};
 use serde::{Deserialize, Serialize};
+use state::{Command, Event, State};
 use std::{thread, time};
 
 #[derive(Deserialize, Serialize)]

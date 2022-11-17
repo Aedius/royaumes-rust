@@ -1,6 +1,6 @@
 use anyhow::anyhow;
-use event_model::{Command, Event, State};
 use serde::{Deserialize, Serialize};
+use state::{Command, Event, State};
 
 #[derive(Deserialize, Serialize)]
 pub enum SimpleCommand {

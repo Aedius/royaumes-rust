@@ -6,8 +6,8 @@ version = 3
 name = "account-api"
 version = "0.1.0"
 dependencies = [
- "event-model",
  "serde",
+ "state 0.1.0",
 ]
 
 [[package]]
@@ -38,7 +38,6 @@ dependencies = [
  "chrono",
  "cucumber",
  "derive_more",
- "event-model",
  "eventstore",
  "jsonwebtokens",
  "reqwest",
@@ -47,6 +46,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "state 0.1.0",
  "tokio",
  "urlencoding",
  "uuid",
@@ -60,8 +60,6 @@ dependencies = [
  "account-model",
  "anyhow",
  "chrono",
- "event-model",
- "event-repository",
  "eventstore",
  "global-config",
  "jsonwebtokens",
@@ -73,6 +71,8 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqlx-cli",
+ "state 0.1.0",
+ "state-repository",
  "uuid",
 ]
 
@@ -1011,29 +1011,6 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
-
-[[package]]
-name = "event-model"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "event-repository"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "event-model",
- "eventstore",
- "redis",
- "serde",
- "serde_json",
- "tokio",
- "uuid",
-]
 
 [[package]]
 name = "eventstore"
@@ -2939,7 +2916,7 @@ dependencies = [
  "rocket_http",
  "serde",
  "serde_json",
- "state",
+ "state 0.5.3",
  "tempfile",
  "time 0.3.16",
  "tokio",
@@ -3003,7 +2980,7 @@ dependencies = [
  "serde",
  "smallvec",
  "stable-pattern",
- "state",
+ "state 0.5.3",
  "time 0.3.16",
  "tokio",
  "uncased",
@@ -3616,11 +3593,34 @@ dependencies = [
 
 [[package]]
 name = "state"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "state"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbe866e1e51e8260c9eed836a042a5e7f6726bb2b411dffeaa712e19c388f23b"
 dependencies = [
  "loom",
+]
+
+[[package]]
+name = "state-repository"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "eventstore",
+ "redis",
+ "serde",
+ "serde_json",
+ "state 0.1.0",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

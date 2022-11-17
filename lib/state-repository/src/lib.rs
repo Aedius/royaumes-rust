@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context, Result};
-use event_model::{Command, Event, State};
 use eventstore::{
     AppendToStreamOptions, Client as EventDb, Error, EventData, ExpectedRevision,
     ReadStreamOptions, StreamPosition,
@@ -7,6 +6,7 @@ use eventstore::{
 use redis::Client as CacheDb;
 use redis::Commands;
 use serde::{Deserialize, Serialize};
+use state::{Command, Event, State};
 use std::fmt::Debug;
 use uuid::Uuid;
 

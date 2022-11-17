@@ -6,8 +6,8 @@ use uuid::Uuid;
 
 use account_api::{AccountCommand, AccountDto};
 use anyhow::{anyhow, Result};
-use event_model::State;
 use rocket::serde::{Deserialize, Serialize};
+use state::State;
 
 use crate::event::{Created, LoggedIn, Quantity, ServerAccount};
 use crate::{AccountError, AccountEvent};

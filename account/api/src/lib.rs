@@ -1,5 +1,5 @@
-use event_model::Command;
 use serde::{Deserialize, Serialize};
+use state::Command;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountDto {

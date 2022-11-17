@@ -12,8 +12,8 @@ use uuid::Uuid;
 use crate::auth::jwt_guard::JwtToken;
 use crate::MariadDb;
 use account_api::{AccountCommand, CreateAccount, Login};
-use account_model::model::AccountState;
-use event_repository::{ModelKey, StateRepository};
+use account_model::state::AccountState;
+use state_repository::{ModelKey, StateRepository};
 
 #[post("/", format = "json", data = "<command>")]
 pub async fn handle_anonymous(

@@ -1,5 +1,5 @@
-use event_model::Event;
 use serde::{Deserialize, Serialize};
+use state::Event;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

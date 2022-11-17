@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-event-model = { path = "../../lib/event-model" }
+state = { path = "../../lib/state" }
 serde = { version = "1.0", features = ["derive"] }

@@ -3,8 +3,8 @@
 use crate::concurrent::{ConcurrentCommand, ConcurrentState};
 use crate::simple::{SimpleCommand, SimpleState};
 
-use event_repository::{ModelKey, StateRepository};
 use eventstore::Client as EventClient;
+use state_repository::{ModelKey, StateRepository};
 use std::future::join;
 use uuid::Uuid;
 
