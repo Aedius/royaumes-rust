@@ -13,7 +13,9 @@ pub struct AccountWorld {
 
 #[given(regex = r"^a model with nb (\d+)$")]
 fn with_number(world: &mut AccountWorld, account: usize) {
-    world.model.nb_account_allowed = account;
+    world
+        .model
+        .play_event(&AccountAdded(Quantity { nb: account }));
 }
 
 #[when(regex = r"^i add the nb (\d+)$")]
@@ -33,12 +35,12 @@ fn join_server(world: &mut AccountWorld, server_id: String, account_id: String) 
 
 #[then(regex = r"^nb is (\d+)$")]
 fn check_number(world: &mut AccountWorld, account: usize) {
-    assert_eq!(account, world.model.nb_account_allowed)
+    assert_eq!(account, world.model.nb_account_allowed())
 }
 
 #[then(regex = r"^i have joined (\d+) server$")]
 fn joined(world: &mut AccountWorld, account: usize) {
-    assert_eq!(account, world.model.nb_accounts)
+    assert_eq!(account, world.model.nb_accounts())
 }
 
 #[then(regex = r"^i can leave the server (.*) with account (.*)$")]

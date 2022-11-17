@@ -1,8 +1,8 @@
 use crate::auth::get_key;
 use crate::auth::jwt_guard::JwtToken;
-use account_api::{AccountCommand, AccountDto};
+use account_api::AccountDto;
 use account_model::error::AccountError;
-use account_model::event::AccountEvent;
+
 use account_model::model::AccountState;
 use event_repository::StateRepository;
 use rocket::serde::json::Json;
@@ -14,7 +14,7 @@ pub async fn account(
     token: JwtToken,
 ) -> Result<Json<AccountDto>, AccountError> {
     let account = state_repository
-        .get_model::<AccountCommand, AccountEvent, AccountState>(&get_key(Some(token.uuid)))
+        .get_model::<AccountState>(&get_key(Some(token.uuid)))
         .await
         .unwrap();
 

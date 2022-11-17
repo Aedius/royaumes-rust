@@ -1,6 +1,6 @@
 use crate::auth::{get_key, JWT_ISSUER, JWT_SECRET};
 use account_model::error::AccountError;
-use account_model::event::AccountEvent;
+
 use jsonwebtokens as jwt;
 use jsonwebtokens::{encode, AlgorithmID};
 use jwt::Algorithm;
@@ -49,20 +49,14 @@ pub async fn handle_anonymous(
             AccountCommand::AddQuantity(cmd) => {
                 let key = ModelKey::new("account".to_string(), token.uuid.clone());
                 state_repository
-                    .add_command::<AccountCommand, AccountEvent, AccountState>(
-                        &key,
-                        AccountCommand::AddQuantity(cmd),
-                    )
+                    .add_command::<AccountState>(&key, AccountCommand::AddQuantity(cmd))
                     .await?;
                 Ok("added".to_string())
             }
             AccountCommand::RemoveQuantity(cmd) => {
                 let key = ModelKey::new("account".to_string(), token.uuid.clone());
                 state_repository
-                    .add_command::<AccountCommand, AccountEvent, AccountState>(
-                        &key,
-                        AccountCommand::RemoveQuantity(cmd),
-                    )
+                    .add_command::<AccountState>(&key, AccountCommand::RemoveQuantity(cmd))
                     .await?;
                 Ok("removed".to_string())
             }
@@ -105,10 +99,7 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
     });
 
     state_repository
-        .add_command::<AccountCommand, AccountEvent, AccountState>(
-            &get_key(Some(exists.uuid.clone())),
-            command,
-        )
+        .add_command::<AccountState>(&get_key(Some(exists.uuid.clone())), command)
         .await?;
 
     Ok(create_token(exists.uuid))
@@ -185,7 +176,7 @@ VALUES (?, ?, ?, ?, ?);
     });
 
     state_repository
-        .add_command::<AccountCommand, AccountEvent, AccountState>(&key, command)
+        .add_command::<AccountState>(&key, command)
         .await?;
 
     Ok(create_token(id))

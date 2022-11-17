@@ -14,13 +14,13 @@ use crate::{AccountError, AccountEvent};
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountState {
-    pub uuid: Uuid,
-    pub pseudo: String,
-    pub last_login: String,
-    pub nb_account_allowed: usize,
-    pub accounts: HashMap<String, Vec<String>>,
-    pub nb_accounts: usize,
-    pub position: u64,
+    uuid: Uuid,
+    pseudo: String,
+    last_login: String,
+    nb_account_allowed: usize,
+    accounts: HashMap<String, Vec<String>>,
+    nb_accounts: usize,
+    position: u64,
 }
 
 impl AccountState {
@@ -29,6 +29,27 @@ impl AccountState {
             pseudo: self.pseudo.clone(),
             nb: self.nb_accounts,
         }
+    }
+    pub fn uuid(&self) -> Uuid {
+        self.uuid
+    }
+    pub fn pseudo(&self) -> &str {
+        &self.pseudo
+    }
+    pub fn last_login(&self) -> &str {
+        &self.last_login
+    }
+    pub fn nb_account_allowed(&self) -> usize {
+        self.nb_account_allowed
+    }
+    pub fn accounts(&self) -> &HashMap<String, Vec<String>> {
+        &self.accounts
+    }
+    pub fn nb_accounts(&self) -> usize {
+        self.nb_accounts
+    }
+    pub fn position(&self) -> u64 {
+        self.position
     }
 }
 

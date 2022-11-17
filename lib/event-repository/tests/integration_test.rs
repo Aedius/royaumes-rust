@@ -1,7 +1,7 @@
 #![feature(future_join)]
 
-use crate::concurrent::{ConcurrentCommand, ConcurrentEvent, ConcurrentState};
-use crate::simple::{SimpleCommand, SimpleEvent, SimpleState};
+use crate::concurrent::{ConcurrentCommand, ConcurrentState};
+use crate::simple::{SimpleCommand, SimpleState};
 
 use event_repository::{ModelKey, StateRepository};
 use eventstore::Client as EventClient;
@@ -17,15 +17,12 @@ async fn easy_case() {
 
     let key = ModelKey::new("simple_test".to_string(), Uuid::new_v4().to_string());
 
-    let model = repo
-        .get_model::<SimpleCommand, SimpleEvent, SimpleState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
     assert_eq!(model, SimpleState { nb: 0, position: 0 });
 
     let added = repo
-        .add_command::<SimpleCommand, SimpleEvent, SimpleState>(&key, SimpleCommand::Add(17))
+        .add_command::<SimpleState>(&key, SimpleCommand::Add(17))
         .await
         .unwrap();
 
@@ -37,10 +34,7 @@ async fn easy_case() {
         }
     );
 
-    let model = repo
-        .get_model::<SimpleCommand, SimpleEvent, SimpleState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
     assert_eq!(
         model,
@@ -50,10 +44,7 @@ async fn easy_case() {
         }
     );
 
-    let model = repo
-        .get_model::<SimpleCommand, SimpleEvent, SimpleState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
     assert_eq!(
         model,
@@ -63,14 +54,11 @@ async fn easy_case() {
         }
     );
 
-    repo.add_command::<SimpleCommand, SimpleEvent, SimpleState>(&key, SimpleCommand::Set(50))
+    repo.add_command::<SimpleState>(&key, SimpleCommand::Set(50))
         .await
         .unwrap();
 
-    let model = repo
-        .get_model::<SimpleCommand, SimpleEvent, SimpleState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
     assert_eq!(
         model,
@@ -80,10 +68,7 @@ async fn easy_case() {
         }
     );
 
-    let model = repo
-        .get_model::<SimpleCommand, SimpleEvent, SimpleState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
     assert_eq!(
         model,
@@ -100,10 +85,7 @@ async fn concurrent_case() {
 
     let key = ModelKey::new("concurrent_test".to_string(), Uuid::new_v4().to_string());
 
-    let model = repo
-        .get_model::<ConcurrentCommand, ConcurrentEvent, ConcurrentState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<ConcurrentState>(&key).await.unwrap();
 
     assert_eq!(
         model,
@@ -113,25 +95,18 @@ async fn concurrent_case() {
         }
     );
 
-    let add_one = repo.add_command::<ConcurrentCommand, ConcurrentEvent, ConcurrentState>(
-        &key,
-        ConcurrentCommand::TakeTime(1, "one".to_string()),
-    );
+    let add_one = repo
+        .add_command::<ConcurrentState>(&key, ConcurrentCommand::TakeTime(1, "one".to_string()));
 
-    let add_two = repo.add_command::<ConcurrentCommand, ConcurrentEvent, ConcurrentState>(
-        &key,
-        ConcurrentCommand::TakeTime(2, "two".to_string()),
-    );
+    let add_two = repo
+        .add_command::<ConcurrentState>(&key, ConcurrentCommand::TakeTime(2, "two".to_string()));
 
     let (one, two) = join!(add_one, add_two).await;
 
     assert!(one.is_ok());
     assert!(two.is_ok());
 
-    let model = repo
-        .get_model::<ConcurrentCommand, ConcurrentEvent, ConcurrentState>(&key)
-        .await
-        .unwrap();
+    let model = repo.get_model::<ConcurrentState>(&key).await.unwrap();
 
     assert_eq!(
         model,

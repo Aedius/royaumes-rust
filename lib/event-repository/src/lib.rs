@@ -87,11 +87,9 @@ impl StateRepository {
     pub fn new(event_db: EventDb, cache_db: CacheDb) -> Self {
         Self { event_db, cache_db }
     }
-    pub async fn get_model<C, E, T>(&self, key: &ModelKey) -> Result<T>
+    pub async fn get_model<T>(&self, key: &ModelKey) -> Result<T>
     where
-        C: Command,
-        E: Event,
-        T: State<Command = C, Event = E>,
+        T: State,
     {
         let mut value: T;
         if T::state_cache_interval().is_some() {
@@ -131,7 +129,7 @@ impl StateRepository {
             if metadata.is_event {
                 let event = json_event
                     .get_original_event()
-                    .as_json::<E>()
+                    .as_json::<T::Event>()
                     .context(format!("decode event : {:?}", json_event))?;
 
                 value.play_event(&event);
@@ -154,14 +152,12 @@ impl StateRepository {
         Ok(value)
     }
 
-    pub async fn add_command<C, E, T>(&self, key: &ModelKey, command: C) -> Result<T>
+    pub async fn add_command<T>(&self, key: &ModelKey, command: T::Command) -> Result<T>
     where
-        C: Command,
-        E: Event,
-        T: State<Command = C, Event = E>,
+        T: State,
     {
         let mut model: T;
-        let events: Vec<E>;
+        let events: Vec<T::Event>;
 
         loop {
             let (l_model, l_events, retry) = self.try_append(key, &command).await?;
@@ -181,11 +177,13 @@ impl StateRepository {
         Ok(model)
     }
 
-    async fn try_append<C, E, T>(&self, key: &ModelKey, command: &C) -> Result<(T, Vec<E>, bool)>
+    async fn try_append<T>(
+        &self,
+        key: &ModelKey,
+        command: &T::Command,
+    ) -> Result<(T, Vec<T::Event>, bool)>
     where
-        C: Command,
-        E: Event,
-        T: State<Command = C, Event = E>,
+        T: State,
     {
         let model: T = self.get_model(key).await.context("adding command")?;
 
