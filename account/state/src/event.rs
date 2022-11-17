@@ -6,10 +6,8 @@ use uuid::Uuid;
 pub enum AccountEvent {
     Logged(LoggedIn),
     Created(Created),
-    AccountAdded(Quantity),
-    AccountRemoved(Quantity),
-    Joined(ServerAccount),
-    Leaved(ServerAccount),
+    ReputationAdded(usize),
+    ReputationRemoved(usize),
 }
 
 impl Event for AccountEvent {
@@ -21,10 +19,8 @@ impl Event for AccountEvent {
         match self {
             AccountEvent::Logged(_) => "Logged",
             AccountEvent::Created(_) => "Created",
-            AccountEvent::AccountAdded(_) => "QuantityAdded",
-            AccountEvent::AccountRemoved(_) => "QuantityRemoved",
-            AccountEvent::Joined(_) => "JoinedServer",
-            AccountEvent::Leaved(_) => "LeavedServer",
+            AccountEvent::ReputationAdded(_) => "ReputationAdded",
+            AccountEvent::ReputationRemoved(_) => "ReputationRemoved",
         }
     }
 }
@@ -33,20 +29,10 @@ impl Event for AccountEvent {
 pub struct Created {
     pub uuid: Uuid,
     pub pseudo: String,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Quantity {
-    pub nb: usize,
+    pub time: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct LoggedIn {
     pub time: u64,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct ServerAccount {
-    pub server_id: String,
-    pub account_id: String,
 }

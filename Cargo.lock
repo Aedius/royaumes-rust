@@ -59,7 +59,6 @@ dependencies = [
  "account-shared",
  "anyhow",
  "async-trait",
- "chrono",
  "cucumber",
  "derive_more",
  "eventstore",

@@ -4,7 +4,7 @@ use state::Command;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountDto {
     pub pseudo: String,
-    pub nb: usize,
+    pub reputation: usize,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -18,22 +18,14 @@ pub struct CreateAccount {
 pub struct Login {
     pub email: String,
     pub password: String,
-    pub time: u64,
-}
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct ServerAccount {
-    pub server_id: String,
-    pub account_id: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum AccountCommand {
     CreateAccount(CreateAccount),
     Login(Login),
-    AddQuantity(usize),
-    RemoveQuantity(usize),
-    Join(ServerAccount),
-    Leave(ServerAccount),
+    AddReputation(usize),
+    RemoveReputation(usize),
 }
 
 impl Command for AccountCommand {
@@ -44,11 +36,9 @@ impl Command for AccountCommand {
     fn command_name(&self) -> &str {
         match self {
             AccountCommand::CreateAccount(_) => "Create",
-            AccountCommand::AddQuantity(_) => "AddQuantity",
-            AccountCommand::RemoveQuantity(_) => "RemoveQuantity",
+            AccountCommand::AddReputation(_) => "AddReputation",
+            AccountCommand::RemoveReputation(_) => "RemoveReputation",
             AccountCommand::Login(_) => "Login",
-            AccountCommand::Join(_) => "JoinServer",
-            AccountCommand::Leave(_) => "LeaveServer",
         }
     }
 }

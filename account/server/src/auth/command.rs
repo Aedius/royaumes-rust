@@ -26,18 +26,12 @@ pub async fn handle_anonymous(
         None => match command.0 {
             AccountCommand::CreateAccount(cmd) => create(state_repository, maria_db, cmd).await,
             AccountCommand::Login(cmd) => login(state_repository, maria_db, cmd).await,
-            AccountCommand::AddQuantity(_) => Err(AccountError::Other(
+            AccountCommand::AddReputation(_) => Err(AccountError::Other(
                 "cannot add quantity without id".to_string(),
             )),
-            AccountCommand::RemoveQuantity(_) => Err(AccountError::Other(
+            AccountCommand::RemoveReputation(_) => Err(AccountError::Other(
                 "cannot remove quantity without id".to_string(),
             )),
-            AccountCommand::Join(_) => {
-                todo!();
-            }
-            AccountCommand::Leave(_) => {
-                todo!();
-            }
         },
         Some(token) => match command.0 {
             AccountCommand::CreateAccount(_) => {
@@ -46,25 +40,19 @@ pub async fn handle_anonymous(
             AccountCommand::Login(_) => {
                 Err(AccountError::Other("cannot login with id".to_string()))
             }
-            AccountCommand::AddQuantity(cmd) => {
+            AccountCommand::AddReputation(cmd) => {
                 let key = ModelKey::new("account".to_string(), token.uuid.clone());
                 state_repository
-                    .add_command::<AccountState>(&key, AccountCommand::AddQuantity(cmd))
+                    .add_command::<AccountState>(&key, AccountCommand::AddReputation(cmd))
                     .await?;
                 Ok("added".to_string())
             }
-            AccountCommand::RemoveQuantity(cmd) => {
+            AccountCommand::RemoveReputation(cmd) => {
                 let key = ModelKey::new("account".to_string(), token.uuid.clone());
                 state_repository
-                    .add_command::<AccountState>(&key, AccountCommand::RemoveQuantity(cmd))
+                    .add_command::<AccountState>(&key, AccountCommand::RemoveReputation(cmd))
                     .await?;
                 Ok("removed".to_string())
-            }
-            AccountCommand::Join(_) => {
-                todo!();
-            }
-            AccountCommand::Leave(_) => {
-                todo!();
             }
         },
     }
@@ -95,7 +83,6 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
     let command = AccountCommand::Login(Login {
         email: "***".to_string(),
         password: "***".to_string(),
-        time: 0,
     });
 
     state_repository

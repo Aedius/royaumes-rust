@@ -1,22 +1,12 @@
 Feature: Number feature
 
-    Scenario: If i add number to a model i got the sum with previous
-        Given a state with nb 20
-        When i add the nb 22
-        Then nb is 42
+    Scenario: if i have some reputation, i can add more
+        Given an account with a reputation of 20
+        When i try to add 22 reputation
+        Then reputation is 42
 
-    Scenario: I join my first server
-        Given a state with nb 1
-        When i have joined the server foo with account bar
-        Then i have joined 1 server
-
-    Scenario: I can leave with the same account
-        Given a state with nb 10
-        When i have joined the server tata with account titi
-        Then i have joined 1 server
-        Then i can leave the server tata with account titi
-
-    Scenario: I cannot rejoin with the same account
-        Given a state with nb 10
-        When i have joined the server popo with account koko
-        Then i cant join the server popo with account koko
+    Scenario: i cant remove more reputation than that i have
+        Given an account with a reputation of 20
+        When i try to remove 22 reputation
+        Then reputation is 20
+        Then i got an error

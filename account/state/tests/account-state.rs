@@ -1,72 +1,61 @@
-use account_state::event::AccountEvent::{AccountAdded, Joined};
-use account_state::event::{Quantity, ServerAccount};
+use account_state::event::AccountEvent::ReputationAdded;
 use account_state::state::AccountState;
 
-use account_shared::{AccountCommand, ServerAccount as SA};
+use account_shared::AccountCommand::{AddReputation, RemoveReputation};
+use anyhow::Error;
 use cucumber::{given, then, when, World};
 use state::State;
 
 #[derive(cucumber::World, Debug, Default)]
 pub struct AccountWorld {
     model: AccountState,
+    err: Option<Error>,
 }
 
-#[given(regex = r"^a state with nb (\d+)$")]
-fn with_number(world: &mut AccountWorld, account: usize) {
-    world
-        .model
-        .play_event(&AccountAdded(Quantity { nb: account }));
+#[given(regex = r"^an account with a reputation of (\d+)$")]
+fn with_number(world: &mut AccountWorld, rep: usize) {
+    world.model.play_event(&ReputationAdded(rep));
 }
 
-#[when(regex = r"^i add the nb (\d+)$")]
-fn add_number(world: &mut AccountWorld, account: usize) {
-    world
-        .model
-        .play_event(&AccountAdded(Quantity { nb: account }));
+#[when(regex = r"^i try to add (\d+) reputation$")]
+fn add_number(world: &mut AccountWorld, rep: usize) {
+    let events = world.model.try_command(&AddReputation(rep));
+
+    match events {
+        Ok(list) => {
+            for e in list {
+                world.model.play_event(&e);
+            }
+        }
+        Err(e) => {
+            world.err = Some(e);
+        }
+    }
+}
+#[when(regex = r"^i try to remove (\d+) reputation$")]
+fn remove_number(world: &mut AccountWorld, rep: usize) {
+    let events = world.model.try_command(&RemoveReputation(rep));
+
+    match events {
+        Ok(list) => {
+            for e in list {
+                world.model.play_event(&e);
+            }
+        }
+        Err(e) => {
+            world.err = Some(e);
+        }
+    }
 }
 
-#[when(regex = r"^i have joined the server (.*) with account (.*)$")]
-fn join_server(world: &mut AccountWorld, server_id: String, account_id: String) {
-    world.model.play_event(&Joined(ServerAccount {
-        server_id,
-        account_id,
-    }));
+#[then(regex = r"^reputation is (\d+)$")]
+fn check_number(world: &mut AccountWorld, rep: usize) {
+    assert_eq!(rep, world.model.reputation())
 }
 
-#[then(regex = r"^nb is (\d+)$")]
-fn check_number(world: &mut AccountWorld, account: usize) {
-    assert_eq!(account, world.model.nb_account_allowed())
-}
-
-#[then(regex = r"^i have joined (\d+) server$")]
-fn joined(world: &mut AccountWorld, account: usize) {
-    assert_eq!(account, world.model.nb_accounts())
-}
-
-#[then(regex = r"^i can leave the server (.*) with account (.*)$")]
-fn can_leave(world: &mut AccountWorld, server_id: String, account_id: String) {
-    let res = match world.model.try_command(&AccountCommand::Leave(SA {
-        server_id,
-        account_id,
-    })) {
-        Ok(_) => 1,
-        Err(_e) => 2,
-    };
-
-    assert_eq!(res, 1)
-}
-
-#[then(regex = r"^i cant join the server (.*) with account (.*)$")]
-fn cant_join(world: &mut AccountWorld, server_id: String, account_id: String) {
-    let res = match world.model.try_command(&AccountCommand::Join(SA {
-        server_id,
-        account_id,
-    })) {
-        Ok(_) => 1,
-        Err(_e) => 2,
-    };
-
-    assert_eq!(res, 2)
+#[then(regex = r"^i got an error$")]
+fn have_error(world: &mut AccountWorld) {
+    assert!(world.err.is_some())
 }
 
 #[tokio::main]

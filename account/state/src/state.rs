@@ -1,7 +1,5 @@
-use std::collections::HashMap;
+use std::time::SystemTime;
 
-use chrono::{TimeZone, Utc};
-use rocket::form::validate::Contains;
 use uuid::Uuid;
 
 use account_shared::{AccountCommand, AccountDto};
@@ -9,17 +7,16 @@ use anyhow::{anyhow, Result};
 use rocket::serde::{Deserialize, Serialize};
 use state::State;
 
-use crate::event::{Created, LoggedIn, Quantity, ServerAccount};
+use crate::event::{Created, LoggedIn};
 use crate::{AccountError, AccountEvent};
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AccountState {
     uuid: Uuid,
     pseudo: String,
-    last_login: String,
-    nb_account_allowed: usize,
-    accounts: HashMap<String, Vec<String>>,
-    nb_accounts: usize,
+    register_at: u64,
+    last_login: u64,
+    reputation: usize,
     position: u64,
 }
 
@@ -27,29 +24,24 @@ impl AccountState {
     pub fn dto(&self) -> AccountDto {
         AccountDto {
             pseudo: self.pseudo.clone(),
-            nb: self.nb_accounts,
+            reputation: self.reputation,
         }
     }
+
     pub fn uuid(&self) -> Uuid {
         self.uuid
     }
     pub fn pseudo(&self) -> &str {
         &self.pseudo
     }
-    pub fn last_login(&self) -> &str {
-        &self.last_login
+    pub fn register_at(&self) -> u64 {
+        self.register_at
     }
-    pub fn nb_account_allowed(&self) -> usize {
-        self.nb_account_allowed
+    pub fn last_login(&self) -> u64 {
+        self.last_login
     }
-    pub fn accounts(&self) -> &HashMap<String, Vec<String>> {
-        &self.accounts
-    }
-    pub fn nb_accounts(&self) -> usize {
-        self.nb_accounts
-    }
-    pub fn position(&self) -> u64 {
-        self.position
+    pub fn reputation(&self) -> usize {
+        self.reputation
     }
 }
 
@@ -62,40 +54,15 @@ impl State for AccountState {
             AccountEvent::Created(created) => {
                 self.uuid = created.uuid;
                 self.pseudo = created.pseudo.clone();
-                self.nb_account_allowed = 0;
+                self.register_at = created.time;
             }
-            AccountEvent::AccountAdded(quantity) => {
-                self.nb_account_allowed = self
-                    .nb_account_allowed
-                    .checked_add(quantity.nb)
-                    .unwrap_or(usize::MAX);
+            AccountEvent::ReputationAdded(quantity) => {
+                self.reputation = self.reputation.checked_add(*quantity).unwrap_or(usize::MAX);
             }
-            AccountEvent::AccountRemoved(quantity) => {
-                self.nb_account_allowed = self.nb_account_allowed.saturating_sub(quantity.nb);
+            AccountEvent::ReputationRemoved(quantity) => {
+                self.reputation = self.reputation.saturating_sub(*quantity);
             }
-            AccountEvent::Logged(log) => {
-                let date = Utc.timestamp(log.time.try_into().expect("timestamp is too big"), 0);
-
-                self.last_login = date.to_rfc2822()
-            }
-            AccountEvent::Joined(sa) => {
-                match self.accounts.get_mut(&*sa.server_id) {
-                    None => {
-                        self.accounts
-                            .insert(sa.server_id.clone(), vec![sa.account_id.clone()]);
-                    }
-                    Some(list) => {
-                        list.push(sa.account_id.clone());
-                    }
-                }
-                self.nb_accounts += 1;
-            }
-            AccountEvent::Leaved(sa) => {
-                if let Some(accounts) = self.accounts.get_mut(&*sa.server_id) {
-                    accounts.retain(|x| x != &sa.account_id);
-                }
-                self.nb_accounts -= 1;
-            }
+            AccountEvent::Logged(log) => self.last_login = log.time,
         }
     }
 
@@ -107,79 +74,40 @@ impl State for AccountState {
                         "account already has a pseudo".to_string(),
                     )))
                 } else {
+                    let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+
                     Ok(vec![AccountEvent::Created(Created {
                         uuid: Uuid::new_v4(),
                         pseudo: create.pseudo.clone(),
+                        time: now.as_secs(),
                     })])
                 }
             }
-            AccountCommand::Login(login) => {
-                Ok(vec![AccountEvent::Logged(LoggedIn { time: login.time })])
+            AccountCommand::Login(_login) => {
+                let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+
+                Ok(vec![AccountEvent::Logged(LoggedIn {
+                    time: now.as_secs(),
+                })])
             }
-            AccountCommand::AddQuantity(nb) => {
-                if self.nb_account_allowed.checked_add(*nb).is_none() {
+            AccountCommand::AddReputation(nb) => {
+                if self.reputation.checked_add(*nb).is_none() {
                     Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot add {} to {}",
-                        nb, self.nb_account_allowed
+                        nb, self.reputation
                     ))))
                 } else {
-                    Ok(vec![AccountEvent::AccountAdded(Quantity { nb: *nb })])
+                    Ok(vec![AccountEvent::ReputationAdded(*nb)])
                 }
             }
-            AccountCommand::RemoveQuantity(nb) => {
-                if nb > &self.nb_account_allowed {
+            AccountCommand::RemoveReputation(nb) => {
+                if nb > &self.reputation {
                     Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot remove {} from {}",
-                        nb, self.nb_account_allowed
+                        nb, self.reputation
                     ))))
                 } else {
-                    Ok(vec![AccountEvent::AccountRemoved(Quantity { nb: *nb })])
-                }
-            }
-            AccountCommand::Join(join) => {
-                if self.nb_accounts >= self.nb_account_allowed {
-                    return Err(anyhow!(AccountError::Other(
-                        "already maximum accounts".to_string()
-                    )));
-                }
-
-                match self.accounts.get(&*join.server_id) {
-                    None => Ok(vec![AccountEvent::Joined(ServerAccount {
-                        server_id: join.server_id.clone(),
-                        account_id: join.account_id.clone(),
-                    })]),
-                    Some(list) => {
-                        if list.contains(join.account_id.clone()) {
-                            Err(anyhow!(AccountError::Other("Already joined".to_string())))
-                        } else {
-                            Ok(vec![AccountEvent::Joined(ServerAccount {
-                                server_id: join.server_id.clone(),
-                                account_id: join.account_id.clone(),
-                            })])
-                        }
-                    }
-                }
-            }
-            AccountCommand::Leave(leave) => {
-                if self.nb_accounts == 0 {
-                    return Err(anyhow!(AccountError::Other("No account yet".to_string())));
-                }
-                match self.accounts.get(&*leave.server_id) {
-                    Some(list) => {
-                        if list.contains(leave.account_id.clone()) {
-                            Ok(vec![AccountEvent::Leaved(ServerAccount {
-                                server_id: leave.server_id.clone(),
-                                account_id: leave.account_id.clone(),
-                            })])
-                        } else {
-                            Err(anyhow!(AccountError::Other(
-                                "account not found".to_string()
-                            )))
-                        }
-                    }
-                    None => Err(anyhow!(AccountError::Other(
-                        "no account on the server".to_string()
-                    ))),
+                    Ok(vec![AccountEvent::ReputationRemoved(*nb)])
                 }
             }
         }

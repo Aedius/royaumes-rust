@@ -9,7 +9,6 @@ edition = "2021"
 state = { path = "../../lib/state" }
 account-shared = { path = "../shared" }
 anyhow= "1.0"
-chrono= "0.4"
 derive_more= "0.99"
 eventstore = "2.1"
 jsonwebtokens = "1.1"
