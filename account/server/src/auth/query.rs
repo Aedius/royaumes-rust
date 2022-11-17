@@ -1,9 +1,9 @@
 use crate::auth::get_key;
 use crate::auth::jwt_guard::JwtToken;
-use account_api::AccountDto;
-use account_model::error::AccountError;
+use account_shared::AccountDto;
+use account_state::error::AccountError;
 
-use account_model::state::AccountState;
+use account_state::state::AccountState;
 use rocket::serde::json::Json;
 use rocket::State;
 use state_repository::StateRepository;

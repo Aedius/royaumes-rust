@@ -1,5 +1,5 @@
 use crate::auth::{get_key, JWT_ISSUER, JWT_SECRET};
-use account_model::error::AccountError;
+use account_state::error::AccountError;
 
 use jsonwebtokens as jwt;
 use jsonwebtokens::{encode, AlgorithmID};
@@ -11,8 +11,8 @@ use uuid::Uuid;
 
 use crate::auth::jwt_guard::JwtToken;
 use crate::MariadDb;
-use account_api::{AccountCommand, CreateAccount, Login};
-use account_model::state::AccountState;
+use account_shared::{AccountCommand, CreateAccount, Login};
+use account_state::state::AccountState;
 use state_repository::{ModelKey, StateRepository};
 
 #[post("/", format = "json", data = "<command>")]

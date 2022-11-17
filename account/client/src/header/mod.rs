@@ -3,7 +3,7 @@ mod register;
 
 use crate::header::login::LoginForm;
 use crate::header::register::RegisterForm;
-use account_api::AccountDto;
+use account_shared::AccountDto;
 use bounce::BounceRoot;
 use gloo_storage::{LocalStorage, Storage};
 use reqwasm::http::Request;

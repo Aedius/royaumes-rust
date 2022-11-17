@@ -4,7 +4,7 @@ use chrono::{TimeZone, Utc};
 use rocket::form::validate::Contains;
 use uuid::Uuid;
 
-use account_api::{AccountCommand, AccountDto};
+use account_shared::{AccountCommand, AccountDto};
 use anyhow::{anyhow, Result};
 use rocket::serde::{Deserialize, Serialize};
 use state::State;

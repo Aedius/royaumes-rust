@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-account-api = { path = "../api" }
-account-model = { path = "../model" }
+account-shared = { path = "../shared" }
+account-state = { path = "../state" }
 state = { path = "../../lib/state" }
 state-repository = { path = "../../lib/state-repository" }
 global-config = { path = "../../lib/global-config" }

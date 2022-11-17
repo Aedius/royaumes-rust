@@ -1,8 +1,8 @@
-use account_model::event::AccountEvent::{AccountAdded, Joined};
-use account_model::event::{Quantity, ServerAccount};
-use account_model::state::AccountState;
+use account_state::event::AccountEvent::{AccountAdded, Joined};
+use account_state::event::{Quantity, ServerAccount};
+use account_state::state::AccountState;
 
-use account_api::{AccountCommand, ServerAccount as SA};
+use account_shared::{AccountCommand, ServerAccount as SA};
 use cucumber::{given, then, when, World};
 use state::State;
 
@@ -11,7 +11,7 @@ pub struct AccountWorld {
     model: AccountState,
 }
 
-#[given(regex = r"^a model with nb (\d+)$")]
+#[given(regex = r"^a state with nb (\d+)$")]
 fn with_number(world: &mut AccountWorld, account: usize) {
     world
         .model

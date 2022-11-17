@@ -46,5 +46,5 @@ see the [makefile](makefile)
 
 they are done with : https://cucumber-rs.github.io/cucumber/current/quickstart.html
 ```
-cargo test -p account-model --test account-model
+cargo test -p account-state --test account-state
 ```

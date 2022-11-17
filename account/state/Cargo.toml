@@ -1,5 +1,5 @@
 [package]
-name = "account-model"
+name = "account-state"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 state = { path = "../../lib/state" }
-account-api = { path = "../api" }
+account-shared = { path = "../shared" }
 anyhow= "1.0"
 chrono= "0.4"
 derive_more= "0.99"
@@ -29,5 +29,5 @@ async-trait = "0.1"
 cucumber = { version = "0.15" }
 
 [[test]]
-name = "account-model" # this should be the same as the filename of your test target
+name = "account-state" # this should be the same as the filename of your test target
 harness = false  # allows Cucumber to print output instead of libtest
