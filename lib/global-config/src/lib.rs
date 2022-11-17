@@ -33,6 +33,7 @@ pub struct Config {
     scripts: HashMap<Components, Vec<String>>,
     event_store: String,
     mysql: String,
+    redis: String,
 }
 
 impl Config {
@@ -74,6 +75,7 @@ impl Config {
             event_store: "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"
                 .to_string(),
             mysql: "mysql://root:password@localhost:3306".to_string(),
+            redis: "redis://localhost:6379/".to_string(),
         }
     }
 
@@ -110,5 +112,8 @@ impl Config {
     }
     pub fn mysql(&self) -> &str {
         &self.mysql
+    }
+    pub fn redis(&self) -> &str {
+        &self.redis
     }
 }

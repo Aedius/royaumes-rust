@@ -1,3 +1,4 @@
+use event_model::Event;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -9,6 +10,23 @@ pub enum AccountEvent {
     AccountRemoved(Quantity),
     Joined(ServerAccount),
     Leaved(ServerAccount),
+}
+
+impl Event for AccountEvent {
+    fn name_prefix() -> &'static str {
+        "account"
+    }
+
+    fn event_name(&self) -> &str {
+        match self {
+            AccountEvent::Logged(_) => "Logged",
+            AccountEvent::Created(_) => "Created",
+            AccountEvent::AccountAdded(_) => "QuantityAdded",
+            AccountEvent::AccountRemoved(_) => "QuantityRemoved",
+            AccountEvent::Joined(_) => "JoinedServer",
+            AccountEvent::Leaved(_) => "LeavedServer",
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

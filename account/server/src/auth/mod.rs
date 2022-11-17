@@ -3,93 +3,23 @@ mod jwt_guard;
 mod query;
 
 use crate::auth::command::handle_anonymous;
-
 use crate::auth::query::{account, register};
-use account_model::model::AccountModel;
 
-use account_model::error::AccountError;
-use account_model::Account;
-use eventstore::{Client, EventData, ReadStream};
+use event_repository::ModelKey;
 use rocket::Route;
+use uuid::Uuid;
 
 const STREAM_NAME: &str = "account";
+const JWT_SECRET: &str = "secret";
+const JWT_ISSUER: &str = "royaumes-rs";
 
 pub fn get_route() -> Vec<Route> {
     routes![account, handle_anonymous, register]
 }
 
-async fn account_exist(db: &Client, id: String) -> Result<bool, AccountError> {
-    let mut stream = get_stream(db, id).await?;
-
-    Ok(stream.next().await.is_ok())
-}
-
-async fn load_account(db: &Client, id: String) -> Result<AccountModel, AccountError> {
-    let mut stream = get_stream(db, id.clone()).await?;
-
-    let mut account = AccountModel::default();
-    let mut exist = false;
-    // region iterate-stream
-    while let Ok(Some(event)) = stream.next().await {
-        exist = true;
-
-        let account_operation = event.get_original_event().as_json::<Account>();
-
-        match account_operation {
-            Ok(account_operation) => match account_operation {
-                Account::Event(account_event) => {
-                    account.play_event(account_event);
-                }
-                Account::Command(_) => {}
-                Account::Error(_) => {}
-            },
-            Err(err) => {
-                warn!("Unable to json decode : {:?}, got error {:?}", event, err);
-            }
-        }
-    }
-
-    if exist {
-        Ok(account)
-    } else {
-        Err(AccountError::NotFound(format!(
-            "account `{}` not found",
-            id
-        )))
+pub fn get_key(k: Option<String>) -> ModelKey {
+    match k {
+        None => ModelKey::new(STREAM_NAME.to_string(), Uuid::new_v4().to_string()),
+        Some(k) => ModelKey::new(STREAM_NAME.to_string(), k),
     }
 }
-
-async fn get_stream(db: &Client, id: String) -> Result<ReadStream, AccountError> {
-    let res = db
-        .read_stream(format!("{}-{}", STREAM_NAME, id), &Default::default())
-        .await;
-
-    let stream = match res {
-        Ok(s) => s,
-        Err(err) => {
-            return Err(AccountError::Other(format!(
-                "Cannot connect to evenstore : {:?}",
-                err
-            )))
-        }
-    };
-    Ok(stream)
-}
-
-async fn add_event(db: &Client, id: String, events: Vec<EventData>) -> Result<(), AccountError> {
-    let added = db
-        .append_to_stream(
-            format!("{}-{}", STREAM_NAME, id),
-            &Default::default(),
-            events,
-        )
-        .await;
-
-    match added {
-        Ok(_) => Ok(()),
-        Err(err) => Err(AccountError::Other(format!("Cannot add event : {:?}", err))),
-    }
-}
-
-const JWT_SECRET: &str = "secret";
-const JWT_ISSUER: &str = "royaumes-rs";

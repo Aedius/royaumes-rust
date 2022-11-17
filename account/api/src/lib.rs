@@ -1,3 +1,4 @@
+use event_model::Command;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -33,4 +34,21 @@ pub enum AccountCommand {
     RemoveQuantity(usize),
     Join(ServerAccount),
     Leave(ServerAccount),
+}
+
+impl Command for AccountCommand {
+    fn name_prefix() -> &'static str {
+        "account"
+    }
+
+    fn command_name(&self) -> &str {
+        match self {
+            AccountCommand::CreateAccount(_) => "Create",
+            AccountCommand::AddQuantity(_) => "AddQuantity",
+            AccountCommand::RemoveQuantity(_) => "RemoveQuantity",
+            AccountCommand::Login(_) => "Login",
+            AccountCommand::Join(_) => "JoinServer",
+            AccountCommand::Leave(_) => "LeaveServer",
+        }
+    }
 }

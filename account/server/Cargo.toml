@@ -6,18 +6,23 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-global-config = { path = "../../lib/global-config" }
 account-api = { path = "../api" }
 account-model = { path = "../model" }
-chrono= "0.4"
+event-model = { path = "../../lib/event-model" }
+event-repository = { path = "../../lib/event-repository" }
+global-config = { path = "../../lib/global-config" }
+
+anyhow = "1.0"
+chrono = "0.4"
 eventstore = "2.1"
 jsonwebtokens = "1.1"
-uuid = {version = "0.8", features = ["v4", "serde"]}
-rocket = { version = "0.5.0-rc.2", features = ["json"] }
-rocket_cors = { git = "https://github.com/lawliet89/rocket_cors.git", rev = "54fae070"  }
+uuid = { version = "0.8", features = ["v4", "serde"] }
+redis = { version = "0.22", features = ["tokio-native-tls-comp"] }
 reqwest = "0.11"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors.git", rev = "54fae070" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls","mysql", "migrate", "offline" ] }
+sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "mysql", "migrate", "offline"] }
 sqlx-cli = "0.6.1"
 
