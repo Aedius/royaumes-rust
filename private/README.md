@@ -1,3 +1,3 @@
 # public
 
-This folder handle the private server
+This folder handle the private server.
