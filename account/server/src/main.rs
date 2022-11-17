@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate rocket;
 
-use event_repository::StateRepository;
 use eventstore::Client;
 use global_config::Components::Public;
 use global_config::Config;
@@ -11,6 +10,7 @@ use rocket::response::content;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use sqlx::mysql::MySqlPool;
 use sqlx::{MySql, Pool};
+use state_repository::StateRepository;
 
 mod auth;
 

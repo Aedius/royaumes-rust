@@ -16,7 +16,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests account-model
-      run: cargo test -p account-model --test account-model --verbose
+    - name: add nightly
+      run: rustup toolchain install nightly
+    - name: add-clippy
+      run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
+    - name: clippy
+      run: cargo clippy
+    - name: Run tests account-state
+      run: cargo test -p account-state --test account-state --verbose
+

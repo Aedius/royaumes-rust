@@ -3,18 +3,10 @@
 version = 3
 
 [[package]]
-name = "account-api"
-version = "0.1.0"
-dependencies = [
- "event-model",
- "serde",
-]
-
-[[package]]
 name = "account-client"
 version = "0.1.0"
 dependencies = [
- "account-api",
+ "account-shared",
  "bounce",
  "custom-elements",
  "gloo-storage",
@@ -29,39 +21,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "account-model"
-version = "0.1.0"
-dependencies = [
- "account-api",
- "anyhow",
- "async-trait",
- "chrono",
- "cucumber",
- "derive_more",
- "event-model",
- "eventstore",
- "jsonwebtokens",
- "reqwest",
- "rocket",
- "rocket_cors",
- "serde",
- "serde_json",
- "sqlx",
- "tokio",
- "urlencoding",
- "uuid",
-]
-
-[[package]]
 name = "account-server"
 version = "0.1.0"
 dependencies = [
- "account-api",
- "account-model",
+ "account-shared",
+ "account-state",
  "anyhow",
  "chrono",
- "event-model",
- "event-repository",
  "eventstore",
  "global-config",
  "jsonwebtokens",
@@ -73,6 +39,40 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqlx-cli",
+ "state 0.1.0",
+ "state-repository",
+ "uuid",
+]
+
+[[package]]
+name = "account-shared"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "state 0.1.0",
+]
+
+[[package]]
+name = "account-state"
+version = "0.1.0"
+dependencies = [
+ "account-shared",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "cucumber",
+ "derive_more",
+ "eventstore",
+ "jsonwebtokens",
+ "reqwest",
+ "rocket",
+ "rocket_cors",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "state 0.1.0",
+ "tokio",
+ "urlencoding",
  "uuid",
 ]
 
@@ -1011,29 +1011,6 @@ name = "event-listener"
 version = "2.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
-
-[[package]]
-name = "event-model"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "event-repository"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "event-model",
- "eventstore",
- "redis",
- "serde",
- "serde_json",
- "tokio",
- "uuid",
-]
 
 [[package]]
 name = "eventstore"
@@ -2493,39 +2470,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ac9a59f73473f1b8d852421e59e64809f025994837ef743615c6d0c5b305160"
 
 [[package]]
-name = "planet-api"
-version = "0.1.0"
-
-[[package]]
-name = "planet-client"
-version = "0.1.0"
-dependencies = [
- "custom-elements",
- "planet-api",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "weblog",
- "yew",
-]
-
-[[package]]
-name = "planet-model"
-version = "0.1.0"
-
-[[package]]
-name = "planet-server"
-version = "0.1.0"
-dependencies = [
- "eventstore",
- "global-config",
- "planet-api",
- "planet-model",
- "rocket",
- "rocket_cors",
-]
-
-[[package]]
 name = "polyval"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2939,7 +2883,7 @@ dependencies = [
  "rocket_http",
  "serde",
  "serde_json",
- "state",
+ "state 0.5.3",
  "tempfile",
  "time 0.3.16",
  "tokio",
@@ -3003,7 +2947,7 @@ dependencies = [
  "serde",
  "smallvec",
  "stable-pattern",
- "state",
+ "state 0.5.3",
  "time 0.3.16",
  "tokio",
  "uncased",
@@ -3321,39 +3265,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "server-api"
-version = "0.1.0"
-
-[[package]]
-name = "server-client"
-version = "0.1.0"
-dependencies = [
- "custom-elements",
- "server-api",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
- "weblog",
- "yew",
-]
-
-[[package]]
-name = "server-model"
-version = "0.1.0"
-
-[[package]]
-name = "server-server"
-version = "0.1.0"
-dependencies = [
- "eventstore",
- "global-config",
- "rocket",
- "rocket_cors",
- "server-api",
- "server-model",
-]
-
-[[package]]
 name = "sha1"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3616,11 +3527,34 @@ dependencies = [
 
 [[package]]
 name = "state"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "state"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbe866e1e51e8260c9eed836a042a5e7f6726bb2b411dffeaa712e19c388f23b"
 dependencies = [
  "loom",
+]
+
+[[package]]
+name = "state-repository"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "eventstore",
+ "redis",
+ "serde",
+ "serde_json",
+ "state 0.1.0",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use account_api::{AccountCommand, CreateAccount};
+use account_shared::{AccountCommand, CreateAccount};
 use bounce::{use_atom, Atom};
 use gloo_storage::{LocalStorage, Storage};
 use reqwasm::http::Request;
