@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate rocket;
 
+use auth_lib::Issuer;
+use dotenvy::dotenv;
 use eventstore::Client;
 use global_config::Components::{Private, Public};
 use global_config::Config;
@@ -24,8 +26,25 @@ impl MariadDb {
     }
 }
 
+pub struct AccountIssuer {}
+
+impl Issuer for AccountIssuer {
+    fn name() -> String {
+        dotenvy::var("ISSUER_ACCOUNT_NAME").unwrap()
+    }
+
+    fn secret() -> String {
+        dotenvy::var("ISSUER_ACCOUNT_SECRET").unwrap()
+    }
+}
+
 #[launch]
 fn rocket() -> _ {
+    dotenv().ok();
+
+    AccountIssuer::name();
+    AccountIssuer::secret();
+
     let config = Config::load();
 
     // Creates a public settings for a single node configuration.

@@ -1,9 +1,10 @@
 use crate::auth::get_key;
-use crate::auth::jwt_guard::JwtToken;
 use account_shared::AccountDto;
 use account_state::error::AccountError;
 
+use crate::AccountIssuer;
 use account_state::state::AccountState;
+use auth_lib::JwtToken;
 use rocket::serde::json::Json;
 use rocket::State;
 use state_repository::StateRepository;
@@ -11,10 +12,10 @@ use state_repository::StateRepository;
 #[get("/account")]
 pub async fn account(
     state_repository: &State<StateRepository>,
-    token: JwtToken,
+    token: JwtToken<AccountIssuer>,
 ) -> Result<Json<AccountDto>, AccountError> {
     let account = state_repository
-        .get_model::<AccountState>(&get_key(Some(token.uuid)))
+        .get_model::<AccountState>(&get_key(Some(token.uuid().to_string())))
         .await
         .unwrap();
 

@@ -11,9 +11,11 @@ account-state = { path = "../state" }
 state = { path = "../../lib/state" }
 state-repository = { path = "../../lib/state-repository" }
 global-config = { path = "../../lib/global-config" }
+auth-lib ={ path="../../lib/auth"}
 
 anyhow = "1.0"
 chrono = "0.4"
+dotenvy = "0.15"
 eventstore = "2.1"
 jsonwebtokens = "1.1"
 uuid = { version = "0.8", features = ["v4", "serde"] }
