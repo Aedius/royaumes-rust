@@ -1,11 +1,10 @@
-use crate::Components::{Account, Private, Public};
+use crate::Components::{Private, Public};
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 pub enum Components {
-    Account,
-    Private,
     Public,
+    Private,
 }
 
 #[derive(Clone)]
@@ -28,8 +27,8 @@ impl Parts {
 }
 
 pub struct Config {
-    hosts: HashMap<Components, Parts>,
-    scripts: HashMap<Components, Vec<String>>,
+    hosts: Vec<Parts>,
+    scripts: HashMap<Components, (Parts, Vec<String>)>,
     event_store: String,
     mysql: String,
     redis: String,
@@ -37,35 +36,48 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Self {
-        let mut hosts = HashMap::new();
+        let mut hosts = Vec::new();
         let mut scripts = HashMap::new();
 
-        hosts.insert(
-            Account,
-            Parts {
-                is_https: false,
-                host: "127.0.0.1".to_string(),
-                port: Some(8000u16),
-            },
-        );
-        hosts.insert(
-            Private,
-            Parts {
-                is_https: false,
-                host: "127.0.0.1".to_string(),
-                port: Some(3131u16),
-            },
-        );
-        hosts.insert(
+        hosts.push(Parts {
+            is_https: false,
+            host: "127.0.0.1".to_string(),
+            port: Some(3101u16),
+        });
+        hosts.push(Parts {
+            is_https: false,
+            host: "127.0.0.1".to_string(),
+            port: Some(3102u16),
+        });
+        hosts.push(Parts {
+            is_https: false,
+            host: "127.0.0.1".to_string(),
+            port: Some(3100u16),
+        });
+
+        scripts.insert(
             Public,
-            Parts {
-                is_https: false,
-                host: "127.0.0.1".to_string(),
-                port: Some(3100u16),
-            },
+            (
+                Parts {
+                    is_https: false,
+                    host: "127.0.0.1".to_string(),
+                    port: Some(8000u16),
+                },
+                vec!["account.js".to_string()],
+            ),
         );
 
-        scripts.insert(Account, vec!["account.js".to_string()]);
+        scripts.insert(
+            Private,
+            (
+                Parts {
+                    is_https: false,
+                    host: "127.0.0.1".to_string(),
+                    port: Some(8001u16),
+                },
+                vec!["stocks.js".to_string()],
+            ),
+        );
 
         Config {
             hosts,
@@ -77,34 +89,20 @@ impl Config {
         }
     }
 
-    pub fn get_host(&self, component: Components) -> Option<String> {
-        self.hosts.get(&component).map(|v| v.host.clone())
-    }
-
-    pub fn get_port(&self, component: Components) -> u16 {
-        match self.hosts.get(&component) {
-            None => 80u16,
-            Some(v) => v.port.unwrap_or(80u16),
+    pub fn get_scripts(&self, component: &Components) -> Vec<String> {
+        match self.scripts.get(component) {
+            None => Vec::new(),
+            Some((parts, scripts)) => scripts
+                .iter()
+                .map(|s| format!("{}/{s}", parts.to_uri()))
+                .collect(),
         }
     }
 
-    pub fn get_uri(&self, component: Components) -> Option<String> {
-        self.hosts.get(&component).map(|v| v.to_uri())
+    pub fn get_hosts(&self) -> Vec<String> {
+        self.hosts.iter().map(|v| v.to_uri()).collect()
     }
 
-    pub fn get_scripts(&self) -> Vec<String> {
-        let mut scripts = Vec::new();
-
-        for (component, parts) in self.hosts.clone().into_iter() {
-            if let Some(list) = self.scripts.get(&component) {
-                for script in list {
-                    scripts.push(format!("{}/{script}", parts.to_uri()));
-                }
-            }
-        }
-
-        scripts
-    }
     pub fn event_store(&self) -> &str {
         &self.event_store
     }

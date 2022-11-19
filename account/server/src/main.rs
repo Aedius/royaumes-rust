@@ -4,7 +4,6 @@ extern crate rocket;
 use auth_lib::Issuer;
 use dotenvy::dotenv;
 use eventstore::Client;
-use global_config::Components::{Private, Public};
 use global_config::Config;
 use rocket::fs::{relative, FileServer};
 use rocket::http::Method;
@@ -58,10 +57,7 @@ fn rocket() -> _ {
     let mariadb_url = format!("{}/account", config.mysql());
     let pool = MySqlPool::connect_lazy(&mariadb_url).unwrap();
 
-    let allowed_origins = AllowedOrigins::some_exact(&[
-        config.get_uri(Public).unwrap(),
-        config.get_uri(Private).unwrap(),
-    ]);
+    let allowed_origins = AllowedOrigins::some_exact(&config.get_hosts());
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,

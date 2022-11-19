@@ -1,6 +1,8 @@
 use bounce::helmet::Helmet;
+use global_config::Components::Public;
 use global_config::Config;
 use yew::prelude::*;
+
 pub struct WebComp {
     scripts: Vec<String>,
 }
@@ -13,7 +15,7 @@ impl Component for WebComp {
         let config = Config::load();
 
         Self {
-            scripts: config.get_scripts(),
+            scripts: config.get_scripts(&Public),
         }
     }
 
