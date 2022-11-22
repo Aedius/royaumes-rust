@@ -25,7 +25,11 @@ impl Component for Body {
             <Global css={css!(
             r#"
                 html, body {
-
+                    background-color: #515F84;
+                    color: #7E88AB;
+                }
+                a, button, .call-to-action {
+                    color: white
                 }
             "#
             )} />

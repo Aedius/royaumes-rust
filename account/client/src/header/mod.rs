@@ -93,16 +93,20 @@ impl Component for Header {
             Menu::None => {
                 html! {
                     <ul>
-                        <li><div class="tab-item-content" onclick={login_click}>{ "login" }</div></li>
-                        <li><div class="tab-item-content" onclick={register_click}>{ "register" }</div></li>
+                        <li><div class="call-to-action" onclick={login_click}>{ "login" }</div></li>
+                        <li><div class="call-to-action" onclick={register_click}>{ "register" }</div></li>
                     </ul>
                 }
             }
             Menu::Login => {
                 html! {
                     <ul>
-                        <li class="selected"><div class="tab-item-content" onclick={no_menu_click}>{ "login" }</div></li>
-                        <li><div class="tab-item-content" onclick={register_click}>{ "register" }</div></li>
+                        <li class="selected">
+                            <div class="call-to-action" onclick={no_menu_click}>{ "login" }</div>
+                        </li>
+                        <li>
+                            <div class="call-to-action" onclick={register_click}>{ "register" }</div>
+                        </li>
 
                     </ul>
                 }
@@ -110,8 +114,12 @@ impl Component for Header {
             Menu::Register => {
                 html! {
                     <ul>
-                        <li><div class="tab-item-content" onclick={login_click}>{ "login" }</div></li>
-                        <li class="selected"><div class="tab-item-content" onclick={no_menu_click}>{ "register" }</div></li>
+                        <li>
+                        <div class="call-to-action" onclick={login_click}>{ "login" }</div>
+                        </li>
+                        <li class="selected">
+                            <div class="call-to-action" onclick={no_menu_click}>{ "register" }</div>
+                        </li>
                     </ul>
                 }
             }
@@ -159,7 +167,7 @@ impl Component for Header {
                                         </div>
                                     }
                                 </li>
-                                <li><div class="tab-item-content" onclick={logout_click}>{ "log out" }</div></li>
+                                <li><div class="call-to-action" onclick={logout_click}>{ "log out" }</div></li>
                             </ul>
                         </div>
 
