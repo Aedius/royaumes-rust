@@ -3,23 +3,26 @@ implementing an old school webgame
 
 ## lib:
 
+an [state](lib/state/README.md) main lib about event sourcing, it provide a trait to implement to create a state from event and generate event from command.
+
+an [state-repository](lib/state-repository/README.md) lib that handle the evenstore database with the event command and state provided by the previous lib.
+
 an [auth](lib/auth/README.md) lib to share the jwt token check to all component.
+
+an [global-config](lib/global-config/README.md) lib to share the configuration between services for CORS
+
+
 
 ## components :
 
-a [public](public/README.md) component to handle anonymous traffic, present the game.
+a [public](public/README.md) html / js client to load public resources.
+
+a [private](private/README.md) html / js client to load private resources.
 
 an [account](account/README.md) component with : 
 - webcomponent to register / login
 
-a [server](server/README.md) component with :
-- tbd
 
-a [planet](planet/README.md) component with :
-- tbd
-
-an [army](army/README.md) component with :
-- tbd
 
 ## Development
 
