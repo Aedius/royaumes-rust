@@ -42,17 +42,12 @@ impl Config {
         hosts.push(Parts {
             is_https: false,
             host: "127.0.0.1".to_string(),
-            port: Some(3101u16),
-        });
-        hosts.push(Parts {
-            is_https: false,
-            host: "127.0.0.1".to_string(),
-            port: Some(3102u16),
-        });
-        hosts.push(Parts {
-            is_https: false,
-            host: "127.0.0.1".to_string(),
             port: Some(3100u16),
+        });
+        hosts.push(Parts {
+            is_https: false,
+            host: "127.0.0.1".to_string(),
+            port: Some(8001u16),
         });
 
         scripts.insert(
@@ -64,6 +59,17 @@ impl Config {
                     port: Some(8000u16),
                 },
                 vec!["account.js".to_string()],
+            ),
+        );
+        scripts.insert(
+            Public,
+            (
+                Parts {
+                    is_https: false,
+                    host: "127.0.0.1".to_string(),
+                    port: Some(8001u16),
+                },
+                vec!["description/index.js".to_string()],
             ),
         );
 

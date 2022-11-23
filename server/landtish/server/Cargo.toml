@@ -1,0 +1,30 @@
+[package]
+name = "landtish-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+landtish-shared = { path = "../shared" }
+landtish-state = { path = "../state" }
+state = { path = "../../../lib/state" }
+state-repository = { path = "../../../lib/state-repository" }
+global-config = { path = "../../../lib/global-config" }
+auth-lib ={ path="../../../lib/auth"}
+
+anyhow = "1.0"
+chrono = "0.4"
+dotenvy = "0.15"
+eventstore = "2.1"
+jsonwebtokens = "1.1"
+uuid = { version = "0.8", features = ["v4", "serde"] }
+redis = { version = "0.22", features = ["tokio-native-tls-comp"] }
+reqwest = "0.11"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors.git", rev = "54fae070" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "mysql", "migrate", "offline"] }
+sqlx-cli = "0.6.1"
+
