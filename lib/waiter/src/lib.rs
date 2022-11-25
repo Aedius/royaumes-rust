@@ -1,13 +1,18 @@
+#![feature(associated_type_defaults)]
+
 use eventstore::{StreamPosition, SubscribeToStreamOptions};
-use state::{Event, State};
+use state::{Command, Event, State};
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 
-pub trait WaitingState: State + Send {
-    fn get_next(event: &Self::Event) -> Option<(Self::Command, Duration)>;
+pub trait WaitingState<T>: State + Send
+where T : 'static + Command + Send + Sync {
+    fn get_next(event: &Self::Event) -> Option<(T, Duration)>;
 }
 
-pub async fn process_wait<T: WaitingState>(repo: StateRepository, event: T::Event) {
+pub async fn process_wait<U, T: WaitingState<U> + State<Command = U>>(repo: StateRepository, event: T::Event)
+where U : 'static + Command + Send + Sync , <T as State>::Event: Send
+{
     let event_db = repo.event_db().clone();
     let stream_name = format!("$et-{}.{}", T::Event::name_prefix(), event.event_name());
 
@@ -31,13 +36,11 @@ pub async fn process_wait<T: WaitingState>(repo: StateRepository, event: T::Even
                 let repo = repo.clone();
 
                 if let Some((c, d)) = T::get_next(&event) {
-                    let c = c.clone();
                     tokio::spawn(async move {
                         sleep(d).await;
                         let key: ModelKey = e.stream_id.into();
                         println!("{key:?}");
-                        // next row doenst compile ...
-                        // repo.add_command::<T>(&key, c.clone());
+                        repo.add_command::<T>(&key, c).await.unwrap();
                     });
                 }
             }

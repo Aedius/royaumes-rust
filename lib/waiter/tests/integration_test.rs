@@ -13,7 +13,7 @@ mod state;
 #[tokio::test]
 async fn waiter_case() {
     let repo = get_repository();
-    process_wait::<WaitState>(repo.clone(), WaitEvent::Wait(0, 0)).await;
+    process_wait::<WaitCommand, WaitState>(repo.clone(), WaitEvent::Wait(0, 0)).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 
@@ -41,7 +41,7 @@ async fn waiter_case() {
 
     assert_eq!(growth, WaitState { nb: 5, position: 1 });
 
-    let secs = Duration::from_secs(3);
+    let secs = Duration::from_secs(4);
 
     sleep(secs).await;
 

@@ -100,7 +100,7 @@ impl State for WaitState {
     }
 }
 
-impl WaitingState for WaitState {
+impl WaitingState<WaitCommand> for WaitState {
     fn get_next(event: &Self::Event) -> Option<(Self::Command, Duration)> {
         match event {
             WaitEvent::Wait(n, s) => Some((WaitCommand::Add(*n), Duration::from_secs(*s as u64))),
