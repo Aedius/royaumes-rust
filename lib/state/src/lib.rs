@@ -4,12 +4,12 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
 
-pub trait Command: Serialize + DeserializeOwned {
+pub trait Command: Serialize + DeserializeOwned + Debug + Send + Clone {
     fn name_prefix() -> &'static str;
     fn command_name(&self) -> &str;
 }
 
-pub trait Event: Serialize + DeserializeOwned {
+pub trait Event: Serialize + DeserializeOwned + Debug {
     fn name_prefix() -> &'static str;
     fn event_name(&self) -> &str;
 }
