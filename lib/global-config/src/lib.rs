@@ -1,11 +1,3 @@
-use crate::Components::{Private, Public};
-use std::collections::HashMap;
-
-#[derive(PartialEq, Eq, Debug, Hash, Clone)]
-pub enum Components {
-    Public,
-    Private,
-}
 
 #[derive(Clone)]
 pub struct Parts {
@@ -28,7 +20,7 @@ impl Parts {
 
 pub struct Config {
     hosts: Vec<Parts>,
-    scripts: HashMap<Components, (Parts, Vec<String>)>,
+    scripts: Vec<(Parts, String)>,
     event_store: String,
     mysql: String,
     redis: String,
@@ -37,51 +29,38 @@ pub struct Config {
 impl Config {
     pub fn load() -> Self {
         let mut hosts = Vec::new();
-        let mut scripts = HashMap::new();
+        let mut scripts = Vec::new();
 
-        hosts.push(Parts {
+        let public = Parts {
             is_https: false,
             host: "127.0.0.1".to_string(),
             port: Some(3100u16),
-        });
-        hosts.push(Parts {
+        };
+
+        let landtish = Parts {
             is_https: false,
             host: "127.0.0.1".to_string(),
             port: Some(8001u16),
-        });
+        };
+        let account  = Parts {
+            is_https: false,
+            host: "127.0.0.1".to_string(),
+            port: Some(8000u16),
+        };
 
-        scripts.insert(
-            Public,
+        hosts.push(public);
+        hosts.push(landtish.clone());
+
+        scripts.push(
             (
-                Parts {
-                    is_https: false,
-                    host: "127.0.0.1".to_string(),
-                    port: Some(8000u16),
-                },
-                vec!["account.js".to_string()],
+                account,
+                "account.js".to_string(),
             ),
         );
-        scripts.insert(
-            Public,
+        scripts.push(
             (
-                Parts {
-                    is_https: false,
-                    host: "127.0.0.1".to_string(),
-                    port: Some(8001u16),
-                },
-                vec!["description/index.js".to_string()],
-            ),
-        );
-
-        scripts.insert(
-            Private,
-            (
-                Parts {
-                    is_https: false,
-                    host: "127.0.0.1".to_string(),
-                    port: Some(8001u16),
-                },
-                vec!["stocks.js".to_string()],
+                landtish,
+                "description/index.js".to_string(),
             ),
         );
 
@@ -95,14 +74,11 @@ impl Config {
         }
     }
 
-    pub fn get_scripts(&self, component: &Components) -> Vec<String> {
-        match self.scripts.get(component) {
-            None => Vec::new(),
-            Some((parts, scripts)) => scripts
-                .iter()
-                .map(|s| format!("{}/{s}", parts.to_uri()))
-                .collect(),
-        }
+    pub fn get_scripts(&self) -> Vec<String> {
+        self.scripts
+            .iter()
+            .map(|parts|format!("{}/{}", parts.0.to_uri(), parts.1) )
+            .collect()
     }
 
     pub fn get_hosts(&self) -> Vec<String> {

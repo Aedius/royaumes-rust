@@ -35,5 +35,5 @@ impl CustomElement for ComponentWrapper {
 
 #[wasm_bindgen]
 pub fn run() {
-    ComponentWrapper::define("account-login");
+    ComponentWrapper::define("landtish-description");
 }

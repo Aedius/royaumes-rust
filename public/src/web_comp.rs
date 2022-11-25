@@ -1,5 +1,4 @@
 use bounce::helmet::Helmet;
-use global_config::Components::Public;
 use global_config::Config;
 use yew::prelude::*;
 
@@ -15,12 +14,13 @@ impl Component for WebComp {
         let config = Config::load();
 
         Self {
-            scripts: config.get_scripts(&Public),
+            scripts: config.get_scripts(),
         }
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let scrips: Vec<Html> = self.scripts.iter().map(|s| Self::script(s)).collect();
+
         html! {
             <Helmet>
                 { scrips }
