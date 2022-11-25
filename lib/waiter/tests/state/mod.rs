@@ -6,7 +6,8 @@ use waiter::WaitingState;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum WaitCommand {
-    Grow(u32, u32),
+    GrowStart(u32, u32),
+    GrowEnd(u32),
     Add(u32),
 }
 
@@ -16,9 +17,11 @@ impl Command for WaitCommand {
     }
 
     fn command_name(&self) -> &str {
+        use WaitCommand::*;
         match &self {
-            WaitCommand::Grow(_, _) => "Grow",
-            WaitCommand::Add(_) => "Add",
+            GrowStart(_, _) => "GrowStart",
+            GrowEnd(_) => "GrowEnd",
+            Add(_) => "Add",
         }
     }
 }
@@ -27,8 +30,8 @@ impl Command for WaitCommand {
 pub enum WaitEvent {
     Added(u32),
     Removed(u32),
-    Wait(u32, u32),
-    Noop,
+    GrowthStarted(u32, u32),
+    GrowthEnded(u32),
 }
 
 impl Event for WaitEvent {
@@ -42,8 +45,8 @@ impl Event for WaitEvent {
         match &self {
             Added(_) => "added",
             Removed(_) => "removed",
-            Wait(_, _) => "wait",
-            Noop => "noop",
+            GrowthStarted(_, _) => "growth_started",
+            GrowthEnded(_) => "growth_ended",
         }
     }
 }
@@ -63,25 +66,32 @@ impl State for WaitState {
         match event {
             Added(n) => self.nb += n,
             Removed(n) => self.nb -= n,
-            Wait(_, _) => {}
-            Noop => {}
+            GrowthStarted(n, _) => self.nb -= n,
+            GrowthEnded(n) => self.nb += n,
         }
     }
 
     fn try_command(&self, command: &Self::Command) -> anyhow::Result<Vec<Self::Event>> {
         match command {
+            WaitCommand::GrowStart(n, s) => {
+                if *n > self.nb {
+                    Err(anyhow!("{} cannot be grown to {}", n, self.nb))
+                } else {
+                    Ok(vec![WaitEvent::GrowthStarted(*n, *s)])
+                }
+            }
+            WaitCommand::GrowEnd(n) => {
+                if self.nb.checked_add(*n).is_none() {
+                    Err(anyhow!("{} cannot be added to {}", n, self.nb))
+                } else {
+                    Ok(vec![WaitEvent::GrowthEnded(*n)])
+                }
+            }
             WaitCommand::Add(n) => {
                 if self.nb.checked_add(*n).is_none() {
                     Err(anyhow!("{} cannot be added to {}", n, self.nb))
                 } else {
                     Ok(vec![WaitEvent::Added(*n)])
-                }
-            }
-            WaitCommand::Grow(n, s) => {
-                if *n > self.nb {
-                    Err(anyhow!("{} cannot be grown to {}", n, self.nb))
-                } else {
-                    Ok(vec![WaitEvent::Removed(*n), WaitEvent::Wait(*n * 2, *s)])
                 }
             }
         }
@@ -103,7 +113,9 @@ impl State for WaitState {
 impl WaitingState<WaitCommand> for WaitState {
     fn get_next(event: &Self::Event) -> Option<(Self::Command, Duration)> {
         match event {
-            WaitEvent::Wait(n, s) => Some((WaitCommand::Add(*n), Duration::from_secs(*s as u64))),
+            WaitEvent::GrowthStarted(n, s) => {
+                Some((WaitCommand::GrowEnd(*n * 2), Duration::from_secs(*s as u64)))
+            }
             _ => None,
         }
     }

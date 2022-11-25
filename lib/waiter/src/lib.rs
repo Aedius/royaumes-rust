@@ -6,12 +6,18 @@ use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 
 pub trait WaitingState<T>: State + Send
-where T : 'static + Command + Send + Sync {
+where
+    T: 'static + Command + Send + Sync,
+{
     fn get_next(event: &Self::Event) -> Option<(T, Duration)>;
 }
 
-pub async fn process_wait<U, T: WaitingState<U> + State<Command = U>>(repo: StateRepository, event: T::Event)
-where U : 'static + Command + Send + Sync , <T as State>::Event: Send
+pub async fn process_wait<U, T: WaitingState<U> + State<Command = U>>(
+    repo: StateRepository,
+    event: T::Event,
+) where
+    U: 'static + Command + Send + Sync,
+    <T as State>::Event: Send,
 {
     let event_db = repo.event_db().clone();
     let stream_name = format!("$et-{}.{}", T::Event::name_prefix(), event.event_name());

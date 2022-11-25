@@ -3,7 +3,6 @@
 use crate::state::{WaitCommand, WaitEvent, WaitState};
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
-use std::{thread, time};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 use waiter::process_wait;
@@ -13,7 +12,7 @@ mod state;
 #[tokio::test]
 async fn waiter_case() {
     let repo = get_repository();
-    process_wait::<WaitCommand, WaitState>(repo.clone(), WaitEvent::Wait(0, 0)).await;
+    process_wait::<WaitCommand, WaitState>(repo.clone(), WaitEvent::GrowthStarted(0, 0)).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 
@@ -35,7 +34,7 @@ async fn waiter_case() {
     );
 
     let growth = repo
-        .add_command::<WaitState>(&key, WaitCommand::Grow(10, 2))
+        .add_command::<WaitState>(&key, WaitCommand::GrowStart(10, 2))
         .await
         .unwrap();
 
@@ -51,7 +50,7 @@ async fn waiter_case() {
         waited,
         WaitState {
             nb: 25,
-            position: 2
+            position: 5
         }
     );
 }

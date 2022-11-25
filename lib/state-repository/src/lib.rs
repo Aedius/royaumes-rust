@@ -75,13 +75,13 @@ impl ModelKey {
     }
 
     fn format(&self) -> String {
-        format!("{}-{}", self.stream_name, self.stream_id)
+        format!("{}.{}", self.stream_name.replace('.', "_"), self.stream_id)
     }
 }
 
 impl From<String> for ModelKey {
     fn from(value: String) -> Self {
-        let mut split = value.split('-');
+        let mut split = value.split('.');
         let stream_name = split.next().unwrap_or_default();
         let stream_id = split.collect();
         ModelKey {
