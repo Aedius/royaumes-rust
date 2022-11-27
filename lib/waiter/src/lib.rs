@@ -1,29 +1,39 @@
 #![feature(associated_type_defaults)]
 
 use eventstore::{StreamPosition, SubscribeToStreamOptions};
-use state::{Command, Event, State};
+use state::{Command, Notification, State};
 use state_repository::{Metadata, ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 
-pub trait CommandFromEvent<E, C>
+#[derive(Debug)]
+pub struct DeportedCommand<C>
 where
-    E: Event + Send + Sync,
-    C: Command + Send + Sync,
+    C: Command,
 {
-    fn get_command(event: E) -> Option<(C, Option<ModelKey>, Option<Duration>)>;
+    pub command: C,
+    pub key: ModelKey,
+    pub duration: Option<Duration>,
 }
 
-pub async fn process_wait<T, V>(repo: StateRepository, event_name: &'static str)
+pub trait CommandFromNotification<N, C>
+where
+    N: Notification + Send + Sync,
+    C: Command + Send + Sync,
+{
+    fn get_command(notification: N, state_key: ModelKey) -> Option<DeportedCommand<C>>;
+}
+
+pub async fn process_wait<T, V>(repo: StateRepository, notification_name: &'static str)
 where
     T: State,
     V: State + Send + 'static,
-    T::Event: Send + Sync,
+    T::Notification: Send + Sync,
     V::Command: Send + Sync,
     V::Event: Send + Sync,
-    V::Command: CommandFromEvent<T::Event, V::Command>,
+    V::Command: CommandFromNotification<T::Notification, V::Command>,
 {
     let event_db = repo.event_db().clone();
-    let stream_name = format!("$et-{}.{}", T::Event::name_prefix(), event_name);
+    let stream_name = format!("$et-{}.{}", T::Notification::name_prefix(), notification_name);
 
     tokio::spawn(async move {
         let options = SubscribeToStreamOptions::default()
@@ -40,22 +50,19 @@ where
                     serde_json::from_slice(e.custom_metadata.as_ref()).unwrap();
                 metadata.set_id(Some(e.id));
 
-                let event: T::Event = e.as_json::<T::Event>().unwrap();
+                let notification: T::Notification = e.as_json::<T::Notification>().unwrap();
 
                 let repo = repo.clone();
 
-                if let Some((command, model_key, duration)) = V::Command::get_command(event) {
+                if let Some(cmd) = V::Command::get_command(notification, e.stream_id.into()) {
+                    println!("{cmd:?}");
+
                     tokio::spawn(async move {
-                        if let Some(d) = duration {
+                        if let Some(d) = cmd.duration {
                             sleep(d).await;
                         }
 
-                        let key: ModelKey = match model_key {
-                            None => e.stream_id.into(),
-                            Some(k) => k,
-                        };
-
-                        repo.add_command::<V>(&key, command, Some(metadata))
+                        repo.add_command::<V>(&cmd.key, cmd.command, Some(metadata))
                             .await
                             .unwrap();
                     });

@@ -1,6 +1,7 @@
 use crate::concurrent::ConcurrentEvent::TimeTaken;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, State};
+use state::{Command, Event, Events, State};
 use std::{thread, time};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -20,7 +21,7 @@ impl Command for ConcurrentCommand {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum ConcurrentEvent {
     TimeTaken(String),
 }
@@ -46,6 +47,7 @@ pub struct ConcurrentState {
 impl State for ConcurrentState {
     type Event = ConcurrentEvent;
     type Command = ConcurrentCommand;
+    type Notification =();
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {
@@ -55,14 +57,17 @@ impl State for ConcurrentState {
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> anyhow::Result<Vec<Self::Event>> {
+    fn try_command(
+        &self,
+        command: &Self::Command,
+    ) -> Result<Events<Self::Event, Self::Notification>> {
         match command {
             ConcurrentCommand::TakeTime(time, name) => {
                 let wait = time::Duration::from_millis((100 * time) as u64);
 
                 thread::sleep(wait);
 
-                Ok(vec![TimeTaken(name.clone())])
+                Ok(Events::new(vec![TimeTaken(name.clone())], vec![]))
             }
         }
     }

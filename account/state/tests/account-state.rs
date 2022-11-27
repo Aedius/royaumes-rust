@@ -23,7 +23,7 @@ fn add_number(world: &mut AccountWorld, rep: usize) {
 
     match events {
         Ok(list) => {
-            for e in list {
+            for e in list.event() {
                 world.model.play_event(&e);
             }
         }
@@ -38,7 +38,7 @@ fn remove_number(world: &mut AccountWorld, rep: usize) {
 
     match events {
         Ok(list) => {
-            for e in list {
+            for e in list.event() {
                 world.model.play_event(&e);
             }
         }

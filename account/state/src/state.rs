@@ -5,7 +5,7 @@ use uuid::Uuid;
 use account_shared::{AccountCommand, AccountDto};
 use anyhow::{anyhow, Result};
 use rocket::serde::{Deserialize, Serialize};
-use state::State;
+use state::{Events, State};
 
 use crate::event::{Created, LoggedIn};
 use crate::{AccountError, AccountEvent};
@@ -48,6 +48,7 @@ impl AccountState {
 impl State for AccountState {
     type Event = AccountEvent;
     type Command = AccountCommand;
+    type Notification =();
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {
@@ -66,7 +67,10 @@ impl State for AccountState {
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
+    fn try_command(
+        &self,
+        command: &Self::Command,
+    ) -> Result<Events<Self::Event, Self::Notification>> {
         match command {
             AccountCommand::CreateAccount(create) => {
                 if !self.pseudo.is_empty() {
@@ -76,19 +80,25 @@ impl State for AccountState {
                 } else {
                     let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
 
-                    Ok(vec![AccountEvent::Created(Created {
-                        uuid: Uuid::new_v4(),
-                        pseudo: create.pseudo.clone(),
-                        time: now.as_secs(),
-                    })])
+                    Ok(Events::new(
+                        vec![AccountEvent::Created(Created {
+                            uuid: Uuid::new_v4(),
+                            pseudo: create.pseudo.clone(),
+                            time: now.as_secs(),
+                        })],
+                        vec![],
+                    ))
                 }
             }
             AccountCommand::Login(_login) => {
                 let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
 
-                Ok(vec![AccountEvent::Logged(LoggedIn {
-                    time: now.as_secs(),
-                })])
+                Ok(Events::new(
+                    vec![AccountEvent::Logged(LoggedIn {
+                        time: now.as_secs(),
+                    })],
+                    vec![],
+                ))
             }
             AccountCommand::AddReputation(nb) => {
                 if self.reputation.checked_add(*nb).is_none() {
@@ -97,7 +107,10 @@ impl State for AccountState {
                         nb, self.reputation
                     ))))
                 } else {
-                    Ok(vec![AccountEvent::ReputationAdded(*nb)])
+                    Ok(Events::new(
+                        vec![AccountEvent::ReputationAdded(*nb)],
+                        vec![],
+                    ))
                 }
             }
             AccountCommand::RemoveReputation(nb) => {
@@ -107,7 +120,10 @@ impl State for AccountState {
                         nb, self.reputation
                     ))))
                 } else {
-                    Ok(vec![AccountEvent::ReputationRemoved(*nb)])
+                    Ok(Events::new(
+                        vec![AccountEvent::ReputationRemoved(*nb)],
+                        vec![],
+                    ))
                 }
             }
         }

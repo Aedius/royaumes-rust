@@ -6,7 +6,7 @@ use eventstore::{
 use redis::Client as CacheDb;
 use redis::Commands;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, State};
+use state::{Command, Event, Notification, State};
 use std::fmt::Debug;
 use uuid::Uuid;
 
@@ -96,7 +96,31 @@ pub fn to_event_data<T: Event>(event: &T, previous: Metadata) -> (EventData, Met
     (event_data, metadata)
 }
 
-#[derive(Debug)]
+pub fn to_notification_data<T: Notification>(event: &T, previous: Metadata) -> (EventData, Metadata) {
+    let id = Uuid::new_v4();
+    let mut event_data = EventData::json(
+        format!("{}.{}", T::name_prefix(), event.notification_name()),
+        event,
+    )
+    .unwrap();
+    event_data = event_data.id(id);
+
+    let metadata = Metadata {
+        id: Some(id),
+        correlation_id: previous.correlation_id,
+        causation_id: match previous.id {
+            None => id,
+            Some(uuid) => uuid,
+        },
+        is_event: false,
+    };
+
+    event_data = event_data.metadata_as_json(&metadata).unwrap();
+
+    (event_data, metadata)
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
 pub struct ModelKey {
     stream_name: String,
     stream_id: String,
@@ -260,8 +284,13 @@ impl StateRepository {
 
         let mut previous_metadata = metadata;
 
-        for event in &events {
+        for event in events.event() {
             let (event_data, metadata) = to_event_data(event, previous_metadata);
+            events_data.push(event_data);
+            previous_metadata = metadata;
+        }
+        for notification in events.notification() {
+            let (event_data, metadata) = to_notification_data(notification, previous_metadata);
             events_data.push(event_data);
             previous_metadata = metadata;
         }
@@ -285,7 +314,7 @@ impl StateRepository {
             }
         }
 
-        Ok((model, events, retry))
+        Ok((model, events.event().to_vec(), retry))
     }
 
     pub fn event_db(&self) -> &EventDb {

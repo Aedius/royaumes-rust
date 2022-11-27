@@ -1,12 +1,18 @@
-use crate::multiple::Cost;
+use crate::multiple::build::{ BuildNotification};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, State};
+use state::{Command, Event, Events, Notification, State};
+use state_repository::ModelKey;
 use std::fmt::Debug;
+use uuid::Uuid;
+use waiter::{CommandFromNotification, DeportedCommand};
+
+pub const ALLOCATED: &'static str = "allocated";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum WorkerCommand {
-    Allocate(Cost),
-    Deallocate(Cost),
+    Allocate(u32, ModelKey),
+    Deallocate(u32, ModelKey),
 }
 
 impl Command for WorkerCommand {
@@ -17,16 +23,16 @@ impl Command for WorkerCommand {
     fn command_name(&self) -> &str {
         use WorkerCommand::*;
         match &self {
-            Allocate(_) => "Allocate",
-            Deallocate(_) => "Deallocate",
+            Allocate(_, _) => "Allocate",
+            Deallocate(_, _) => "Deallocate",
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum WorkerEvent {
-    Allocated(Cost),
-    Deallocated(Cost),
+    Allocated(u32),
+    Deallocated(u32),
 }
 
 impl Event for WorkerEvent {
@@ -38,11 +44,34 @@ impl Event for WorkerEvent {
         use WorkerEvent::*;
 
         match &self {
-            Allocated(_) => "allocated",
+            Allocated(_) => ALLOCATED,
             Deallocated(_) => "deallocated",
         }
     }
 }
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum WorkerNotification {
+    Allocated(u32, ModelKey),
+    Deallocated(u32, ModelKey),
+}
+
+impl Notification for WorkerNotification {
+    fn name_prefix() -> &'static str {
+        "worker"
+    }
+
+    fn notification_name(&self) -> &str {
+        use WorkerNotification::*;
+
+        match &self {
+            Allocated(_, _) => ALLOCATED,
+            Deallocated(_, _) => "deallocated",
+        }
+    }
+}
+
+
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct WorkerState {
@@ -62,22 +91,31 @@ impl Default for WorkerState {
 impl State for WorkerState {
     type Event = WorkerEvent;
     type Command = WorkerCommand;
+    type Notification = WorkerNotification;
 
     fn play_event(&mut self, event: &Self::Event) {
         use WorkerEvent::*;
         match event {
-            Allocated(c) => self.nb -= c.worker,
-            Deallocated(c) => self.nb += c.worker,
+            Allocated(n) => self.nb -= n,
+            Deallocated(n) => self.nb += n,
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> anyhow::Result<Vec<Self::Event>> {
+    fn try_command(
+        &self,
+        command: &Self::Command,
+    ) -> Result<Events<Self::Event, Self::Notification>> {
         use WorkerCommand::*;
-        use WorkerEvent::*;
 
         match command {
-            Allocate(n) => Ok(vec![Allocated(*n)]),
-            Deallocate(n) => Ok(vec![Deallocated(*n)]),
+            Allocate(n, k) => Ok(Events::new(
+                vec![WorkerEvent::Allocated(*n)],
+                vec![WorkerNotification::Allocated(*n, k.clone())]
+            )),
+            Deallocate(n, k) => Ok(Events::new(
+                vec![WorkerEvent::Deallocated(*n)],
+                vec![WorkerNotification::Deallocated(*n, k.clone())]
+            )),
         }
     }
 
@@ -91,5 +129,25 @@ impl State for WorkerState {
 
     fn state_cache_interval() -> Option<u64> {
         None
+    }
+}
+
+impl CommandFromNotification<BuildNotification, WorkerCommand> for WorkerCommand {
+    fn get_command(
+        event: BuildNotification,
+        state_key: ModelKey,
+    ) -> Option<DeportedCommand<WorkerCommand>> {
+        match event {
+            BuildNotification::AllocationNeeded(cost) => {
+                let key = ModelKey::new("worker_test".to_string(), Uuid::new_v4().to_string());
+
+                Some(DeportedCommand {
+                    command: WorkerCommand::Allocate(cost.cost.worker, state_key),
+                    key,
+                    duration: None,
+                })
+            }
+            _ => None,
+        }
     }
 }

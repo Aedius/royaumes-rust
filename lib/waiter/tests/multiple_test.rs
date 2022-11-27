@@ -1,11 +1,14 @@
 #![feature(future_join)]
 
-use crate::multiple::build::{BuildCommand, BuildState};
+use crate::multiple::build::{BuildCommand, BuildState, BuildingCreate, ALLOCATION_NEEDED};
+use crate::multiple::gold::{GoldState, PAID};
+use crate::multiple::worker::{WorkerState, ALLOCATED};
 use crate::multiple::Cost;
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
+use waiter::process_wait;
 
 mod multiple;
 
@@ -13,7 +16,25 @@ mod multiple;
 async fn multiple_state_case() {
     let repo = get_repository();
 
+    process_wait::<BuildState, GoldState>(repo.clone(), ALLOCATION_NEEDED).await;
+    process_wait::<BuildState, WorkerState>(repo.clone(), ALLOCATION_NEEDED).await;
+    process_wait::<GoldState, BuildState>(repo.clone(), PAID).await;
+    process_wait::<WorkerState, BuildState>(repo.clone(), ALLOCATED).await;
+
     let key = ModelKey::new("build_test".to_string(), Uuid::new_v4().to_string());
+
+    let key_bank = ModelKey::new("bank_test".to_string(), Uuid::new_v4().to_string());
+
+    let key_citizen = ModelKey::new("citizen_test".to_string(), Uuid::new_v4().to_string());
+
+    let create = BuildingCreate {
+        cost: Cost {
+            gold: 322,
+            worker: 42,
+        },
+        bank: key_bank.clone(),
+        citizen: key_citizen.clone(),
+    };
 
     let cost = Cost {
         gold: 322,
@@ -21,7 +42,7 @@ async fn multiple_state_case() {
     };
 
     let build = repo
-        .add_command::<BuildState>(&key, BuildCommand::Create(cost), None)
+        .add_command::<BuildState>(&key, BuildCommand::Create(create), None)
         .await
         .unwrap();
 
@@ -31,26 +52,50 @@ async fn multiple_state_case() {
             cost,
             allocated: Default::default(),
             built: false,
+            citizen: Some(key_citizen.clone()),
+            bank: Some(key_bank.clone()),
             position: 0,
         }
     );
 
-    let secs = Duration::from_secs(4);
+    sleep(Duration::from_secs(1)).await;
 
-    sleep(secs).await;
+    let state = repo.get_model::<BuildState>(&key).await.unwrap();
 
-    let cost_gold = Cost {
+    let all_allocated = Cost {
+        gold: 322,
+        worker: 42,
+    };
+
+    assert_eq!(
+        state,
+        BuildState {
+            cost,
+            allocated: all_allocated,
+            built: false,
+            citizen: Some(key_citizen.clone()),
+            bank: Some(key_bank.clone()),
+            position: 6,
+        }
+    );
+
+    sleep(Duration::from_secs(3)).await;
+
+    let state = repo.get_model::<BuildState>(&key).await.unwrap();
+    let worker_freed = Cost {
         gold: 322,
         worker: 0,
     };
 
     assert_eq!(
-        build,
+        state,
         BuildState {
             cost,
-            allocated: cost_gold,
+            allocated: worker_freed,
             built: true,
-            position: 0,
+            position: 8,
+            citizen: Some(key_citizen.clone()),
+            bank: Some(key_bank.clone()),
         }
     );
 }

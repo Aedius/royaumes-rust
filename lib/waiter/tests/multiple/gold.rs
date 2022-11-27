@@ -1,41 +1,66 @@
-use crate::multiple::Cost;
+use crate::multiple::build::{ BuildNotification};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, State};
+use state::{Command, Event, Events, Notification, State};
+use state_repository::ModelKey;
 use std::fmt::Debug;
+use uuid::Uuid;
+use waiter::{CommandFromNotification, DeportedCommand};
+
+pub const PAID: &'static str = "paid";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum GoldCommand {
-    Pay(Cost),
+    Pay(u32, ModelKey),
 }
 
 impl Command for GoldCommand {
     fn name_prefix() -> &'static str {
-        "worker"
+        "gold"
     }
 
     fn command_name(&self) -> &str {
         use GoldCommand::*;
         match &self {
-            Pay(_) => "Pay",
+            Pay(_, _) => "Pay",
         }
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum GoldEvent {
-    Paid(Cost),
+    Paid(u32),
 }
 
 impl Event for GoldEvent {
     fn name_prefix() -> &'static str {
-        "worker"
+        "gold"
     }
 
     fn event_name(&self) -> &str {
         use GoldEvent::*;
 
         match &self {
-            Paid(_) => "paid",
+            Paid(_) => PAID,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum GoldNotification{
+    Paid(u32, ModelKey),
+}
+
+impl Notification for GoldNotification {
+    fn name_prefix() -> &'static str {
+        "gold"
+    }
+
+    fn notification_name(&self) -> &str {
+        use GoldNotification::*;
+
+        match &self {
+            Paid(_, _) => PAID,
         }
     }
 }
@@ -58,16 +83,21 @@ impl Default for GoldState {
 impl State for GoldState {
     type Event = GoldEvent;
     type Command = GoldCommand;
+    type Notification =GoldNotification;
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {
-            GoldEvent::Paid(c) => self.nb -= c.gold,
+            GoldEvent::Paid(c) => self.nb -= c,
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> anyhow::Result<Vec<Self::Event>> {
+    fn try_command(
+        &self,
+        command: &Self::Command,
+    ) -> Result<Events<Self::Event, Self::Notification>> {
         match command {
-            GoldCommand::Pay(n) => Ok(vec![GoldEvent::Paid(*n)]),
+            GoldCommand::Pay(n, k) => Ok(Events::new(vec![GoldEvent::Paid(*n)], vec![
+                GoldNotification::Paid(*n, k.clone())])),
         }
     }
 
@@ -81,5 +111,22 @@ impl State for GoldState {
 
     fn state_cache_interval() -> Option<u64> {
         None
+    }
+}
+
+impl CommandFromNotification<BuildNotification, GoldCommand> for GoldCommand {
+    fn get_command(event: BuildNotification, state_key: ModelKey) -> Option<DeportedCommand<GoldCommand>> {
+        match event {
+            BuildNotification::AllocationNeeded(create) => {
+                let key = ModelKey::new("gold_test".to_string(), Uuid::new_v4().to_string());
+
+                Some(DeportedCommand {
+                    key,
+                    command: GoldCommand::Pay(create.cost.gold, state_key),
+                    duration: None,
+                })
+            }
+            _ => None,
+        }
     }
 }
