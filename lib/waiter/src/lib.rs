@@ -33,7 +33,7 @@ where
     V::Command: CommandFromNotification<T::Notification, V::Command>,
 {
     let event_db = repo.event_db().clone();
-    let stream_name = format!("$et-{}.{}", T::Notification::name_prefix(), notification_name);
+    let stream_name = format!("$et-ntf.{}.{}", T::name_prefix(), notification_name);
 
     tokio::spawn(async move {
         let options = SubscribeToStreamOptions::default()
@@ -55,8 +55,6 @@ where
                 let repo = repo.clone();
 
                 if let Some(cmd) = V::Command::get_command(notification, e.stream_id.into()) {
-                    println!("{cmd:?}");
-
                     tokio::spawn(async move {
                         if let Some(d) = cmd.duration {
                             sleep(d).await;

@@ -29,10 +29,6 @@ pub enum AccountCommand {
 }
 
 impl Command for AccountCommand {
-    fn name_prefix() -> &'static str {
-        "account"
-    }
-
     fn command_name(&self) -> &str {
         match self {
             AccountCommand::CreateAccount(_) => "Create",

@@ -10,10 +10,6 @@ pub enum ConcurrentCommand {
 }
 
 impl Command for ConcurrentCommand {
-    fn name_prefix() -> &'static str {
-        "conc.command"
-    }
-
     fn command_name(&self) -> &str {
         match &self {
             ConcurrentCommand::TakeTime(_, _) => "take_time",
@@ -27,10 +23,6 @@ pub enum ConcurrentEvent {
 }
 
 impl Event for ConcurrentEvent {
-    fn name_prefix() -> &'static str {
-        "conc.event"
-    }
-
     fn event_name(&self) -> &str {
         match &self {
             ConcurrentEvent::TimeTaken(_) => "time_taken",
@@ -47,7 +39,11 @@ pub struct ConcurrentState {
 impl State for ConcurrentState {
     type Event = ConcurrentEvent;
     type Command = ConcurrentCommand;
-    type Notification =();
+    type Notification = ();
+
+    fn name_prefix() -> &'static str {
+        "concurrent"
+    }
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {

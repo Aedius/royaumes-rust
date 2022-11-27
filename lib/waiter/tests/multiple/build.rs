@@ -1,5 +1,5 @@
-use crate::multiple::gold::{ GoldNotification};
-use crate::multiple::worker::{WorkerNotification};
+use crate::multiple::gold::GoldNotification;
+use crate::multiple::worker::WorkerNotification;
 use crate::multiple::Cost;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -10,6 +10,7 @@ use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const ALLOCATION_NEEDED: &'static str = "allocation_needed";
 pub const BUILD_ENDED: &'static str = "build_ended";
+pub const BUILD_STARTED: &'static str = "build_started";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct BuildingCreate {
@@ -21,22 +22,18 @@ pub struct BuildingCreate {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum BuildCommand {
     Create(BuildingCreate),
-    Build(Duration),
     Allocate(Cost),
+    Deallocate(Cost),
     FinnishBuild,
 }
 
 impl Command for BuildCommand {
-    fn name_prefix() -> &'static str {
-        "build"
-    }
-
     fn command_name(&self) -> &str {
         use BuildCommand::*;
         match &self {
             Create(_) => "Create",
             Allocate(_) => "Allocate",
-            Build(_) => "Build",
+            Deallocate(_) => "Deallocate",
             FinnishBuild => "FinnishBuild",
         }
     }
@@ -46,43 +43,37 @@ impl Command for BuildCommand {
 pub enum BuildEvent {
     Created(BuildingCreate),
     Allocated(Cost),
-    BuildStarted(Duration),
+    Deallocated(Cost),
     Built,
 }
 
 impl Event for BuildEvent {
-    fn name_prefix() -> &'static str {
-        "build"
-    }
-
     fn event_name(&self) -> &str {
         use BuildEvent::*;
         match &self {
             Created(_) => "created",
             Allocated(_) => "allocated",
-            BuildStarted(_) => "build_started",
+            Deallocated(_) => "deallocated",
             Built => "build",
         }
     }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub enum BuildNotification{
+pub enum BuildNotification {
     AllocationNeeded(BuildingCreate),
-    BuildEnded(),
+    BuildStarted(Duration),
+    BuildEnded(BuildingCreate),
 }
 
-impl Notification for BuildNotification{
-    fn name_prefix() -> &'static str {
-        "build"
-    }
-
+impl Notification for BuildNotification {
     fn notification_name(&self) -> &str {
         use BuildNotification::*;
 
         match &self {
             AllocationNeeded(_) => ALLOCATION_NEEDED,
-            BuildEnded() => BUILD_ENDED,
+            BuildStarted(_) => BUILD_STARTED,
+            BuildEnded(_) => BUILD_ENDED,
         }
     }
 }
@@ -100,7 +91,11 @@ pub struct BuildState {
 impl State for BuildState {
     type Event = BuildEvent;
     type Command = BuildCommand;
-    type Notification =BuildNotification;
+    type Notification = BuildNotification;
+
+    fn name_prefix() -> &'static str {
+        "test-build"
+    }
 
     fn play_event(&mut self, event: &Self::Event) {
         use BuildEvent::*;
@@ -117,10 +112,13 @@ impl State for BuildState {
                     worker: self.allocated.worker + allocated.worker,
                 }
             }
-            BuildStarted(_) => {}
-            Built => {
-                self.built = true
+            Deallocated(deallocated) => {
+                self.allocated = Cost {
+                    gold: self.allocated.gold - deallocated.gold,
+                    worker: self.allocated.worker - deallocated.worker,
+                }
             }
+            Built => self.built = true,
         }
     }
 
@@ -132,10 +130,32 @@ impl State for BuildState {
         use BuildEvent::*;
         use BuildNotification::*;
         match command {
-            Create(c) => Ok(Events::new(vec![Created(c.clone())], vec![AllocationNeeded(c.clone())])),
-            Allocate(c) => Ok(Events::new(vec![Allocated(*c)], vec![])),
-            Build(d) => Ok(Events::new(vec![BuildStarted(*d)], vec![])),
-            FinnishBuild => Ok(Events::new(vec![Built], vec![BuildEnded()])),
+            Create(c) => Ok(Events::new(
+                vec![Created(c.clone())],
+                vec![AllocationNeeded(c.clone())],
+            )),
+            Allocate(c) => {
+                let mut notifications = Vec::new();
+
+                let mut total = self.allocated;
+                total.worker += c.worker;
+                total.gold += c.gold;
+
+                if total.worker >= self.cost.worker && total.gold >= self.cost.worker {
+                    notifications.push(BuildStarted(Duration::from_secs(2)));
+                }
+
+                Ok(Events::new(vec![Allocated(*c)], notifications))
+            }
+            Deallocate(c) => Ok(Events::new(vec![Deallocated(*c)], Vec::new())),
+            FinnishBuild => Ok(Events::new(
+                vec![Built],
+                vec![BuildEnded(BuildingCreate {
+                    cost: self.cost,
+                    bank: self.bank.clone().unwrap(),
+                    citizen: self.citizen.clone().unwrap(),
+                })],
+            )),
         }
     }
 
@@ -169,14 +189,34 @@ impl CommandFromNotification<GoldNotification, BuildCommand> for BuildCommand {
 
 impl CommandFromNotification<WorkerNotification, BuildCommand> for BuildCommand {
     fn get_command(
-        event: WorkerNotification,
+        notification: WorkerNotification,
         _state_key: ModelKey,
     ) -> Option<DeportedCommand<BuildCommand>> {
-        match event {
+        match notification {
             WorkerNotification::Allocated(worker, paid_key) => Some(DeportedCommand {
                 command: BuildCommand::Allocate(Cost { gold: 0, worker }),
                 key: paid_key,
                 duration: None,
+            }),
+            WorkerNotification::Deallocated(worker, paid_key) => Some(DeportedCommand {
+                command: BuildCommand::Deallocate(Cost { gold: 0, worker }),
+                key: paid_key,
+                duration: None,
+            }),
+        }
+    }
+}
+
+impl CommandFromNotification<BuildNotification, BuildCommand> for BuildCommand {
+    fn get_command(
+        notification: BuildNotification,
+        state_key: ModelKey,
+    ) -> Option<DeportedCommand<BuildCommand>> {
+        match notification {
+            BuildNotification::BuildStarted(s) => Some(DeportedCommand {
+                command: BuildCommand::FinnishBuild,
+                key: state_key,
+                duration: Some(s),
             }),
             _ => None,
         }

@@ -11,10 +11,6 @@ pub enum SimpleCommand {
 }
 
 impl Command for SimpleCommand {
-    fn name_prefix() -> &'static str {
-        "simple"
-    }
-
     fn command_name(&self) -> &str {
         match &self {
             SimpleCommand::Add(_) => "Add",
@@ -31,10 +27,6 @@ pub enum SimpleEvent {
 }
 
 impl Event for SimpleEvent {
-    fn name_prefix() -> &'static str {
-        "simple"
-    }
-
     fn event_name(&self) -> &str {
         match &self {
             SimpleEvent::Added(_) => "added",
@@ -54,6 +46,9 @@ impl State for SimpleState {
     type Command = SimpleCommand;
     type Notification = ();
 
+    fn name_prefix() -> &'static str {
+        "test-simple"
+    }
     fn play_event(&mut self, event: &Self::Event) {
         match event {
             SimpleEvent::Added(n) => self.nb += n,

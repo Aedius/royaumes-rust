@@ -1,8 +1,10 @@
 #![feature(future_join)]
 
-use crate::multiple::build::{BuildCommand, BuildState, BuildingCreate, ALLOCATION_NEEDED};
+use crate::multiple::build::{
+    BuildCommand, BuildState, BuildingCreate, ALLOCATION_NEEDED, BUILD_ENDED, BUILD_STARTED,
+};
 use crate::multiple::gold::{GoldState, PAID};
-use crate::multiple::worker::{WorkerState, ALLOCATED};
+use crate::multiple::worker::{WorkerState, ALLOCATED, DEALLOCATED};
 use crate::multiple::Cost;
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
@@ -18,8 +20,11 @@ async fn multiple_state_case() {
 
     process_wait::<BuildState, GoldState>(repo.clone(), ALLOCATION_NEEDED).await;
     process_wait::<BuildState, WorkerState>(repo.clone(), ALLOCATION_NEEDED).await;
+    process_wait::<BuildState, WorkerState>(repo.clone(), BUILD_ENDED).await;
     process_wait::<GoldState, BuildState>(repo.clone(), PAID).await;
     process_wait::<WorkerState, BuildState>(repo.clone(), ALLOCATED).await;
+    process_wait::<WorkerState, BuildState>(repo.clone(), DEALLOCATED).await;
+    process_wait::<BuildState, BuildState>(repo.clone(), BUILD_STARTED).await;
 
     let key = ModelKey::new("build_test".to_string(), Uuid::new_v4().to_string());
 
@@ -75,7 +80,27 @@ async fn multiple_state_case() {
             built: false,
             citizen: Some(key_citizen.clone()),
             bank: Some(key_bank.clone()),
-            position: 6,
+            position: 7,
+        }
+    );
+
+    let worker_state = repo.get_model::<WorkerState>(&key_citizen).await.unwrap();
+
+    assert_eq!(
+        worker_state,
+        WorkerState {
+            nb: 58,
+            position: 2,
+        }
+    );
+
+    let gold_state = repo.get_model::<GoldState>(&key_bank).await.unwrap();
+
+    assert_eq!(
+        gold_state,
+        GoldState {
+            nb: 678,
+            position: 2,
         }
     );
 
@@ -93,9 +118,28 @@ async fn multiple_state_case() {
             cost,
             allocated: worker_freed,
             built: true,
-            position: 8,
+            position: 12,
             citizen: Some(key_citizen.clone()),
             bank: Some(key_bank.clone()),
+        }
+    );
+
+    let worker_state = repo.get_model::<WorkerState>(&key_citizen).await.unwrap();
+
+    assert_eq!(
+        worker_state,
+        WorkerState {
+            nb: 100,
+            position: 5,
+        }
+    );
+    let gold_state = repo.get_model::<GoldState>(&key_bank).await.unwrap();
+
+    assert_eq!(
+        gold_state,
+        GoldState {
+            nb: 678,
+            position: 2,
         }
     );
 }

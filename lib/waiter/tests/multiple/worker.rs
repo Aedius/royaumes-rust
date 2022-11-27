@@ -1,13 +1,13 @@
-use crate::multiple::build::{ BuildNotification};
+use crate::multiple::build::BuildNotification;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use std::fmt::Debug;
-use uuid::Uuid;
 use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const ALLOCATED: &'static str = "allocated";
+pub const DEALLOCATED: &'static str = "deallocated";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum WorkerCommand {
@@ -16,10 +16,6 @@ pub enum WorkerCommand {
 }
 
 impl Command for WorkerCommand {
-    fn name_prefix() -> &'static str {
-        "worker"
-    }
-
     fn command_name(&self) -> &str {
         use WorkerCommand::*;
         match &self {
@@ -36,16 +32,12 @@ pub enum WorkerEvent {
 }
 
 impl Event for WorkerEvent {
-    fn name_prefix() -> &'static str {
-        "worker"
-    }
-
     fn event_name(&self) -> &str {
         use WorkerEvent::*;
 
         match &self {
             Allocated(_) => ALLOCATED,
-            Deallocated(_) => "deallocated",
+            Deallocated(_) => DEALLOCATED,
         }
     }
 }
@@ -57,10 +49,6 @@ pub enum WorkerNotification {
 }
 
 impl Notification for WorkerNotification {
-    fn name_prefix() -> &'static str {
-        "worker"
-    }
-
     fn notification_name(&self) -> &str {
         use WorkerNotification::*;
 
@@ -71,11 +59,9 @@ impl Notification for WorkerNotification {
     }
 }
 
-
-
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct WorkerState {
-    nb: u32,
+    pub nb: u32,
     pub position: u64,
 }
 
@@ -93,6 +79,9 @@ impl State for WorkerState {
     type Command = WorkerCommand;
     type Notification = WorkerNotification;
 
+    fn name_prefix() -> &'static str {
+        "test-worker"
+    }
     fn play_event(&mut self, event: &Self::Event) {
         use WorkerEvent::*;
         match event {
@@ -110,11 +99,11 @@ impl State for WorkerState {
         match command {
             Allocate(n, k) => Ok(Events::new(
                 vec![WorkerEvent::Allocated(*n)],
-                vec![WorkerNotification::Allocated(*n, k.clone())]
+                vec![WorkerNotification::Allocated(*n, k.clone())],
             )),
             Deallocate(n, k) => Ok(Events::new(
                 vec![WorkerEvent::Deallocated(*n)],
-                vec![WorkerNotification::Deallocated(*n, k.clone())]
+                vec![WorkerNotification::Deallocated(*n, k.clone())],
             )),
         }
     }
@@ -138,15 +127,16 @@ impl CommandFromNotification<BuildNotification, WorkerCommand> for WorkerCommand
         state_key: ModelKey,
     ) -> Option<DeportedCommand<WorkerCommand>> {
         match event {
-            BuildNotification::AllocationNeeded(cost) => {
-                let key = ModelKey::new("worker_test".to_string(), Uuid::new_v4().to_string());
-
-                Some(DeportedCommand {
-                    command: WorkerCommand::Allocate(cost.cost.worker, state_key),
-                    key,
-                    duration: None,
-                })
-            }
+            BuildNotification::AllocationNeeded(bd) => Some(DeportedCommand {
+                command: WorkerCommand::Allocate(bd.cost.worker, state_key),
+                key: bd.citizen,
+                duration: None,
+            }),
+            BuildNotification::BuildEnded(bd) => Some(DeportedCommand {
+                command: WorkerCommand::Deallocate(bd.cost.worker, state_key),
+                key: bd.citizen,
+                duration: None,
+            }),
             _ => None,
         }
     }

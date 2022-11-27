@@ -37,13 +37,13 @@ impl Metadata {
     }
 }
 
-pub fn to_command_data<T: Command>(
-    command: &T,
+pub fn to_command_data<S: State>(
+    command: &S::Command,
     previous_metadata: Option<Metadata>,
 ) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
-        format!("{}.{}", T::name_prefix(), command.command_name()),
+        format!("cmd.{}.{}", S::name_prefix(), command.command_name()),
         command,
     )
     .unwrap();
@@ -72,10 +72,10 @@ pub fn to_command_data<T: Command>(
     (event_data, metadata)
 }
 
-pub fn to_event_data<T: Event>(event: &T, previous: Metadata) -> (EventData, Metadata) {
+pub fn to_event_data<S: State>(event: &S::Event, previous: Metadata) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
-        format!("{}.{}", T::name_prefix(), event.event_name()),
+        format!("evt.{}.{}", S::name_prefix(), event.event_name()),
         event,
     )
     .unwrap();
@@ -96,11 +96,18 @@ pub fn to_event_data<T: Event>(event: &T, previous: Metadata) -> (EventData, Met
     (event_data, metadata)
 }
 
-pub fn to_notification_data<T: Notification>(event: &T, previous: Metadata) -> (EventData, Metadata) {
+pub fn to_notification_data<S: State>(
+    notification: &S::Notification,
+    previous: Metadata,
+) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
-        format!("{}.{}", T::name_prefix(), event.notification_name()),
-        event,
+        format!(
+            "ntf.{}.{}",
+            S::name_prefix(),
+            notification.notification_name()
+        ),
+        notification,
     )
     .unwrap();
     event_data = event_data.id(id);
@@ -278,19 +285,19 @@ impl StateRepository {
             AppendToStreamOptions::default().expected_revision(ExpectedRevision::Exact(position))
         };
 
-        let (command_data, metadata) = to_command_data(command, previous_metadata);
+        let (command_data, metadata) = to_command_data::<T>(command, previous_metadata);
 
         let mut events_data = vec![command_data];
 
         let mut previous_metadata = metadata;
 
         for event in events.event() {
-            let (event_data, metadata) = to_event_data(event, previous_metadata);
+            let (event_data, metadata) = to_event_data::<T>(event, previous_metadata);
             events_data.push(event_data);
             previous_metadata = metadata;
         }
         for notification in events.notification() {
-            let (event_data, metadata) = to_notification_data(notification, previous_metadata);
+            let (event_data, metadata) = to_notification_data::<T>(notification, previous_metadata);
             events_data.push(event_data);
             previous_metadata = metadata;
         }

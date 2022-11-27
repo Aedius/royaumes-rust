@@ -48,7 +48,11 @@ impl AccountState {
 impl State for AccountState {
     type Event = AccountEvent;
     type Command = AccountCommand;
-    type Notification =();
+    type Notification = ();
+
+    fn name_prefix() -> &'static str {
+        "account"
+    }
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {

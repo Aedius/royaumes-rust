@@ -16,10 +16,6 @@ pub enum SingleCommand {
 pub const GROWTH_STARTED: &str = "growth_started";
 
 impl Command for SingleCommand {
-    fn name_prefix() -> &'static str {
-        "wait"
-    }
-
     fn command_name(&self) -> &str {
         use SingleCommand::*;
         match &self {
@@ -38,10 +34,6 @@ pub enum SingleEvent {
 }
 
 impl Event for SingleEvent {
-    fn name_prefix() -> &'static str {
-        "wait"
-    }
-
     fn event_name(&self) -> &str {
         use SingleEvent::*;
 
@@ -59,10 +51,6 @@ pub enum SingleNotification {
 }
 
 impl Notification for SingleNotification {
-    fn name_prefix() -> &'static str {
-        "wait"
-    }
-
     fn notification_name(&self) -> &str {
         use SingleNotification::*;
 
@@ -71,7 +59,6 @@ impl Notification for SingleNotification {
         }
     }
 }
-
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct SingleState {
@@ -84,6 +71,9 @@ impl State for SingleState {
     type Command = SingleCommand;
     type Notification = SingleNotification;
 
+    fn name_prefix() -> &'static str {
+        "test-single"
+    }
     fn play_event(&mut self, event: &Self::Event) {
         use SingleEvent::*;
         match event {
@@ -105,10 +95,7 @@ impl State for SingleState {
                 if *n > self.nb {
                     Err(anyhow!("{} cannot be grown to {}", n, self.nb))
                 } else {
-                    Ok(Events::new(
-                        vec![Removed(*n)],
-                        vec![GrowthStarted(*n, *s)])
-                    )
+                    Ok(Events::new(vec![Removed(*n)], vec![GrowthStarted(*n, *s)]))
                 }
             }
             GrowEnd(n) => {

@@ -5,17 +5,14 @@ use serde::Serialize;
 use std::fmt::Debug;
 
 pub trait Command: Serialize + DeserializeOwned + Debug + Send + Clone {
-    fn name_prefix() -> &'static str;
     fn command_name(&self) -> &str;
 }
 
 pub trait Event: Serialize + DeserializeOwned + Debug + Clone {
-    fn name_prefix() -> &'static str;
     fn event_name(&self) -> &str;
 }
 
-pub trait Notification: Serialize + DeserializeOwned + Debug + Send + Clone{
-    fn name_prefix() -> &'static str;
+pub trait Notification: Serialize + DeserializeOwned + Debug + Send + Clone {
     fn notification_name(&self) -> &str;
 }
 
@@ -28,18 +25,13 @@ where
     notification: Vec<U>,
 }
 
-
-impl Notification for (){
-    fn name_prefix() -> &'static str {
-        "noop"
-    }
-
+impl Notification for () {
     fn notification_name(&self) -> &str {
         "noop"
     }
 }
 
-impl<T:Event, U:Notification> Events<T, U> {
+impl<T: Event, U: Notification> Events<T, U> {
     pub fn new(event: Vec<T>, notification: Vec<U>) -> Self {
         Self {
             event,
@@ -59,6 +51,8 @@ pub trait State: Default + Serialize + DeserializeOwned + Debug {
     type Event: Event;
     type Notification: Notification;
     type Command: Command;
+
+    fn name_prefix() -> &'static str;
 
     fn play_event(&mut self, event: &Self::Event);
 
