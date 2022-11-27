@@ -50,7 +50,7 @@ async fn single_state_case() {
         waited,
         SingleState {
             nb: 25,
-            position: 5
+            position: 6
         }
     );
 }
