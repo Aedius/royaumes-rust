@@ -43,14 +43,14 @@ pub async fn handle_anonymous(
             AccountCommand::AddReputation(cmd) => {
                 let key = ModelKey::new("account".to_string(), token.uuid.clone());
                 state_repository
-                    .add_command::<AccountState>(&key, AccountCommand::AddReputation(cmd))
+                    .add_command::<AccountState>(&key, AccountCommand::AddReputation(cmd), None)
                     .await?;
                 Ok("added".to_string())
             }
             AccountCommand::RemoveReputation(cmd) => {
                 let key = ModelKey::new("account".to_string(), token.uuid.clone());
                 state_repository
-                    .add_command::<AccountState>(&key, AccountCommand::RemoveReputation(cmd))
+                    .add_command::<AccountState>(&key, AccountCommand::RemoveReputation(cmd), None)
                     .await?;
                 Ok("removed".to_string())
             }
@@ -86,7 +86,7 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
     });
 
     state_repository
-        .add_command::<AccountState>(&get_key(Some(exists.uuid.clone())), command)
+        .add_command::<AccountState>(&get_key(Some(exists.uuid.clone())), command, None)
         .await?;
 
     Ok(create_token(exists.uuid))
@@ -163,7 +163,7 @@ VALUES (?, ?, ?, ?, ?);
     });
 
     state_repository
-        .add_command::<AccountState>(&key, command)
+        .add_command::<AccountState>(&key, command, None)
         .await?;
 
     Ok(create_token(id))

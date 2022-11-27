@@ -22,7 +22,7 @@ async fn easy_case() {
     assert_eq!(model, SimpleState { nb: 0, position: 0 });
 
     let added = repo
-        .add_command::<SimpleState>(&key, SimpleCommand::Add(17))
+        .add_command::<SimpleState>(&key, SimpleCommand::Add(17), None)
         .await
         .unwrap();
 
@@ -54,7 +54,7 @@ async fn easy_case() {
         }
     );
 
-    repo.add_command::<SimpleState>(&key, SimpleCommand::Set(50))
+    repo.add_command::<SimpleState>(&key, SimpleCommand::Set(50), None)
         .await
         .unwrap();
 
@@ -95,11 +95,17 @@ async fn concurrent_case() {
         }
     );
 
-    let add_one = repo
-        .add_command::<ConcurrentState>(&key, ConcurrentCommand::TakeTime(1, "one".to_string()));
+    let add_one = repo.add_command::<ConcurrentState>(
+        &key,
+        ConcurrentCommand::TakeTime(1, "one".to_string()),
+        None,
+    );
 
-    let add_two = repo
-        .add_command::<ConcurrentState>(&key, ConcurrentCommand::TakeTime(2, "two".to_string()));
+    let add_two = repo.add_command::<ConcurrentState>(
+        &key,
+        ConcurrentCommand::TakeTime(2, "two".to_string()),
+        None,
+    );
 
     let (one, two) = join!(add_one, add_two).await;
 
