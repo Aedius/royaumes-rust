@@ -1,8 +1,9 @@
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
+use state_repository::ModelKey;
 use tokio::time::Duration;
-use waiter::WaitingState;
+use waiter::CommandFromEvent;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum SingleCommand {
@@ -10,6 +11,8 @@ pub enum SingleCommand {
     GrowEnd(u32),
     Add(u32),
 }
+
+pub const GROWTH_STARTED: &str = "growth_started";
 
 impl Command for SingleCommand {
     fn name_prefix() -> &'static str {
@@ -45,7 +48,7 @@ impl Event for SingleEvent {
         match &self {
             Added(_) => "added",
             Removed(_) => "removed",
-            GrowthStarted(_, _) => "growth_started",
+            GrowthStarted(_, _) => GROWTH_STARTED,
             GrowthEnded(_) => "growth_ended",
         }
     }
@@ -112,12 +115,15 @@ impl State for SingleState {
     }
 }
 
-impl WaitingState<SingleCommand> for SingleState {
-    fn get_next(event: &Self::Event) -> Option<(Self::Command, Duration)> {
+impl CommandFromEvent<SingleEvent, SingleCommand> for SingleCommand {
+    fn get_command(
+        event: SingleEvent,
+    ) -> Option<(SingleCommand, Option<ModelKey>, Option<Duration>)> {
         match event {
             SingleEvent::GrowthStarted(n, s) => Some((
-                SingleCommand::GrowEnd(*n * 2),
-                Duration::from_secs(*s as u64),
+                SingleCommand::GrowEnd(n * 2),
+                None,
+                Some(Duration::from_secs(s as u64)),
             )),
             _ => None,
         }

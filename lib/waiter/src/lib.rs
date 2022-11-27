@@ -5,22 +5,25 @@ use state::{Command, Event, State};
 use state_repository::{Metadata, ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 
-pub trait WaitingState<T>: State + Send
+pub trait CommandFromEvent<E, C>
 where
-    T: 'static + Command + Send + Sync,
+    E: Event + Send + Sync,
+    C: Command + Send + Sync,
 {
-    fn get_next(event: &Self::Event) -> Option<(T, Duration)>;
+    fn get_command(event: E) -> Option<(C, Option<ModelKey>, Option<Duration>)>;
 }
 
-pub async fn process_wait<U, T: WaitingState<U> + State<Command = U>>(
-    repo: StateRepository,
-    event: T::Event,
-) where
-    U: 'static + Command + Send + Sync,
-    <T as State>::Event: Send,
+pub async fn process_wait<T, V>(repo: StateRepository, event_name: &'static str)
+where
+    T: State,
+    V: State + Send + 'static,
+    T::Event: Send + Sync,
+    V::Command: Send + Sync,
+    V::Event: Send + Sync,
+    V::Command: CommandFromEvent<T::Event, V::Command>,
 {
     let event_db = repo.event_db().clone();
-    let stream_name = format!("$et-{}.{}", T::Event::name_prefix(), event.event_name());
+    let stream_name = format!("$et-{}.{}", T::Event::name_prefix(), event_name);
 
     tokio::spawn(async move {
         let options = SubscribeToStreamOptions::default()
@@ -41,12 +44,18 @@ pub async fn process_wait<U, T: WaitingState<U> + State<Command = U>>(
 
                 let repo = repo.clone();
 
-                if let Some((c, d)) = T::get_next(&event) {
+                if let Some((command, model_key, duration)) = V::Command::get_command(event) {
                     tokio::spawn(async move {
-                        sleep(d).await;
-                        let key: ModelKey = e.stream_id.into();
-                        println!("{key:?}");
-                        repo.add_command::<T>(&key, c, Some(metadata))
+                        if let Some(d) = duration {
+                            sleep(d).await;
+                        }
+
+                        let key: ModelKey = match model_key {
+                            None => e.stream_id.into(),
+                            Some(k) => k,
+                        };
+
+                        repo.add_command::<V>(&key, command, Some(metadata))
                             .await
                             .unwrap();
                     });

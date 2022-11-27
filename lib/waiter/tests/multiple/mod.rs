@@ -1,5 +1,5 @@
-pub mod gold;
 pub mod build;
+pub mod gold;
 pub mod worker;
 use serde::{Deserialize, Serialize};
 

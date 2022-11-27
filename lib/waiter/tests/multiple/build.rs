@@ -1,7 +1,7 @@
 use crate::multiple::Cost;
+use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum BuildCommand {

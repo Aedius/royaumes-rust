@@ -1,6 +1,6 @@
 #![feature(future_join)]
 
-use crate::single::{SingleCommand, SingleEvent, SingleState};
+use crate::single::{SingleCommand, SingleState, GROWTH_STARTED};
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
@@ -12,7 +12,7 @@ mod single;
 #[tokio::test]
 async fn single_state_case() {
     let repo = get_repository();
-    process_wait::<SingleCommand, SingleState>(repo.clone(), SingleEvent::GrowthStarted(0, 0)).await;
+    process_wait::<SingleState, SingleState>(repo.clone(), GROWTH_STARTED).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 
@@ -54,7 +54,6 @@ async fn single_state_case() {
         }
     );
 }
-
 
 fn get_repository() -> StateRepository {
     let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"
