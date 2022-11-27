@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
 use std::{thread, time};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum ConcurrentCommand {
     TakeTime(u8, String),
 }
@@ -20,7 +20,7 @@ impl Command for ConcurrentCommand {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum ConcurrentEvent {
     TimeTaken(String),
 }

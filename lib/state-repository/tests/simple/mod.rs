@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum SimpleCommand {
     Add(u32),
     Remove(u32),
@@ -23,7 +23,7 @@ impl Command for SimpleCommand {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum SimpleEvent {
     Added(u32),
     Removed(u32),
