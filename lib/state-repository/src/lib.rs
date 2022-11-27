@@ -12,6 +12,8 @@ use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Metadata {
+    #[serde(skip_serializing)]
+    id: Option<Uuid>,
     #[serde(rename = "$correlationId")]
     correlation_id: Uuid,
     #[serde(rename = "$causationId")]
@@ -20,7 +22,25 @@ pub struct Metadata {
     is_event: bool,
 }
 
-pub fn to_command_data<T: Command>(command: &T) -> (EventData, Uuid) {
+impl Metadata {
+    pub fn correlation_id(&self) -> Uuid {
+        self.correlation_id
+    }
+    pub fn causation_id(&self) -> Uuid {
+        self.causation_id
+    }
+    pub fn set_id(&mut self, id: Option<Uuid>) {
+        self.id = id;
+    }
+    pub fn id(&self) -> Option<Uuid> {
+        self.id
+    }
+}
+
+pub fn to_command_data<T: Command>(
+    command: &T,
+    previous_metadata: Option<Metadata>,
+) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
         format!("{}.{}", T::name_prefix(), command.command_name()),
@@ -29,18 +49,30 @@ pub fn to_command_data<T: Command>(command: &T) -> (EventData, Uuid) {
     .unwrap();
     event_data = event_data.id(id);
 
-    event_data = event_data
-        .metadata_as_json(Metadata {
+    let metadata = match previous_metadata {
+        None => Metadata {
+            id: Some(id),
             correlation_id: id,
             causation_id: id,
             is_event: false,
-        })
-        .unwrap();
+        },
+        Some(previous) => Metadata {
+            id: Some(id),
+            correlation_id: previous.correlation_id,
+            causation_id: match previous.id {
+                None => id,
+                Some(p) => p,
+            },
+            is_event: false,
+        },
+    };
 
-    (event_data, id)
+    event_data = event_data.metadata_as_json(&metadata).unwrap();
+
+    (event_data, metadata)
 }
 
-pub fn to_event_data<T: Event>(event: &T, command_id: Uuid, previous: Uuid) -> (EventData, Uuid) {
+pub fn to_event_data<T: Event>(event: &T, previous: Metadata) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
         format!("{}.{}", T::name_prefix(), event.event_name()),
@@ -49,15 +81,19 @@ pub fn to_event_data<T: Event>(event: &T, command_id: Uuid, previous: Uuid) -> (
     .unwrap();
     event_data = event_data.id(id);
 
-    event_data = event_data
-        .metadata_as_json(Metadata {
-            correlation_id: command_id,
-            causation_id: previous,
-            is_event: true,
-        })
-        .unwrap();
+    let metadata = Metadata {
+        id: Some(id),
+        correlation_id: previous.correlation_id,
+        causation_id: match previous.id {
+            None => id,
+            Some(uuid) => uuid,
+        },
+        is_event: true,
+    };
 
-    (event_data, id)
+    event_data = event_data.metadata_as_json(&metadata).unwrap();
+
+    (event_data, metadata)
 }
 
 #[derive(Debug)]
@@ -166,7 +202,12 @@ impl StateRepository {
         Ok(value)
     }
 
-    pub async fn add_command<T>(&self, key: &ModelKey, command: T::Command) -> Result<T>
+    pub async fn add_command<T>(
+        &self,
+        key: &ModelKey,
+        command: T::Command,
+        previous_metadata: Option<Metadata>,
+    ) -> Result<T>
     where
         T: State,
     {
@@ -174,7 +215,9 @@ impl StateRepository {
         let events: Vec<T::Event>;
 
         loop {
-            let (l_model, l_events, retry) = self.try_append(key, &command).await?;
+            let (l_model, l_events, retry) = self
+                .try_append(key, &command, previous_metadata.clone())
+                .await?;
             if retry {
                 continue;
             }
@@ -195,6 +238,7 @@ impl StateRepository {
         &self,
         key: &ModelKey,
         command: &T::Command,
+        previous_metadata: Option<Metadata>,
     ) -> Result<(T, Vec<T::Event>, bool)>
     where
         T: State,
@@ -210,16 +254,16 @@ impl StateRepository {
             AppendToStreamOptions::default().expected_revision(ExpectedRevision::Exact(position))
         };
 
-        let (command_data, command_uuid) = to_command_data(command);
+        let (command_data, metadata) = to_command_data(command, previous_metadata);
 
         let mut events_data = vec![command_data];
 
-        let mut previous_uuid = command_uuid;
+        let mut previous_metadata = metadata;
 
         for event in &events {
-            let (event_data, uuid) = to_event_data(event, command_uuid, previous_uuid);
+            let (event_data, metadata) = to_event_data(event, previous_metadata);
             events_data.push(event_data);
-            previous_uuid = uuid;
+            previous_metadata = metadata;
         }
 
         let appended = self

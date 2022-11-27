@@ -21,7 +21,7 @@ async fn waiter_case() {
     assert_eq!(model, WaitState { nb: 0, position: 0 });
 
     let added = repo
-        .add_command::<WaitState>(&key, WaitCommand::Add(15))
+        .add_command::<WaitState>(&key, WaitCommand::Add(15), None)
         .await
         .unwrap();
 
@@ -34,7 +34,7 @@ async fn waiter_case() {
     );
 
     let growth = repo
-        .add_command::<WaitState>(&key, WaitCommand::GrowStart(10, 2))
+        .add_command::<WaitState>(&key, WaitCommand::GrowStart(10, 2), None)
         .await
         .unwrap();
 
