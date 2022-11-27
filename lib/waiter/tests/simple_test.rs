@@ -1,59 +1,60 @@
 #![feature(future_join)]
 
-use crate::state::{WaitCommand, WaitEvent, WaitState};
+use crate::single::{SingleCommand, SingleEvent, SingleState};
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 use waiter::process_wait;
 
-mod state;
+mod single;
 
 #[tokio::test]
-async fn waiter_case() {
+async fn single_state_case() {
     let repo = get_repository();
-    process_wait::<WaitCommand, WaitState>(repo.clone(), WaitEvent::GrowthStarted(0, 0)).await;
+    process_wait::<SingleCommand, SingleState>(repo.clone(), SingleEvent::GrowthStarted(0, 0)).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 
-    let model = repo.get_model::<WaitState>(&key).await.unwrap();
+    let model = repo.get_model::<SingleState>(&key).await.unwrap();
 
-    assert_eq!(model, WaitState { nb: 0, position: 0 });
+    assert_eq!(model, SingleState { nb: 0, position: 0 });
 
     let added = repo
-        .add_command::<WaitState>(&key, WaitCommand::Add(15), None)
+        .add_command::<SingleState>(&key, SingleCommand::Add(15), None)
         .await
         .unwrap();
 
     assert_eq!(
         added,
-        WaitState {
+        SingleState {
             nb: 15,
             position: 0
         }
     );
 
     let growth = repo
-        .add_command::<WaitState>(&key, WaitCommand::GrowStart(10, 2), None)
+        .add_command::<SingleState>(&key, SingleCommand::GrowStart(10, 2), None)
         .await
         .unwrap();
 
-    assert_eq!(growth, WaitState { nb: 5, position: 1 });
+    assert_eq!(growth, SingleState { nb: 5, position: 1 });
 
     let secs = Duration::from_secs(4);
 
     sleep(secs).await;
 
-    let waited = repo.get_model::<WaitState>(&key).await.unwrap();
+    let waited = repo.get_model::<SingleState>(&key).await.unwrap();
 
     assert_eq!(
         waited,
-        WaitState {
+        SingleState {
             nb: 25,
             position: 5
         }
     );
 }
+
 
 fn get_repository() -> StateRepository {
     let settings = "esdb://admin:changeit@localhost:2113?tls=false&tlsVerifyCert=false"

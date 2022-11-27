@@ -5,19 +5,19 @@ use tokio::time::Duration;
 use waiter::WaitingState;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub enum WaitCommand {
+pub enum SingleCommand {
     GrowStart(u32, u32),
     GrowEnd(u32),
     Add(u32),
 }
 
-impl Command for WaitCommand {
+impl Command for SingleCommand {
     fn name_prefix() -> &'static str {
         "wait"
     }
 
     fn command_name(&self) -> &str {
-        use WaitCommand::*;
+        use SingleCommand::*;
         match &self {
             GrowStart(_, _) => "GrowStart",
             GrowEnd(_) => "GrowEnd",
@@ -27,20 +27,20 @@ impl Command for WaitCommand {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum WaitEvent {
+pub enum SingleEvent {
     Added(u32),
     Removed(u32),
     GrowthStarted(u32, u32),
     GrowthEnded(u32),
 }
 
-impl Event for WaitEvent {
+impl Event for SingleEvent {
     fn name_prefix() -> &'static str {
         "wait"
     }
 
     fn event_name(&self) -> &str {
-        use WaitEvent::*;
+        use SingleEvent::*;
 
         match &self {
             Added(_) => "added",
@@ -52,17 +52,17 @@ impl Event for WaitEvent {
 }
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
-pub struct WaitState {
+pub struct SingleState {
     pub nb: u32,
     pub position: u64,
 }
 
-impl State for WaitState {
-    type Event = WaitEvent;
-    type Command = WaitCommand;
+impl State for SingleState {
+    type Event = SingleEvent;
+    type Command = SingleCommand;
 
     fn play_event(&mut self, event: &Self::Event) {
-        use WaitEvent::*;
+        use SingleEvent::*;
         match event {
             Added(n) => self.nb += n,
             Removed(n) => self.nb -= n,
@@ -72,26 +72,28 @@ impl State for WaitState {
     }
 
     fn try_command(&self, command: &Self::Command) -> anyhow::Result<Vec<Self::Event>> {
+        use SingleCommand::*;
+        use SingleEvent::*;
         match command {
-            WaitCommand::GrowStart(n, s) => {
+            GrowStart(n, s) => {
                 if *n > self.nb {
                     Err(anyhow!("{} cannot be grown to {}", n, self.nb))
                 } else {
-                    Ok(vec![WaitEvent::GrowthStarted(*n, *s)])
+                    Ok(vec![GrowthStarted(*n, *s)])
                 }
             }
-            WaitCommand::GrowEnd(n) => {
+            GrowEnd(n) => {
                 if self.nb.checked_add(*n).is_none() {
                     Err(anyhow!("{} cannot be added to {}", n, self.nb))
                 } else {
-                    Ok(vec![WaitEvent::GrowthEnded(*n)])
+                    Ok(vec![GrowthEnded(*n)])
                 }
             }
-            WaitCommand::Add(n) => {
+            Add(n) => {
                 if self.nb.checked_add(*n).is_none() {
                     Err(anyhow!("{} cannot be added to {}", n, self.nb))
                 } else {
-                    Ok(vec![WaitEvent::Added(*n)])
+                    Ok(vec![Added(*n)])
                 }
             }
         }
@@ -110,12 +112,13 @@ impl State for WaitState {
     }
 }
 
-impl WaitingState<WaitCommand> for WaitState {
+impl WaitingState<SingleCommand> for SingleState {
     fn get_next(event: &Self::Event) -> Option<(Self::Command, Duration)> {
         match event {
-            WaitEvent::GrowthStarted(n, s) => {
-                Some((WaitCommand::GrowEnd(*n * 2), Duration::from_secs(*s as u64)))
-            }
+            SingleEvent::GrowthStarted(n, s) => Some((
+                SingleCommand::GrowEnd(*n * 2),
+                Duration::from_secs(*s as u64),
+            )),
             _ => None,
         }
     }
