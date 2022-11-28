@@ -7,6 +7,7 @@ use std::fmt::Debug;
 use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const PAID: &'static str = "paid";
+const GOLD_STATE_NAME: &'static str = "test-gold";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum GoldCommand {
@@ -43,6 +44,10 @@ pub enum GoldNotification {
 }
 
 impl Notification for GoldNotification {
+    fn state_prefix() -> &'static str {
+        GOLD_STATE_NAME
+    }
+
     fn notification_name(&self) -> &str {
         use GoldNotification::*;
 
@@ -73,7 +78,7 @@ impl State for GoldState {
     type Notification = GoldNotification;
 
     fn name_prefix() -> &'static str {
-        "test-gold"
+        GOLD_STATE_NAME
     }
 
     fn play_event(&mut self, event: &Self::Event) {

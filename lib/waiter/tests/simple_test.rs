@@ -1,6 +1,6 @@
 #![feature(future_join)]
 
-use crate::single::{SingleCommand, SingleState, GROWTH_STARTED};
+use crate::single::{SingleCommand, SingleNotification, SingleState, GROWTH_STARTED};
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
@@ -12,7 +12,7 @@ mod single;
 #[tokio::test]
 async fn single_state_case() {
     let repo = get_repository();
-    process_wait::<SingleState, SingleState>(repo.clone(), vec!(GROWTH_STARTED)).await;
+    process_wait::<SingleNotification, SingleState>(repo.clone(), vec![GROWTH_STARTED]).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 

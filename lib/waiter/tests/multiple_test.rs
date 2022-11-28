@@ -1,10 +1,11 @@
 #![feature(future_join)]
 
 use crate::multiple::build::{
-    BuildCommand, BuildState, BuildingCreate, ALLOCATION_NEEDED, BUILD_ENDED, BUILD_STARTED,
+    BuildCommand, BuildNotification, BuildState, BuildingCreate, ALLOCATION_NEEDED, BUILD_ENDED,
+    BUILD_STARTED,
 };
-use crate::multiple::gold::{GoldState, PAID};
-use crate::multiple::worker::{WorkerState, ALLOCATED, DEALLOCATED};
+use crate::multiple::gold::{GoldNotification, GoldState, PAID};
+use crate::multiple::worker::{WorkerNotification, WorkerState, ALLOCATED, DEALLOCATED};
 use crate::multiple::Cost;
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
@@ -18,13 +19,18 @@ mod multiple;
 async fn multiple_state_case() {
     let repo = get_repository();
 
-    process_wait::<BuildState, BuildState>(repo.clone(), vec!(BUILD_STARTED)).await;
+    process_wait::<BuildNotification, BuildState>(repo.clone(), vec![BUILD_STARTED]).await;
 
-    process_wait::<BuildState, GoldState>(repo.clone(), vec!(ALLOCATION_NEEDED)).await;
-    process_wait::<BuildState, WorkerState>(repo.clone(), vec!(ALLOCATION_NEEDED, BUILD_ENDED)).await;
+    process_wait::<BuildNotification, GoldState>(repo.clone(), vec![ALLOCATION_NEEDED]).await;
+    process_wait::<BuildNotification, WorkerState>(
+        repo.clone(),
+        vec![ALLOCATION_NEEDED, BUILD_ENDED],
+    )
+    .await;
 
-    process_wait::<GoldState, BuildState>(repo.clone(), vec!(PAID)).await;
-    process_wait::<WorkerState, BuildState>(repo.clone(), vec!(ALLOCATED,DEALLOCATED)).await;
+    process_wait::<GoldNotification, BuildState>(repo.clone(), vec![PAID]).await;
+    process_wait::<WorkerNotification, BuildState>(repo.clone(), vec![ALLOCATED, DEALLOCATED])
+        .await;
 
     let key = ModelKey::new("build_test".to_string(), Uuid::new_v4().to_string());
 

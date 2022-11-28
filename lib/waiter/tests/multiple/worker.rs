@@ -8,6 +8,7 @@ use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const ALLOCATED: &'static str = "allocated";
 pub const DEALLOCATED: &'static str = "deallocated";
+const WORKER_STATE_NAME: &'static str = "test-worker";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum WorkerCommand {
@@ -49,6 +50,10 @@ pub enum WorkerNotification {
 }
 
 impl Notification for WorkerNotification {
+    fn state_prefix() -> &'static str {
+        WORKER_STATE_NAME
+    }
+
     fn notification_name(&self) -> &str {
         use WorkerNotification::*;
 
@@ -80,7 +85,7 @@ impl State for WorkerState {
     type Notification = WorkerNotification;
 
     fn name_prefix() -> &'static str {
-        "test-worker"
+        WORKER_STATE_NAME
     }
     fn play_event(&mut self, event: &Self::Event) {
         use WorkerEvent::*;

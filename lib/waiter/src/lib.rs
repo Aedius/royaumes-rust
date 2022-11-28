@@ -25,19 +25,17 @@ where
 
 pub async fn process_wait<T, V>(repo: StateRepository, notifications: Vec<&'static str>)
 where
-    T: State,
     V: State + Send + 'static,
-    T::Notification: Send + Sync,
+    T: Notification + Send + Sync,
     V::Command: Send + Sync,
     V::Event: Send + Sync,
-    V::Command: CommandFromNotification<T::Notification, V::Command>,
+    V::Command: CommandFromNotification<T, V::Command>,
 {
-
     for notification_name in notifications {
         let repo = repo.clone();
         let event_db = repo.event_db().clone();
 
-        let stream_name = format!("$et-ntf.{}.{}", T::name_prefix(), notification_name);
+        let stream_name = format!("$et-ntf.{}.{}", T::state_prefix(), notification_name);
         tokio::spawn(async move {
             let options = SubscribeToStreamOptions::default()
                 .start_from(StreamPosition::End)
@@ -53,7 +51,7 @@ where
                         serde_json::from_slice(e.custom_metadata.as_ref()).unwrap();
                     metadata.set_id(Some(e.id));
 
-                    let notification: T::Notification = e.as_json::<T::Notification>().unwrap();
+                    let notification: T = e.as_json::<T>().unwrap();
 
                     let repo = repo.clone();
 

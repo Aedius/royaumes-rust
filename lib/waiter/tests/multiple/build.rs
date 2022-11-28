@@ -11,6 +11,7 @@ use waiter::{CommandFromNotification, DeportedCommand};
 pub const ALLOCATION_NEEDED: &'static str = "allocation_needed";
 pub const BUILD_ENDED: &'static str = "build_ended";
 pub const BUILD_STARTED: &'static str = "build_started";
+const BUILD_STATE_NAME: &'static str = "test-build";
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct BuildingCreate {
@@ -67,6 +68,10 @@ pub enum BuildNotification {
 }
 
 impl Notification for BuildNotification {
+    fn state_prefix() -> &'static str {
+        BUILD_STATE_NAME
+    }
+
     fn notification_name(&self) -> &str {
         use BuildNotification::*;
 
@@ -94,7 +99,7 @@ impl State for BuildState {
     type Notification = BuildNotification;
 
     fn name_prefix() -> &'static str {
-        "test-build"
+        BUILD_STATE_NAME
     }
 
     fn play_event(&mut self, event: &Self::Event) {

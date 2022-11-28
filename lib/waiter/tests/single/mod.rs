@@ -14,6 +14,7 @@ pub enum SingleCommand {
 }
 
 pub const GROWTH_STARTED: &str = "growth_started";
+const SINLGE_STATE_PREFIX: &'static str = "test-single";
 
 impl Command for SingleCommand {
     fn command_name(&self) -> &str {
@@ -51,6 +52,10 @@ pub enum SingleNotification {
 }
 
 impl Notification for SingleNotification {
+    fn state_prefix() -> &'static str {
+        SINLGE_STATE_PREFIX
+    }
+
     fn notification_name(&self) -> &str {
         use SingleNotification::*;
 
@@ -72,7 +77,7 @@ impl State for SingleState {
     type Notification = SingleNotification;
 
     fn name_prefix() -> &'static str {
-        "test-single"
+        SINLGE_STATE_PREFIX
     }
     fn play_event(&mut self, event: &Self::Event) {
         use SingleEvent::*;

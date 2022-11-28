@@ -13,6 +13,7 @@ pub trait Event: Serialize + DeserializeOwned + Debug + Clone {
 }
 
 pub trait Notification: Serialize + DeserializeOwned + Debug + Send + Clone {
+    fn state_prefix() -> &'static str;
     fn notification_name(&self) -> &str;
 }
 
@@ -26,6 +27,10 @@ where
 }
 
 impl Notification for () {
+    fn state_prefix() -> &'static str {
+        "noop"
+    }
+
     fn notification_name(&self) -> &str {
         "noop"
     }
