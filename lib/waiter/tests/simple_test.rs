@@ -12,7 +12,7 @@ mod single;
 #[tokio::test]
 async fn single_state_case() {
     let repo = get_repository();
-    process_wait::<SingleState, SingleState>(repo.clone(), GROWTH_STARTED).await;
+    process_wait::<SingleState, SingleState>(repo.clone(), vec!(GROWTH_STARTED)).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 

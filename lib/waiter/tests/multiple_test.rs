@@ -18,13 +18,13 @@ mod multiple;
 async fn multiple_state_case() {
     let repo = get_repository();
 
-    process_wait::<BuildState, GoldState>(repo.clone(), ALLOCATION_NEEDED).await;
-    process_wait::<BuildState, WorkerState>(repo.clone(), ALLOCATION_NEEDED).await;
-    process_wait::<BuildState, WorkerState>(repo.clone(), BUILD_ENDED).await;
-    process_wait::<GoldState, BuildState>(repo.clone(), PAID).await;
-    process_wait::<WorkerState, BuildState>(repo.clone(), ALLOCATED).await;
-    process_wait::<WorkerState, BuildState>(repo.clone(), DEALLOCATED).await;
-    process_wait::<BuildState, BuildState>(repo.clone(), BUILD_STARTED).await;
+    process_wait::<BuildState, BuildState>(repo.clone(), vec!(BUILD_STARTED)).await;
+
+    process_wait::<BuildState, GoldState>(repo.clone(), vec!(ALLOCATION_NEEDED)).await;
+    process_wait::<BuildState, WorkerState>(repo.clone(), vec!(ALLOCATION_NEEDED, BUILD_ENDED)).await;
+
+    process_wait::<GoldState, BuildState>(repo.clone(), vec!(PAID)).await;
+    process_wait::<WorkerState, BuildState>(repo.clone(), vec!(ALLOCATED,DEALLOCATED)).await;
 
     let key = ModelKey::new("build_test".to_string(), Uuid::new_v4().to_string());
 
