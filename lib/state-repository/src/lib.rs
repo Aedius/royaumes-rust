@@ -102,11 +102,7 @@ pub fn to_notification_data<S: State>(
 ) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
-        format!(
-            "ntf.{}.{}",
-            S::name_prefix(),
-            notification.notification_name()
-        ),
+        format!("ntf.{}", notification.notification_name()),
         notification,
     )
     .unwrap();

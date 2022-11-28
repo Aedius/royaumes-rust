@@ -52,10 +52,6 @@ pub enum SingleNotification {
 }
 
 impl Notification for SingleNotification {
-    fn state_prefix() -> &'static str {
-        SINLGE_STATE_PREFIX
-    }
-
     fn notification_name(&self) -> &str {
         use SingleNotification::*;
 
@@ -135,13 +131,13 @@ impl State for SingleState {
 
 impl CommandFromNotification<SingleNotification, SingleCommand> for SingleCommand {
     fn get_command(
-        event: SingleNotification,
-        state_key: ModelKey,
+        notification: SingleNotification,
+        notification_state_key: ModelKey,
     ) -> Option<DeportedCommand<SingleCommand>> {
-        match event {
+        match notification {
             SingleNotification::GrowthStarted(n, s) => Some(DeportedCommand {
                 command: SingleCommand::GrowEnd(n * 2),
-                key: state_key,
+                target_state_key: notification_state_key,
                 duration: Some(Duration::from_secs(s as u64)),
             }),
         }

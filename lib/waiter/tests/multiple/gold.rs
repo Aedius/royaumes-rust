@@ -44,10 +44,6 @@ pub enum GoldNotification {
 }
 
 impl Notification for GoldNotification {
-    fn state_prefix() -> &'static str {
-        GOLD_STATE_NAME
-    }
-
     fn notification_name(&self) -> &str {
         use GoldNotification::*;
 
@@ -114,13 +110,13 @@ impl State for GoldState {
 
 impl CommandFromNotification<BuildNotification, GoldCommand> for GoldCommand {
     fn get_command(
-        event: BuildNotification,
-        state_key: ModelKey,
+        notification: BuildNotification,
+        notification_state_key: ModelKey,
     ) -> Option<DeportedCommand<GoldCommand>> {
-        match event {
+        match notification {
             BuildNotification::AllocationNeeded(create) => Some(DeportedCommand {
-                key: create.bank,
-                command: GoldCommand::Pay(create.cost.gold, state_key),
+                target_state_key: create.bank,
+                command: GoldCommand::Pay(create.cost.gold, notification_state_key),
                 duration: None,
             }),
             _ => None,

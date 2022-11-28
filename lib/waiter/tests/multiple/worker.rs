@@ -50,10 +50,6 @@ pub enum WorkerNotification {
 }
 
 impl Notification for WorkerNotification {
-    fn state_prefix() -> &'static str {
-        WORKER_STATE_NAME
-    }
-
     fn notification_name(&self) -> &str {
         use WorkerNotification::*;
 
@@ -128,18 +124,18 @@ impl State for WorkerState {
 
 impl CommandFromNotification<BuildNotification, WorkerCommand> for WorkerCommand {
     fn get_command(
-        event: BuildNotification,
-        state_key: ModelKey,
+        notification: BuildNotification,
+        notification_state_key: ModelKey,
     ) -> Option<DeportedCommand<WorkerCommand>> {
-        match event {
+        match notification {
             BuildNotification::AllocationNeeded(bd) => Some(DeportedCommand {
-                command: WorkerCommand::Allocate(bd.cost.worker, state_key),
-                key: bd.citizen,
+                command: WorkerCommand::Allocate(bd.cost.worker, notification_state_key),
+                target_state_key: bd.citizen,
                 duration: None,
             }),
             BuildNotification::BuildEnded(bd) => Some(DeportedCommand {
-                command: WorkerCommand::Deallocate(bd.cost.worker, state_key),
-                key: bd.citizen,
+                command: WorkerCommand::Deallocate(bd.cost.worker, notification_state_key),
+                target_state_key: bd.citizen,
                 duration: None,
             }),
             _ => None,

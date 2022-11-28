@@ -11,7 +11,7 @@ where
     C: Command,
 {
     pub command: C,
-    pub key: ModelKey,
+    pub target_state_key: ModelKey,
     pub duration: Option<Duration>,
 }
 
@@ -20,7 +20,8 @@ where
     N: Notification + Send + Sync,
     C: Command + Send + Sync,
 {
-    fn get_command(notification: N, state_key: ModelKey) -> Option<DeportedCommand<C>>;
+    fn get_command(notification: N, notification_state_key: ModelKey)
+        -> Option<DeportedCommand<C>>;
 }
 
 pub async fn process_wait<T, V>(repo: StateRepository, notifications: Vec<&'static str>)
@@ -35,7 +36,7 @@ where
         let repo = repo.clone();
         let event_db = repo.event_db().clone();
 
-        let stream_name = format!("$et-ntf.{}.{}", T::state_prefix(), notification_name);
+        let stream_name = format!("$et-ntf.{}", notification_name);
         tokio::spawn(async move {
             let options = SubscribeToStreamOptions::default()
                 .start_from(StreamPosition::End)
@@ -61,9 +62,13 @@ where
                                 sleep(d).await;
                             }
 
-                            repo.add_command::<V>(&cmd.key, cmd.command, Some(metadata))
-                                .await
-                                .unwrap();
+                            repo.add_command::<V>(
+                                &cmd.target_state_key,
+                                cmd.command,
+                                Some(metadata),
+                            )
+                            .await
+                            .unwrap();
                         });
                     }
                 }

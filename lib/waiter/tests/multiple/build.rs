@@ -68,10 +68,6 @@ pub enum BuildNotification {
 }
 
 impl Notification for BuildNotification {
-    fn state_prefix() -> &'static str {
-        BUILD_STATE_NAME
-    }
-
     fn notification_name(&self) -> &str {
         use BuildNotification::*;
 
@@ -179,13 +175,13 @@ impl State for BuildState {
 
 impl CommandFromNotification<GoldNotification, BuildCommand> for BuildCommand {
     fn get_command(
-        event: GoldNotification,
-        _state_key: ModelKey,
+        notification: GoldNotification,
+        _notification_state_key: ModelKey,
     ) -> Option<DeportedCommand<BuildCommand>> {
-        match event {
+        match notification {
             GoldNotification::Paid(gold, paid_key) => Some(DeportedCommand {
                 command: BuildCommand::Allocate(Cost { gold, worker: 0 }),
-                key: paid_key,
+                target_state_key: paid_key,
                 duration: None,
             }),
         }
@@ -195,17 +191,17 @@ impl CommandFromNotification<GoldNotification, BuildCommand> for BuildCommand {
 impl CommandFromNotification<WorkerNotification, BuildCommand> for BuildCommand {
     fn get_command(
         notification: WorkerNotification,
-        _state_key: ModelKey,
+        _notification_state_key: ModelKey,
     ) -> Option<DeportedCommand<BuildCommand>> {
         match notification {
             WorkerNotification::Allocated(worker, paid_key) => Some(DeportedCommand {
                 command: BuildCommand::Allocate(Cost { gold: 0, worker }),
-                key: paid_key,
+                target_state_key: paid_key,
                 duration: None,
             }),
             WorkerNotification::Deallocated(worker, paid_key) => Some(DeportedCommand {
                 command: BuildCommand::Deallocate(Cost { gold: 0, worker }),
-                key: paid_key,
+                target_state_key: paid_key,
                 duration: None,
             }),
         }
@@ -215,12 +211,12 @@ impl CommandFromNotification<WorkerNotification, BuildCommand> for BuildCommand 
 impl CommandFromNotification<BuildNotification, BuildCommand> for BuildCommand {
     fn get_command(
         notification: BuildNotification,
-        state_key: ModelKey,
+        notification_state_key: ModelKey,
     ) -> Option<DeportedCommand<BuildCommand>> {
         match notification {
             BuildNotification::BuildStarted(s) => Some(DeportedCommand {
                 command: BuildCommand::FinnishBuild,
-                key: state_key,
+                target_state_key: notification_state_key,
                 duration: Some(s),
             }),
             _ => None,
