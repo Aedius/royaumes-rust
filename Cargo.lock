@@ -4659,6 +4659,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "workflow"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "eventstore",
+ "redis",
+ "serde",
+ "serde_json",
+ "state 0.1.0",
+ "state-repository",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "yansi"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

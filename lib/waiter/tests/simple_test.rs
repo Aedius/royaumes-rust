@@ -6,6 +6,7 @@ use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 use waiter::process_wait;
+use crate::single::SingleNotification::GrowthStarted;
 
 mod single;
 
@@ -27,10 +28,13 @@ async fn single_state_case() {
 
     assert_eq!(
         added,
-        SingleState {
-            nb: 15,
-            position: 0
-        }
+        (
+            SingleState {
+                nb: 15,
+                position: 0,
+            },
+            Vec::new()
+        )
     );
 
     let growth = repo
@@ -38,7 +42,12 @@ async fn single_state_case() {
         .await
         .unwrap();
 
-    assert_eq!(growth, SingleState { nb: 5, position: 1 });
+    assert_eq!(growth,
+               (
+                   SingleState { nb: 5, position: 1 },
+                   vec!(GrowthStarted(10,2)),
+               )
+    );
 
     let secs = Duration::from_secs(4);
 
@@ -50,7 +59,7 @@ async fn single_state_case() {
         waited,
         SingleState {
             nb: 25,
-            position: 6
+            position: 6,
         }
     );
 }

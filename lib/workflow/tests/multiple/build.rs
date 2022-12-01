@@ -1,19 +1,16 @@
-use crate::multiple::gold::GoldNotification;
-use crate::multiple::worker::WorkerNotification;
 use crate::multiple::Cost;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use std::time::Duration;
-use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const ALLOCATION_NEEDED: &'static str = "allocation_needed";
 pub const BUILD_ENDED: &'static str = "build_ended";
 pub const BUILD_STARTED: &'static str = "build_started";
 const BUILD_STATE_NAME: &'static str = "test-build";
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct BuildingCreate {
     pub cost: Cost,
     pub bank: ModelKey,
@@ -60,7 +57,7 @@ impl Event for BuildEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum BuildNotification {
     AllocationNeeded(BuildingCreate),
     BuildStarted(Duration),
@@ -170,56 +167,5 @@ impl State for BuildState {
 
     fn state_cache_interval() -> Option<u64> {
         None
-    }
-}
-
-impl CommandFromNotification<GoldNotification, BuildCommand> for BuildCommand {
-    fn get_command(
-        notification: GoldNotification,
-        _notification_state_key: ModelKey,
-    ) -> Option<DeportedCommand<BuildCommand>> {
-        match notification {
-            GoldNotification::Paid(gold, paid_key) => Some(DeportedCommand {
-                command: BuildCommand::Allocate(Cost { gold, worker: 0 }),
-                target_state_key: paid_key,
-                duration: None,
-            }),
-        }
-    }
-}
-
-impl CommandFromNotification<WorkerNotification, BuildCommand> for BuildCommand {
-    fn get_command(
-        notification: WorkerNotification,
-        _notification_state_key: ModelKey,
-    ) -> Option<DeportedCommand<BuildCommand>> {
-        match notification {
-            WorkerNotification::Allocated(worker, paid_key) => Some(DeportedCommand {
-                command: BuildCommand::Allocate(Cost { gold: 0, worker }),
-                target_state_key: paid_key,
-                duration: None,
-            }),
-            WorkerNotification::Deallocated(worker, paid_key) => Some(DeportedCommand {
-                command: BuildCommand::Deallocate(Cost { gold: 0, worker }),
-                target_state_key: paid_key,
-                duration: None,
-            }),
-        }
-    }
-}
-
-impl CommandFromNotification<BuildNotification, BuildCommand> for BuildCommand {
-    fn get_command(
-        notification: BuildNotification,
-        notification_state_key: ModelKey,
-    ) -> Option<DeportedCommand<BuildCommand>> {
-        match notification {
-            BuildNotification::BuildStarted(s) => Some(DeportedCommand {
-                command: BuildCommand::FinnishBuild,
-                target_state_key: notification_state_key,
-                duration: Some(s),
-            }),
-            _ => None,
-        }
     }
 }

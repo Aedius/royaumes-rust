@@ -1,10 +1,8 @@
-use crate::multiple::build::BuildNotification;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use std::fmt::Debug;
-use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const ALLOCATED: &'static str = "allocated";
 pub const DEALLOCATED: &'static str = "deallocated";
@@ -119,26 +117,5 @@ impl State for WorkerState {
 
     fn state_cache_interval() -> Option<u64> {
         None
-    }
-}
-
-impl CommandFromNotification<BuildNotification, WorkerCommand> for WorkerCommand {
-    fn get_command(
-        notification: BuildNotification,
-        notification_state_key: ModelKey,
-    ) -> Option<DeportedCommand<WorkerCommand>> {
-        match notification {
-            BuildNotification::AllocationNeeded(bd) => Some(DeportedCommand {
-                command: WorkerCommand::Allocate(bd.cost.worker, notification_state_key),
-                target_state_key: bd.citizen,
-                duration: None,
-            }),
-            BuildNotification::BuildEnded(bd) => Some(DeportedCommand {
-                command: WorkerCommand::Deallocate(bd.cost.worker, notification_state_key),
-                target_state_key: bd.citizen,
-                duration: None,
-            }),
-            _ => None,
-        }
     }
 }

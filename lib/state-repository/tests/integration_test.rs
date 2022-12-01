@@ -28,10 +28,13 @@ async fn easy_case() {
 
     assert_eq!(
         added,
-        SimpleState {
-            nb: 17,
-            position: 0
-        }
+        (
+            SimpleState {
+                nb: 17,
+                position: 0
+            },
+            Vec::new()
+        )
     );
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();

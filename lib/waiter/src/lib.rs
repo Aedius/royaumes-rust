@@ -6,37 +6,35 @@ use state_repository::{Metadata, ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 
 #[derive(Debug)]
-pub struct DeportedCommand<C>
+pub struct DelayedCommand<C>
 where
     C: Command,
 {
     pub command: C,
-    pub target_state_key: ModelKey,
-    pub duration: Option<Duration>,
+    pub delay: Duration,
 }
 
-pub trait CommandFromNotification<N, C>
+pub trait DelayedCommandFromNotification<N, C>
 where
     N: Notification + Send + Sync,
     C: Command + Send + Sync,
 {
-    fn get_command(notification: N, notification_state_key: ModelKey)
-        -> Option<DeportedCommand<C>>;
+    fn get_command(notification: N, notification_state_key: ModelKey) -> Option<DelayedCommand<C>>;
 }
 
-pub async fn process_wait<T, V>(repo: StateRepository, notifications: Vec<&'static str>)
+pub async fn process_wait<T, S>(repo: StateRepository, notifications: Vec<&'static str>)
 where
-    V: State + Send + 'static,
+    S: State + Send + 'static,
     T: Notification + Send + Sync,
-    V::Command: Send + Sync,
-    V::Event: Send + Sync,
-    V::Command: CommandFromNotification<T, V::Command>,
+    S::Command: Send + Sync,
+    S::Event: Send + Sync,
+    S::Command: DelayedCommandFromNotification<T, S::Command>,
 {
     for notification_name in notifications {
         let repo = repo.clone();
         let event_db = repo.event_db().clone();
 
-        let stream_name = format!("$et-ntf.{}", notification_name);
+        let stream_name = format!("$et-ntf.{}.{}", S::name_prefix(), notification_name);
         tokio::spawn(async move {
             let options = SubscribeToStreamOptions::default()
                 .start_from(StreamPosition::End)
@@ -56,19 +54,15 @@ where
 
                     let repo = repo.clone();
 
-                    if let Some(cmd) = V::Command::get_command(notification, e.stream_id.into()) {
-                        tokio::spawn(async move {
-                            if let Some(d) = cmd.duration {
-                                sleep(d).await;
-                            }
+                    let local_key: ModelKey = e.stream_id.into();
 
-                            repo.add_command::<V>(
-                                &cmd.target_state_key,
-                                cmd.command,
-                                Some(metadata),
-                            )
-                            .await
-                            .unwrap();
+                    if let Some(cmd) = S::Command::get_command(notification, local_key.clone()) {
+                        tokio::spawn(async move {
+                            sleep(cmd.delay).await;
+
+                            repo.add_command::<S>(&local_key, cmd.command, Some(metadata))
+                                .await
+                                .unwrap();
                         });
                     }
                 }

@@ -1,10 +1,8 @@
-use crate::multiple::build::BuildNotification;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use std::fmt::Debug;
-use waiter::{CommandFromNotification, DeportedCommand};
 
 pub const PAID: &'static str = "paid";
 const GOLD_STATE_NAME: &'static str = "test-gold";
@@ -105,21 +103,5 @@ impl State for GoldState {
 
     fn state_cache_interval() -> Option<u64> {
         None
-    }
-}
-
-impl CommandFromNotification<BuildNotification, GoldCommand> for GoldCommand {
-    fn get_command(
-        notification: BuildNotification,
-        notification_state_key: ModelKey,
-    ) -> Option<DeportedCommand<GoldCommand>> {
-        match notification {
-            BuildNotification::AllocationNeeded(create) => Some(DeportedCommand {
-                target_state_key: create.bank,
-                command: GoldCommand::Pay(create.cost.gold, notification_state_key),
-                duration: None,
-            }),
-            _ => None,
-        }
     }
 }

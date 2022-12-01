@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use tokio::time::Duration;
-use waiter::{CommandFromNotification, DeportedCommand};
+use waiter::{DelayedCommand, DelayedCommandFromNotification};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum SingleCommand {
@@ -46,7 +46,7 @@ impl Event for SingleEvent {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub enum SingleNotification {
     GrowthStarted(u32, u32),
 }
@@ -129,16 +129,15 @@ impl State for SingleState {
     }
 }
 
-impl CommandFromNotification<SingleNotification, SingleCommand> for SingleCommand {
+impl DelayedCommandFromNotification<SingleNotification, SingleCommand> for SingleCommand {
     fn get_command(
         notification: SingleNotification,
-        notification_state_key: ModelKey,
-    ) -> Option<DeportedCommand<SingleCommand>> {
+        _notification_state_key: ModelKey,
+    ) -> Option<DelayedCommand<SingleCommand>> {
         match notification {
-            SingleNotification::GrowthStarted(n, s) => Some(DeportedCommand {
+            SingleNotification::GrowthStarted(n, s) => Some(DelayedCommand {
                 command: SingleCommand::GrowEnd(n * 2),
-                target_state_key: notification_state_key,
-                duration: Some(Duration::from_secs(s as u64)),
+                delay: Duration::from_secs(s as u64),
             }),
         }
     }

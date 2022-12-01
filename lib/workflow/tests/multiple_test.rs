@@ -1,36 +1,19 @@
 #![feature(future_join)]
 
-use crate::multiple::build::{
-    BuildCommand, BuildNotification, BuildState, BuildingCreate, ALLOCATION_NEEDED, BUILD_ENDED,
-    BUILD_STARTED,
-};
-use crate::multiple::gold::{GoldNotification, GoldState, PAID};
-use crate::multiple::worker::{WorkerNotification, WorkerState, ALLOCATED, DEALLOCATED};
+use crate::multiple::build::{BuildCommand, BuildState, BuildingCreate};
+use crate::multiple::gold::GoldState;
+use crate::multiple::worker::WorkerState;
 use crate::multiple::Cost;
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
-use waiter::process_wait;
 
 mod multiple;
 
 #[tokio::test]
 async fn multiple_state_case() {
     let repo = get_repository();
-
-    process_wait::<BuildNotification, BuildState>(repo.clone(), vec![BUILD_STARTED]).await;
-
-    process_wait::<BuildNotification, GoldState>(repo.clone(), vec![ALLOCATION_NEEDED]).await;
-    process_wait::<BuildNotification, WorkerState>(
-        repo.clone(),
-        vec![ALLOCATION_NEEDED, BUILD_ENDED],
-    )
-    .await;
-
-    process_wait::<GoldNotification, BuildState>(repo.clone(), vec![PAID]).await;
-    process_wait::<WorkerNotification, BuildState>(repo.clone(), vec![ALLOCATED, DEALLOCATED])
-        .await;
 
     let key = ModelKey::new("build_test".to_string(), Uuid::new_v4().to_string());
 
@@ -59,14 +42,17 @@ async fn multiple_state_case() {
 
     assert_eq!(
         build,
-        BuildState {
-            cost,
-            allocated: Default::default(),
-            built: false,
-            citizen: Some(key_citizen.clone()),
-            bank: Some(key_bank.clone()),
-            position: 0,
-        }
+        (
+            BuildState {
+                cost,
+                allocated: Default::default(),
+                built: false,
+                citizen: Some(key_citizen.clone()),
+                bank: Some(key_bank.clone()),
+                position: 0,
+            },
+            Vec::new()
+        )
     );
 
     sleep(Duration::from_secs(1)).await;

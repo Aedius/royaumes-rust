@@ -35,6 +35,15 @@ impl Metadata {
     pub fn id(&self) -> Option<Uuid> {
         self.id
     }
+
+    pub fn new(id: Option<Uuid>, correlation_id: Uuid, causation_id: Uuid, is_event: bool) -> Self {
+        Self {
+            id,
+            correlation_id,
+            causation_id,
+            is_event,
+        }
+    }
 }
 
 pub fn to_command_data<S: State>(
@@ -102,7 +111,11 @@ pub fn to_notification_data<S: State>(
 ) -> (EventData, Metadata) {
     let id = Uuid::new_v4();
     let mut event_data = EventData::json(
-        format!("ntf.{}", notification.notification_name()),
+        format!(
+            "ntf.{}.{}",
+            S::name_prefix(),
+            notification.notification_name()
+        ),
         notification,
     )
     .unwrap();
@@ -234,15 +247,16 @@ impl StateRepository {
         key: &ModelKey,
         command: T::Command,
         previous_metadata: Option<Metadata>,
-    ) -> Result<T>
+    ) -> Result<(T, Vec<T::Notification>)>
     where
         T: State,
     {
         let mut model: T;
         let events: Vec<T::Event>;
+        let notifications: Vec<T::Notification>;
 
         loop {
-            let (l_model, l_events, retry) = self
+            let (l_model, l_events, l_notifications, retry) = self
                 .try_append(key, &command, previous_metadata.clone())
                 .await?;
             if retry {
@@ -250,6 +264,7 @@ impl StateRepository {
             }
             model = l_model;
             events = l_events;
+            notifications = l_notifications;
 
             break;
         }
@@ -258,7 +273,7 @@ impl StateRepository {
             model.play_event(event);
         }
 
-        Ok(model)
+        Ok((model, notifications))
     }
 
     async fn try_append<T>(
@@ -266,7 +281,7 @@ impl StateRepository {
         key: &ModelKey,
         command: &T::Command,
         previous_metadata: Option<Metadata>,
-    ) -> Result<(T, Vec<T::Event>, bool)>
+    ) -> Result<(T, Vec<T::Event>, Vec<T::Notification>, bool)>
     where
         T: State,
     {
@@ -298,6 +313,24 @@ impl StateRepository {
             previous_metadata = metadata;
         }
 
+        let retry = self
+            .try_append_event_data(key, &options, events_data)
+            .await?;
+
+        Ok((
+            model,
+            events.event().to_vec(),
+            events.notification().to_vec(),
+            retry,
+        ))
+    }
+
+    pub async fn try_append_event_data(
+        &self,
+        key: &ModelKey,
+        options: &AppendToStreamOptions,
+        events_data: Vec<EventData>,
+    ) -> Result<bool> {
         let appended = self
             .event_db
             .append_to_stream(key.format(), &options, events_data)
@@ -316,8 +349,7 @@ impl StateRepository {
                 }
             }
         }
-
-        Ok((model, events.event().to_vec(), retry))
+        Ok(retry)
     }
 
     pub fn event_db(&self) -> &EventDb {
