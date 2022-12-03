@@ -198,7 +198,11 @@ impl StateRepository {
         }
 
         let options = ReadStreamOptions::default();
-        let options = options.position(StreamPosition::Position(value.get_position() + 1));
+        let options = if let Some(position) = value.get_position() {
+            options.position(StreamPosition::Position(position + 1))
+        } else {
+            options.position(StreamPosition::Start)
+        };
 
         let mut stream = self
             .event_db
@@ -225,7 +229,8 @@ impl StateRepository {
                 value.play_event(&event);
                 nb_change += 1;
             }
-            value.set_position(original_event.revision)
+
+            value.set_position(Some(original_event.revision))
         }
 
         if T::state_cache_interval().is_some() && nb_change > T::state_cache_interval().unwrap() {
@@ -247,24 +252,23 @@ impl StateRepository {
         key: &ModelKey,
         command: T::Command,
         previous_metadata: Option<Metadata>,
-    ) -> Result<(T, Vec<T::Notification>)>
+    ) -> Result<T>
     where
         T: State,
     {
         let mut model: T;
         let events: Vec<T::Event>;
-        let notifications: Vec<T::Notification>;
 
         loop {
-            let (l_model, l_events, l_notifications, retry) = self
+            let (l_model, l_events, retry) = self
                 .try_append(key, &command, previous_metadata.clone())
                 .await?;
             if retry {
                 continue;
             }
+
             model = l_model;
             events = l_events;
-            notifications = l_notifications;
 
             break;
         }
@@ -273,7 +277,7 @@ impl StateRepository {
             model.play_event(event);
         }
 
-        Ok((model, notifications))
+        Ok(model)
     }
 
     async fn try_append<T>(
@@ -281,7 +285,7 @@ impl StateRepository {
         key: &ModelKey,
         command: &T::Command,
         previous_metadata: Option<Metadata>,
-    ) -> Result<(T, Vec<T::Event>, Vec<T::Notification>, bool)>
+    ) -> Result<(T, Vec<T::Event>, bool)>
     where
         T: State,
     {
@@ -289,11 +293,10 @@ impl StateRepository {
 
         let events = model.try_command(command).context("try command")?;
 
-        let position = model.get_position();
-        let options = if position == 0 {
-            AppendToStreamOptions::default().expected_revision(ExpectedRevision::NoStream)
-        } else {
+        let options = if let Some(position) = model.get_position() {
             AppendToStreamOptions::default().expected_revision(ExpectedRevision::Exact(position))
+        } else {
+            AppendToStreamOptions::default().expected_revision(ExpectedRevision::NoStream)
         };
 
         let (command_data, metadata) = to_command_data::<T>(command, previous_metadata);
@@ -317,12 +320,7 @@ impl StateRepository {
             .try_append_event_data(key, &options, events_data)
             .await?;
 
-        Ok((
-            model,
-            events.event().to_vec(),
-            events.notification().to_vec(),
-            retry,
-        ))
+        Ok((model, events.event().to_vec(), retry))
     }
 
     pub async fn try_append_event_data(
@@ -341,7 +339,9 @@ impl StateRepository {
         if appended.is_err() {
             let err = appended.unwrap_err();
             match err {
-                Error::WrongExpectedVersion { .. } => {
+                Error::WrongExpectedVersion { expected, current } => {
+                    println!("{current} instead of {expected}");
+
                     retry = true;
                 }
                 _ => {

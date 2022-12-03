@@ -38,7 +38,7 @@ impl Event for SimpleEvent {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct SimpleState {
     pub nb: u32,
-    pub position: u64,
+    pub position: Option<u64>,
 }
 
 impl State for SimpleState {
@@ -82,11 +82,11 @@ impl State for SimpleState {
         }
     }
 
-    fn get_position(&self) -> u64 {
+    fn get_position(&self) -> Option<u64> {
         self.position
     }
 
-    fn set_position(&mut self, pos: u64) {
+    fn set_position(&mut self, pos: Option<u64>) {
         self.position = pos;
     }
 

@@ -33,7 +33,7 @@ impl Event for ConcurrentEvent {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ConcurrentState {
     pub names: Vec<String>,
-    pub position: u64,
+    pub position: Option<u64>,
 }
 
 impl State for ConcurrentState {
@@ -68,11 +68,11 @@ impl State for ConcurrentState {
         }
     }
 
-    fn get_position(&self) -> u64 {
+    fn get_position(&self) -> Option<u64> {
         self.position
     }
 
-    fn set_position(&mut self, pos: u64) {
+    fn set_position(&mut self, pos: Option<u64>) {
         self.position = pos;
     }
 

@@ -19,7 +19,13 @@ async fn easy_case() {
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
-    assert_eq!(model, SimpleState { nb: 0, position: 0 });
+    assert_eq!(
+        model,
+        SimpleState {
+            nb: 0,
+            position: None
+        }
+    );
 
     let added = repo
         .add_command::<SimpleState>(&key, SimpleCommand::Add(17), None)
@@ -28,13 +34,10 @@ async fn easy_case() {
 
     assert_eq!(
         added,
-        (
-            SimpleState {
-                nb: 17,
-                position: 0
-            },
-            Vec::new()
-        )
+        (SimpleState {
+            nb: 17,
+            position: None
+        })
     );
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
@@ -43,7 +46,7 @@ async fn easy_case() {
         model,
         SimpleState {
             nb: 17,
-            position: 1
+            position: Some(1)
         }
     );
 
@@ -53,7 +56,7 @@ async fn easy_case() {
         model,
         SimpleState {
             nb: 17,
-            position: 1
+            position: Some(1)
         }
     );
 
@@ -67,7 +70,7 @@ async fn easy_case() {
         model,
         SimpleState {
             nb: 50,
-            position: 4
+            position: Some(4)
         }
     );
 
@@ -77,7 +80,7 @@ async fn easy_case() {
         model,
         SimpleState {
             nb: 50,
-            position: 4
+            position: Some(4)
         }
     );
 }
@@ -94,7 +97,7 @@ async fn concurrent_case() {
         model,
         ConcurrentState {
             names: Vec::new(),
-            position: 0
+            position: None
         }
     );
 
@@ -121,7 +124,7 @@ async fn concurrent_case() {
         model,
         ConcurrentState {
             names: vec!["one".to_string(), "two".to_string()],
-            position: 3
+            position: Some(3)
         }
     );
 }

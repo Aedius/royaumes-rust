@@ -1,6 +1,8 @@
 pub mod build;
+pub mod flow;
 pub mod gold;
 pub mod worker;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Default, Debug, Copy, Clone, Eq, PartialEq)]

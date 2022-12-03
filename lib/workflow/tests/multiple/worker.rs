@@ -61,14 +61,14 @@ impl Notification for WorkerNotification {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct WorkerState {
     pub nb: u32,
-    pub position: u64,
+    pub position: Option<u64>,
 }
 
 impl Default for WorkerState {
     fn default() -> Self {
         WorkerState {
             nb: 100,
-            position: 0,
+            position: None,
         }
     }
 }
@@ -107,11 +107,11 @@ impl State for WorkerState {
         }
     }
 
-    fn get_position(&self) -> u64 {
+    fn get_position(&self) -> Option<u64> {
         self.position
     }
 
-    fn set_position(&mut self, pos: u64) {
+    fn set_position(&mut self, pos: Option<u64>) {
         self.position = pos;
     }
 

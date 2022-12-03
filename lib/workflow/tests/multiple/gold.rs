@@ -1,8 +1,10 @@
+use crate::multiple::flow::{Payment, PaymentPaid};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use std::fmt::Debug;
+use workflow::{Distant, Flow};
 
 pub const PAID: &'static str = "paid";
 const GOLD_STATE_NAME: &'static str = "test-gold";
@@ -54,14 +56,14 @@ impl Notification for GoldNotification {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct GoldState {
     pub nb: u32,
-    pub position: u64,
+    pub position: Option<u64>,
 }
 
 impl Default for GoldState {
     fn default() -> Self {
         GoldState {
             nb: 1000,
-            position: 0,
+            position: None,
         }
     }
 }
@@ -93,15 +95,31 @@ impl State for GoldState {
         }
     }
 
-    fn get_position(&self) -> u64 {
+    fn get_position(&self) -> Option<u64> {
         self.position
     }
 
-    fn set_position(&mut self, pos: u64) {
+    fn set_position(&mut self, pos: Option<u64>) {
         self.position = pos;
     }
 
     fn state_cache_interval() -> Option<u64> {
         None
+    }
+}
+
+impl Distant<Payment> for GoldState {
+    fn get_command(input: <Payment as Flow>::Input) -> Self::Command {
+        GoldCommand::Pay(input.amount, input.target)
+    }
+
+    fn get_response(output: Self::Notification) -> <Payment as Flow>::Output {
+        match output {
+            GoldNotification::Paid(amount, target) => PaymentPaid::Paid(amount, target),
+        }
+    }
+
+    fn get_notification_response() -> Vec<&'static str> {
+        vec![PAID]
     }
 }

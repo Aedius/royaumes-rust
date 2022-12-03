@@ -17,7 +17,7 @@ pub struct AccountState {
     register_at: u64,
     last_login: u64,
     reputation: usize,
-    position: u64,
+    position: Option<u64>,
 }
 
 impl AccountState {
@@ -133,11 +133,11 @@ impl State for AccountState {
         }
     }
 
-    fn get_position(&self) -> u64 {
+    fn get_position(&self) -> Option<u64> {
         self.position
     }
 
-    fn set_position(&mut self, pos: u64) {
+    fn set_position(&mut self, pos: Option<u64>) {
         self.position = pos;
     }
 

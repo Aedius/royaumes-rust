@@ -1,14 +1,16 @@
+use crate::multiple::flow::{AskPayment, PaymentPaid, PaymentPay};
 use crate::multiple::Cost;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, Events, Notification, State};
 use state_repository::ModelKey;
 use std::time::Duration;
+use workflow::{Distant, Flow};
 
 pub const ALLOCATION_NEEDED: &'static str = "allocation_needed";
 pub const BUILD_ENDED: &'static str = "build_ended";
 pub const BUILD_STARTED: &'static str = "build_started";
-const BUILD_STATE_NAME: &'static str = "test-build";
+const BUILD_STATE_NAME: &'static str = "test-tower";
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub struct BuildingCreate {
@@ -83,7 +85,7 @@ pub struct BuildState {
     pub built: bool,
     pub citizen: Option<ModelKey>,
     pub bank: Option<ModelKey>,
-    pub position: u64,
+    pub position: Option<u64>,
 }
 
 impl State for BuildState {
@@ -157,15 +159,43 @@ impl State for BuildState {
         }
     }
 
-    fn get_position(&self) -> u64 {
+    fn get_position(&self) -> Option<u64> {
         self.position
     }
 
-    fn set_position(&mut self, pos: u64) {
+    fn set_position(&mut self, pos: Option<u64>) {
         self.position = pos;
     }
 
     fn state_cache_interval() -> Option<u64> {
         None
+    }
+}
+
+impl Distant<AskPayment> for BuildState {
+    fn get_command(input: <AskPayment as Flow>::Input) -> Self::Command {
+        match input {
+            PaymentPaid::Paid(amount, _) => BuildCommand::Allocate(Cost {
+                gold: amount,
+                worker: 0,
+            }),
+            PaymentPaid::NotPaid(_) => BuildCommand::Allocate(Cost { gold: 0, worker: 0 }),
+        }
+    }
+
+    fn get_response(output: Self::Notification) -> <AskPayment as Flow>::Output {
+        match output {
+            BuildNotification::AllocationNeeded(c) => PaymentPay {
+                amount: c.cost.gold,
+                target: c.bank,
+            },
+            _ => {
+                panic!("not implemented");
+            }
+        }
+    }
+
+    fn get_notification_response() -> Vec<&'static str> {
+        vec![ALLOCATION_NEEDED]
     }
 }

@@ -61,9 +61,9 @@ pub trait State: Default + Serialize + DeserializeOwned + Debug {
         command: &Self::Command,
     ) -> Result<Events<Self::Event, Self::Notification>>;
 
-    fn get_position(&self) -> u64;
+    fn get_position(&self) -> Option<u64>;
 
-    fn set_position(&mut self, pos: u64);
+    fn set_position(&mut self, pos: Option<u64>);
 
     fn state_cache_interval() -> Option<u64>;
 }

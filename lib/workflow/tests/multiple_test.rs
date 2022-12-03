@@ -1,6 +1,7 @@
 #![feature(future_join)]
 
 use crate::multiple::build::{BuildCommand, BuildState, BuildingCreate};
+use crate::multiple::flow::{AskPayment, Payment};
 use crate::multiple::gold::GoldState;
 use crate::multiple::worker::WorkerState;
 use crate::multiple::Cost;
@@ -8,6 +9,7 @@ use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
+use workflow::Distant;
 
 mod multiple;
 
@@ -15,11 +17,16 @@ mod multiple;
 async fn multiple_state_case() {
     let repo = get_repository();
 
-    let key = ModelKey::new("build_test".to_string(), Uuid::new_v4().to_string());
+    let key = ModelKey::new("tower_test".to_string(), Uuid::new_v4().to_string());
 
     let key_bank = ModelKey::new("bank_test".to_string(), Uuid::new_v4().to_string());
 
     let key_citizen = ModelKey::new("citizen_test".to_string(), Uuid::new_v4().to_string());
+
+    <GoldState as Distant<Payment>>::listen(repo.clone());
+    <BuildState as Distant<AskPayment>>::listen(repo.clone());
+
+    sleep(Duration::from_secs(1)).await;
 
     let create = BuildingCreate {
         cost: Cost {
@@ -42,17 +49,14 @@ async fn multiple_state_case() {
 
     assert_eq!(
         build,
-        (
-            BuildState {
-                cost,
-                allocated: Default::default(),
-                built: false,
-                citizen: Some(key_citizen.clone()),
-                bank: Some(key_bank.clone()),
-                position: 0,
-            },
-            Vec::new()
-        )
+        (BuildState {
+            cost,
+            allocated: Default::default(),
+            built: false,
+            citizen: Some(key_citizen.clone()),
+            bank: Some(key_bank.clone()),
+            position: None,
+        })
     );
 
     sleep(Duration::from_secs(1)).await;
@@ -72,7 +76,7 @@ async fn multiple_state_case() {
             built: false,
             citizen: Some(key_citizen.clone()),
             bank: Some(key_bank.clone()),
-            position: 7,
+            position: Some(7),
         }
     );
 
@@ -82,7 +86,7 @@ async fn multiple_state_case() {
         worker_state,
         WorkerState {
             nb: 58,
-            position: 2,
+            position: Some(2),
         }
     );
 
@@ -92,7 +96,7 @@ async fn multiple_state_case() {
         gold_state,
         GoldState {
             nb: 678,
-            position: 2,
+            position: Some(2),
         }
     );
 
@@ -110,7 +114,7 @@ async fn multiple_state_case() {
             cost,
             allocated: worker_freed,
             built: true,
-            position: 12,
+            position: Some(12),
             citizen: Some(key_citizen.clone()),
             bank: Some(key_bank.clone()),
         }
@@ -122,7 +126,7 @@ async fn multiple_state_case() {
         worker_state,
         WorkerState {
             nb: 100,
-            position: 5,
+            position: Some(5),
         }
     );
     let gold_state = repo.get_model::<GoldState>(&key_bank).await.unwrap();
@@ -131,7 +135,7 @@ async fn multiple_state_case() {
         gold_state,
         GoldState {
             nb: 678,
-            position: 2,
+            position: Some(2),
         }
     );
 }
