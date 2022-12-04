@@ -19,46 +19,22 @@ async fn easy_case() {
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
-    assert_eq!(
-        model,
-        SimpleState {
-            nb: 0,
-            position: None
-        }
-    );
+    assert_eq!(model.state(), &SimpleState { nb: 0 });
 
     let added = repo
         .add_command::<SimpleState>(&key, SimpleCommand::Add(17), None)
         .await
         .unwrap();
 
-    assert_eq!(
-        added,
-        (SimpleState {
-            nb: 17,
-            position: None
-        })
-    );
+    assert_eq!(added, (SimpleState { nb: 17 }));
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
-    assert_eq!(
-        model,
-        SimpleState {
-            nb: 17,
-            position: Some(1)
-        }
-    );
+    assert_eq!(model.state(), &SimpleState { nb: 17 });
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
-    assert_eq!(
-        model,
-        SimpleState {
-            nb: 17,
-            position: Some(1)
-        }
-    );
+    assert_eq!(model.state(), &SimpleState { nb: 17 });
 
     repo.add_command::<SimpleState>(&key, SimpleCommand::Set(50), None)
         .await
@@ -66,23 +42,11 @@ async fn easy_case() {
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
-    assert_eq!(
-        model,
-        SimpleState {
-            nb: 50,
-            position: Some(4)
-        }
-    );
+    assert_eq!(model.state(), &SimpleState { nb: 50 });
 
     let model = repo.get_model::<SimpleState>(&key).await.unwrap();
 
-    assert_eq!(
-        model,
-        SimpleState {
-            nb: 50,
-            position: Some(4)
-        }
-    );
+    assert_eq!(model.state(), &SimpleState { nb: 50 });
 }
 
 #[tokio::test]
@@ -94,8 +58,8 @@ async fn concurrent_case() {
     let model = repo.get_model::<ConcurrentState>(&key).await.unwrap();
 
     assert_eq!(
-        model,
-        ConcurrentState {
+        model.state(),
+        &ConcurrentState {
             names: Vec::new(),
             position: None
         }
@@ -121,8 +85,8 @@ async fn concurrent_case() {
     let model = repo.get_model::<ConcurrentState>(&key).await.unwrap();
 
     assert_eq!(
-        model,
-        ConcurrentState {
+        model.state(),
+        &ConcurrentState {
             names: vec!["one".to_string(), "two".to_string()],
             position: Some(3)
         }

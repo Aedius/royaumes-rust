@@ -19,8 +19,8 @@ async fn single_state_case() {
     let model = repo.get_model::<SingleState>(&key).await.unwrap();
 
     assert_eq!(
-        model,
-        SingleState {
+        model.state(),
+        &SingleState {
             nb: 0,
             position: None
         }

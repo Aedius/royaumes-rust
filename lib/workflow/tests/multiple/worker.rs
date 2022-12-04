@@ -15,7 +15,7 @@ pub enum WorkerCommand {
 }
 
 impl Command for WorkerCommand {
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         use WorkerCommand::*;
         match &self {
             Allocate(_, _) => "Allocate",
@@ -31,7 +31,7 @@ pub enum WorkerEvent {
 }
 
 impl Event for WorkerEvent {
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         use WorkerEvent::*;
 
         match &self {
@@ -89,21 +89,12 @@ impl State for WorkerState {
         }
     }
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>> {
+    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
         use WorkerCommand::*;
 
         match command {
-            Allocate(n, k) => Ok(Events::new(
-                vec![WorkerEvent::Allocated(*n)],
-                vec![WorkerNotification::Allocated(*n, k.clone())],
-            )),
-            Deallocate(n, k) => Ok(Events::new(
-                vec![WorkerEvent::Deallocated(*n)],
-                vec![WorkerNotification::Deallocated(*n, k.clone())],
-            )),
+            Allocate(n, k) => Ok(vec![WorkerEvent::Allocated(*n)]),
+            Deallocate(n, k) => Ok(vec![WorkerEvent::Deallocated(*n)]),
         }
     }
 

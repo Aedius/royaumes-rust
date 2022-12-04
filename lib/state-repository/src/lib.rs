@@ -5,8 +5,9 @@ use eventstore::{
 };
 use redis::Client as CacheDb;
 use redis::Commands;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, Notification, State};
+use state::{Command, Event, State, StateName};
 use std::fmt::Debug;
 use uuid::Uuid;
 
@@ -46,94 +47,86 @@ impl Metadata {
     }
 }
 
-pub fn to_command_data<S: State>(
-    command: &S::Command,
-    previous_metadata: Option<Metadata>,
-) -> (EventData, Metadata) {
-    let id = Uuid::new_v4();
-    let mut event_data = EventData::json(
-        format!("cmd.{}.{}", S::name_prefix(), command.command_name()),
-        command,
-    )
-    .unwrap();
-    event_data = event_data.id(id);
+#[derive(Clone)]
+pub struct EventWithMetadata {
+    event_data: EventData,
+    metadata: Metadata,
+}
 
-    let metadata = match previous_metadata {
-        None => Metadata {
-            id: Some(id),
-            correlation_id: id,
-            causation_id: id,
-            is_event: false,
-        },
-        Some(previous) => Metadata {
-            id: Some(id),
-            correlation_id: previous.correlation_id,
-            causation_id: match previous.id {
-                None => id,
-                Some(p) => p,
+impl EventWithMetadata {
+    pub fn event_data(&self) -> &EventData {
+        &self.event_data
+    }
+    pub fn metadata(&self) -> &Metadata {
+        &self.metadata
+    }
+
+    pub fn full_event_data(&self) -> EventData {
+        self.event_data
+            .clone()
+            .metadata_as_json(self.metadata())
+            .unwrap()
+    }
+
+    pub fn from_command<C>(
+        command: C,
+        previous_metadata: Option<&Metadata>,
+        state_name: StateName,
+    ) -> Self
+    where
+        C: Command,
+    {
+        let event_data = EventData::json(
+            format!("cmd.{}.{}", state_name, command.command_name()),
+            command,
+        )
+        .unwrap();
+
+        Self::from_event_data(event_data, previous_metadata, false)
+    }
+
+    pub fn from_event<E>(event: E, previous_metadata: &Metadata, state_name: StateName) -> Self
+    where
+        E: Event,
+    {
+        let event_data =
+            EventData::json(format!("evt.{}.{}", state_name, event.event_name()), event).unwrap();
+
+        Self::from_event_data(event_data, Some(previous_metadata), true)
+    }
+
+    fn from_event_data(
+        mut event_data: EventData,
+        previous_metadata: Option<&Metadata>,
+        is_event: bool,
+    ) -> Self {
+        let id = Uuid::new_v4();
+
+        event_data = event_data.id(id);
+
+        let metadata = match previous_metadata {
+            None => Metadata {
+                id: Some(id),
+                correlation_id: id,
+                causation_id: id,
+                is_event,
             },
-            is_event: false,
-        },
-    };
+            Some(previous) => Metadata {
+                id: Some(id),
+                correlation_id: previous.correlation_id,
+                causation_id: match previous.id {
+                    None => id,
+                    Some(p) => p,
+                },
+                is_event,
+            },
+        };
 
-    event_data = event_data.metadata_as_json(&metadata).unwrap();
-
-    (event_data, metadata)
-}
-
-pub fn to_event_data<S: State>(event: &S::Event, previous: Metadata) -> (EventData, Metadata) {
-    let id = Uuid::new_v4();
-    let mut event_data = EventData::json(
-        format!("evt.{}.{}", S::name_prefix(), event.event_name()),
-        event,
-    )
-    .unwrap();
-    event_data = event_data.id(id);
-
-    let metadata = Metadata {
-        id: Some(id),
-        correlation_id: previous.correlation_id,
-        causation_id: match previous.id {
-            None => id,
-            Some(uuid) => uuid,
-        },
-        is_event: true,
-    };
-
-    event_data = event_data.metadata_as_json(&metadata).unwrap();
-
-    (event_data, metadata)
-}
-
-pub fn to_notification_data<S: State>(
-    notification: &S::Notification,
-    previous: Metadata,
-) -> (EventData, Metadata) {
-    let id = Uuid::new_v4();
-    let mut event_data = EventData::json(
-        format!(
-            "ntf.{}.{}",
-            S::name_prefix(),
-            notification.notification_name()
-        ),
-        notification,
-    )
-    .unwrap();
-    event_data = event_data.id(id);
-
-    let metadata = Metadata {
-        id: Some(id),
-        correlation_id: previous.correlation_id,
-        causation_id: match previous.id {
-            None => id,
-            Some(uuid) => uuid,
-        },
-        is_event: false,
-    };
-
-    event_data = event_data.metadata_as_json(&metadata).unwrap();
-
-    (event_data, metadata)
+        Self {
+            event_data,
+            metadata,
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
@@ -173,16 +166,34 @@ pub struct StateRepository {
     cache_db: CacheDb,
 }
 
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
+struct StateInformation {
+    position: Option<u64>,
+}
+
+#[derive(Default, Serialize, Deserialize, Debug, Clone)]
+pub struct StateWithInfo<S> {
+    info: StateInformation,
+    state: S,
+}
+
+impl<S> StateWithInfo<S> {
+    pub fn state(&self) -> &S {
+        &self.state
+    }
+}
+
 impl StateRepository {
     pub fn new(event_db: EventDb, cache_db: CacheDb) -> Self {
         Self { event_db, cache_db }
     }
-    pub async fn get_model<T>(&self, key: &ModelKey) -> Result<T>
+
+    pub async fn get_model<S>(&self, key: &ModelKey) -> Result<StateWithInfo<S>>
     where
-        T: State,
+        S: State + DeserializeOwned,
     {
-        let mut value: T;
-        if T::state_cache_interval().is_some() {
+        let value: StateWithInfo<S>;
+        if S::state_cache_interval().is_some() {
             let mut cache_connection = self
                 .cache_db
                 .get_connection()
@@ -194,11 +205,14 @@ impl StateRepository {
 
             value = serde_json::from_str(data.as_str()).unwrap_or_default();
         } else {
-            value = T::default();
+            value = StateWithInfo::default();
         }
 
+        let mut state = value.state;
+        let mut info = value.info;
+
         let options = ReadStreamOptions::default();
-        let options = if let Some(position) = value.get_position() {
+        let options = if let Some(position) = info.position {
             options.position(StreamPosition::Position(position + 1))
         } else {
             options.position(StreamPosition::Start)
@@ -221,37 +235,38 @@ impl StateRepository {
             .unwrap();
 
             if metadata.is_event {
-                let event = json_event
-                    .get_original_event()
-                    .as_json::<T::Event>()
+                let event = original_event
+                    .as_json::<S::Event>()
                     .context(format!("decode event : {:?}", json_event))?;
 
-                value.play_event(&event);
+                state.play_event(&event);
                 nb_change += 1;
             }
 
-            value.set_position(Some(original_event.revision))
+            info.position = Some(original_event.revision)
         }
 
-        if T::state_cache_interval().is_some() && nb_change > T::state_cache_interval().unwrap() {
+        let result = StateWithInfo { info, state };
+
+        if S::state_cache_interval().is_some() && nb_change > S::state_cache_interval().unwrap() {
             let mut cache_connection = self
                 .cache_db
                 .get_connection()
                 .context("connect to cache db")?;
 
             cache_connection
-                .set(key.format(), serde_json::to_string(&value)?)
+                .set(key.format(), serde_json::to_string(&result)?)
                 .context("set cache value")?;
         }
 
-        Ok(value)
+        Ok(result)
     }
 
     pub async fn add_command<T>(
         &self,
         key: &ModelKey,
         command: T::Command,
-        previous_metadata: Option<Metadata>,
+        previous_metadata: Option<&Metadata>,
     ) -> Result<T>
     where
         T: State,
@@ -261,7 +276,7 @@ impl StateRepository {
 
         loop {
             let (l_model, l_events, retry) = self
-                .try_append(key, &command, previous_metadata.clone())
+                .try_append(key, command.clone(), previous_metadata)
                 .await?;
             if retry {
                 continue;
@@ -280,58 +295,66 @@ impl StateRepository {
         Ok(model)
     }
 
-    async fn try_append<T>(
+    async fn try_append<S>(
         &self,
         key: &ModelKey,
-        command: &T::Command,
-        previous_metadata: Option<Metadata>,
-    ) -> Result<(T, Vec<T::Event>, bool)>
+        command: S::Command,
+        previous_metadata: Option<&Metadata>,
+    ) -> Result<(S, Vec<S::Event>, bool)>
     where
-        T: State,
+        S: State,
     {
-        let model: T = self.get_model(key).await.context("adding command")?;
+        let model: StateWithInfo<S> = self.get_model(key).await.context("adding command")?;
 
-        let events = model.try_command(command).context("try command")?;
+        let state = model.state;
+        let info = model.info;
 
-        let options = if let Some(position) = model.get_position() {
+        let events = state.try_command(command.clone()).context("try command")?;
+
+        let options = if let Some(position) = info.position {
             AppendToStreamOptions::default().expected_revision(ExpectedRevision::Exact(position))
         } else {
             AppendToStreamOptions::default().expected_revision(ExpectedRevision::NoStream)
         };
 
-        let (command_data, metadata) = to_command_data::<T>(command, previous_metadata);
+        let command_metadata =
+            EventWithMetadata::from_command(command, previous_metadata, S::name_prefix());
 
-        let mut events_data = vec![command_data];
+        let mut events_data = vec![command_metadata.clone()];
 
-        let mut previous_metadata = metadata;
+        let mut previous_metadata = command_metadata.metadata().to_owned();
 
-        for event in events.event() {
-            let (event_data, metadata) = to_event_data::<T>(event, previous_metadata);
-            events_data.push(event_data);
-            previous_metadata = metadata;
-        }
-        for notification in events.notification() {
-            let (event_data, metadata) = to_notification_data::<T>(notification, previous_metadata);
-            events_data.push(event_data);
-            previous_metadata = metadata;
+        let res_events = events.clone();
+
+        for event in events {
+            let event_metadata =
+                EventWithMetadata::from_event(event, &previous_metadata, S::name_prefix());
+
+            events_data.push(event_metadata.clone());
+            previous_metadata = event_metadata.metadata().to_owned();
         }
 
         let retry = self
             .try_append_event_data(key, &options, events_data)
             .await?;
 
-        Ok((model, events.event().to_vec(), retry))
+        Ok((state, res_events, retry))
     }
 
     pub async fn try_append_event_data(
         &self,
         key: &ModelKey,
         options: &AppendToStreamOptions,
-        events_data: Vec<EventData>,
+        events_with_data: Vec<EventWithMetadata>,
     ) -> Result<bool> {
+        let events: Vec<EventData> = events_with_data
+            .into_iter()
+            .map(|e| e.full_event_data())
+            .collect();
+
         let appended = self
             .event_db
-            .append_to_stream(key.format(), &options, events_data)
+            .append_to_stream(key.format(), &options, events)
             .await;
 
         let mut retry = false;

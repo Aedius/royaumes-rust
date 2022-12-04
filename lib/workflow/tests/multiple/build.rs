@@ -28,7 +28,7 @@ pub enum BuildCommand {
 }
 
 impl Command for BuildCommand {
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         use BuildCommand::*;
         match &self {
             Create(_) => "Create",
@@ -48,7 +48,7 @@ pub enum BuildEvent {
 }
 
 impl Event for BuildEvent {
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         use BuildEvent::*;
         match &self {
             Created(_) => "created",
@@ -122,18 +122,12 @@ impl State for BuildState {
         }
     }
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>> {
+    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
         use BuildCommand::*;
         use BuildEvent::*;
         use BuildNotification::*;
         match command {
-            Create(c) => Ok(Events::new(
-                vec![Created(c.clone())],
-                vec![AllocationNeeded(c.clone())],
-            )),
+            Create(c) => Ok(vec![Created(c.clone())]),
             Allocate(c) => {
                 let mut notifications = Vec::new();
 
@@ -145,17 +139,10 @@ impl State for BuildState {
                     notifications.push(BuildStarted(Duration::from_secs(2)));
                 }
 
-                Ok(Events::new(vec![Allocated(*c)], notifications))
+                Ok(vec![Allocated(*c)])
             }
-            Deallocate(c) => Ok(Events::new(vec![Deallocated(*c)], Vec::new())),
-            FinnishBuild => Ok(Events::new(
-                vec![Built],
-                vec![BuildEnded(BuildingCreate {
-                    cost: self.cost,
-                    bank: self.bank.clone().unwrap(),
-                    citizen: self.citizen.clone().unwrap(),
-                })],
-            )),
+            Deallocate(c) => Ok(vec![Deallocated(*c)]),
+            FinnishBuild => Ok(vec![Built]),
         }
     }
 

@@ -15,7 +15,7 @@ pub enum GoldCommand {
 }
 
 impl Command for GoldCommand {
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         use GoldCommand::*;
         match &self {
             Pay(_, _) => "Pay",
@@ -29,7 +29,7 @@ pub enum GoldEvent {
 }
 
 impl Event for GoldEvent {
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         use GoldEvent::*;
 
         match &self {
@@ -83,15 +83,9 @@ impl State for GoldState {
         }
     }
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>> {
+    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
         match command {
-            GoldCommand::Pay(n, k) => Ok(Events::new(
-                vec![GoldEvent::Paid(*n)],
-                vec![GoldNotification::Paid(*n, k.clone())],
-            )),
+            GoldCommand::Pay(n, k) => Ok(vec![GoldEvent::Paid(*n)]),
         }
     }
 

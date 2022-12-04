@@ -29,7 +29,7 @@ pub enum AccountCommand {
 }
 
 impl Command for AccountCommand {
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         match self {
             AccountCommand::CreateAccount(_) => "Create",
             AccountCommand::AddReputation(_) => "AddReputation",

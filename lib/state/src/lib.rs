@@ -4,66 +4,29 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fmt::Debug;
 
+pub type CommandName = &'static str;
+pub type EventName = &'static str;
+pub type StateName = &'static str;
+
 pub trait Command: Serialize + DeserializeOwned + Debug + Send + Clone {
-    fn command_name(&self) -> &str;
+    fn command_name(&self) -> CommandName;
 }
 
-pub trait Event: Serialize + DeserializeOwned + Debug + Clone {
-    fn event_name(&self) -> &str;
+pub trait Event: Serialize + DeserializeOwned + Debug + Send + Clone {
+    fn event_name(&self) -> EventName;
 }
 
-pub trait Notification: Serialize + DeserializeOwned + Debug + Send + Clone {
-    fn notification_name(&self) -> &str;
-}
-
-pub struct Events<T, U>
-where
-    T: Event,
-    U: Notification,
-{
-    event: Vec<T>,
-    notification: Vec<U>,
-}
-
-impl Notification for () {
-    fn notification_name(&self) -> &str {
-        "noop"
-    }
-}
-
-impl<T: Event, U: Notification> Events<T, U> {
-    pub fn new(event: Vec<T>, notification: Vec<U>) -> Self {
-        Self {
-            event,
-            notification,
-        }
-    }
-
-    pub fn event(&self) -> &Vec<T> {
-        &self.event
-    }
-    pub fn notification(&self) -> &Vec<U> {
-        &self.notification
-    }
-}
-
-pub trait State: Default + Serialize + DeserializeOwned + Debug {
+pub trait State: Default + Serialize + DeserializeOwned + Debug + Send + Clone {
     type Event: Event;
-    type Notification: Notification;
     type Command: Command;
 
-    fn name_prefix() -> &'static str;
+    fn name_prefix() -> StateName;
 
     fn play_event(&mut self, event: &Self::Event);
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>>;
+    fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>>;
 
-    fn get_position(&self) -> Option<u64>;
-
-    fn set_position(&mut self, pos: Option<u64>);
-
-    fn state_cache_interval() -> Option<u64>;
+    fn state_cache_interval() -> Option<u64> {
+        None
+    }
 }

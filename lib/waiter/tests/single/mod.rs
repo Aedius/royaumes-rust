@@ -17,7 +17,7 @@ pub const GROWTH_STARTED: &str = "growth_started";
 const SINLGE_STATE_PREFIX: &'static str = "test-single";
 
 impl Command for SingleCommand {
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         use SingleCommand::*;
         match &self {
             GrowStart(_, _) => "GrowStart",
@@ -35,7 +35,7 @@ pub enum SingleEvent {
 }
 
 impl Event for SingleEvent {
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         use SingleEvent::*;
 
         match &self {
@@ -84,10 +84,7 @@ impl State for SingleState {
         }
     }
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>> {
+    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
         use SingleCommand::*;
         use SingleEvent::*;
         use SingleNotification::*;
@@ -96,21 +93,21 @@ impl State for SingleState {
                 if *n > self.nb {
                     Err(anyhow!("{} cannot be grown to {}", n, self.nb))
                 } else {
-                    Ok(Events::new(vec![Removed(*n)], vec![GrowthStarted(*n, *s)]))
+                    Ok(vec![Removed(*n)])
                 }
             }
             GrowEnd(n) => {
                 if self.nb.checked_add(*n).is_none() {
                     Err(anyhow!("{} cannot be added to {}", n, self.nb))
                 } else {
-                    Ok(Events::new(vec![GrowthEnded(*n)], vec![]))
+                    Ok(vec![GrowthEnded(*n)])
                 }
             }
             Add(n) => {
                 if self.nb.checked_add(*n).is_none() {
                     Err(anyhow!("{} cannot be added to {}", n, self.nb))
                 } else {
-                    Ok(Events::new(vec![Added(*n)], vec![]))
+                    Ok(vec![Added(*n)])
                 }
             }
         }

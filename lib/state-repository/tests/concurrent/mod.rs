@@ -1,7 +1,7 @@
 use crate::concurrent::ConcurrentEvent::TimeTaken;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, Events, State};
+use state::{Command, Event, State};
 use std::{thread, time};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -10,7 +10,7 @@ pub enum ConcurrentCommand {
 }
 
 impl Command for ConcurrentCommand {
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         match &self {
             ConcurrentCommand::TakeTime(_, _) => "take_time",
         }
@@ -23,14 +23,14 @@ pub enum ConcurrentEvent {
 }
 
 impl Event for ConcurrentEvent {
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         match &self {
             ConcurrentEvent::TimeTaken(_) => "time_taken",
         }
     }
 }
 
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct ConcurrentState {
     pub names: Vec<String>,
     pub position: Option<u64>,
@@ -39,7 +39,6 @@ pub struct ConcurrentState {
 impl State for ConcurrentState {
     type Event = ConcurrentEvent;
     type Command = ConcurrentCommand;
-    type Notification = ();
 
     fn name_prefix() -> &'static str {
         "concurrent"
@@ -53,30 +52,15 @@ impl State for ConcurrentState {
         }
     }
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>> {
+    fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>> {
         match command {
             ConcurrentCommand::TakeTime(time, name) => {
                 let wait = time::Duration::from_millis((100 * time) as u64);
 
                 thread::sleep(wait);
 
-                Ok(Events::new(vec![TimeTaken(name.clone())], vec![]))
+                Ok(vec![TimeTaken(name.clone())])
             }
         }
-    }
-
-    fn get_position(&self) -> Option<u64> {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: Option<u64>) {
-        self.position = pos;
-    }
-
-    fn state_cache_interval() -> Option<u64> {
-        None
     }
 }

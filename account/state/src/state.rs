@@ -71,10 +71,7 @@ impl State for AccountState {
         }
     }
 
-    fn try_command(
-        &self,
-        command: &Self::Command,
-    ) -> Result<Events<Self::Event, Self::Notification>> {
+    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
         match command {
             AccountCommand::CreateAccount(create) => {
                 if !self.pseudo.is_empty() {
@@ -84,25 +81,19 @@ impl State for AccountState {
                 } else {
                     let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
 
-                    Ok(Events::new(
-                        vec![AccountEvent::Created(Created {
-                            uuid: Uuid::new_v4(),
-                            pseudo: create.pseudo.clone(),
-                            time: now.as_secs(),
-                        })],
-                        vec![],
-                    ))
+                    Ok(vec![AccountEvent::Created(Created {
+                        uuid: Uuid::new_v4(),
+                        pseudo: create.pseudo.clone(),
+                        time: now.as_secs(),
+                    })])
                 }
             }
             AccountCommand::Login(_login) => {
                 let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
 
-                Ok(Events::new(
-                    vec![AccountEvent::Logged(LoggedIn {
-                        time: now.as_secs(),
-                    })],
-                    vec![],
-                ))
+                Ok(vec![AccountEvent::Logged(LoggedIn {
+                    time: now.as_secs(),
+                })])
             }
             AccountCommand::AddReputation(nb) => {
                 if self.reputation.checked_add(*nb).is_none() {
@@ -111,10 +102,7 @@ impl State for AccountState {
                         nb, self.reputation
                     ))))
                 } else {
-                    Ok(Events::new(
-                        vec![AccountEvent::ReputationAdded(*nb)],
-                        vec![],
-                    ))
+                    Ok(vec![AccountEvent::ReputationAdded(*nb)])
                 }
             }
             AccountCommand::RemoveReputation(nb) => {
@@ -124,10 +112,7 @@ impl State for AccountState {
                         nb, self.reputation
                     ))))
                 } else {
-                    Ok(Events::new(
-                        vec![AccountEvent::ReputationRemoved(*nb)],
-                        vec![],
-                    ))
+                    Ok(vec![AccountEvent::ReputationRemoved(*nb)])
                 }
             }
         }

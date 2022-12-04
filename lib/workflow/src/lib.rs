@@ -122,7 +122,6 @@ where
                 let mut stream = event_db.subscribe_to_stream(stream_name, &options).await;
 
                 loop {
-
                     let notification_json = stream.next().await;
 
                     println!("notification_json : {notification_json:?}");
