@@ -25,7 +25,7 @@ pub enum ConcurrentEvent {
 impl Event for ConcurrentEvent {
     fn event_name(&self) -> &'static str {
         match &self {
-            ConcurrentEvent::TimeTaken(_) => "time_taken",
+            TimeTaken(_) => "time_taken",
         }
     }
 }
@@ -33,7 +33,6 @@ impl Event for ConcurrentEvent {
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct ConcurrentState {
     pub names: Vec<String>,
-    pub position: Option<u64>,
 }
 
 impl State for ConcurrentState {
@@ -46,7 +45,7 @@ impl State for ConcurrentState {
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {
-            ConcurrentEvent::TimeTaken(name) => {
+            TimeTaken(name) => {
                 self.names.push(name.clone());
             }
         }

@@ -60,8 +60,7 @@ async fn concurrent_case() {
     assert_eq!(
         model.state(),
         &ConcurrentState {
-            names: Vec::new(),
-            position: None
+            names: Vec::new()
         }
     );
 
@@ -88,7 +87,6 @@ async fn concurrent_case() {
         model.state(),
         &ConcurrentState {
             names: vec!["one".to_string(), "two".to_string()],
-            position: Some(3)
         }
     );
 }
