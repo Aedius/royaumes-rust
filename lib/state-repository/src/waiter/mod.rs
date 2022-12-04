@@ -1,8 +1,10 @@
 use async_trait::async_trait;
 use eventstore::{StreamPosition, SubscribeToStreamOptions};
 use state::{EventName, State};
-use tokio::time::{sleep, Duration};
-use crate::{EVENT_PREFIX, Metadata, ModelKey, StateRepository};
+use tokio::time::{Duration, sleep};
+use crate::{EVENT_PREFIX, StateRepository};
+use crate::metadata::Metadata;
+use crate::model_key::ModelKey;
 
 #[async_trait]
 pub trait DelayedState: State {

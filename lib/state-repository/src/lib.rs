@@ -1,4 +1,7 @@
 pub mod waiter;
+pub mod cross_state;
+pub mod metadata;
+pub mod model_key;
 
 use anyhow::{anyhow, Context, Result};
 use eventstore::{AppendToStreamOptions, Client as EventDb, Error, EventData, ExpectedRevision, ReadStreamOptions, StreamPosition};
@@ -6,161 +9,13 @@ use redis::Client as CacheDb;
 use redis::Commands;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, State, StateName};
+use state::{ State};
 use std::fmt::Debug;
-use uuid::Uuid;
+use metadata::{EventWithMetadata, Metadata};
+use model_key::ModelKey;
 
 const COMMAND_PREFIX :&'static str = "cmd";
 const EVENT_PREFIX :&'static str = "evt";
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Metadata {
-    #[serde(skip_serializing)]
-    id: Option<Uuid>,
-    #[serde(rename = "$correlationId")]
-    correlation_id: Uuid,
-    #[serde(rename = "$causationId")]
-    causation_id: Uuid,
-    #[serde(rename = "is_event")]
-    is_event: bool,
-}
-
-impl Metadata {
-    pub fn correlation_id(&self) -> Uuid {
-        self.correlation_id
-    }
-    pub fn causation_id(&self) -> Uuid {
-        self.causation_id
-    }
-    pub fn set_id(&mut self, id: Option<Uuid>) {
-        self.id = id;
-    }
-    pub fn id(&self) -> Option<Uuid> {
-        self.id
-    }
-
-    pub fn new(id: Option<Uuid>, correlation_id: Uuid, causation_id: Uuid, is_event: bool) -> Self {
-        Self {
-            id,
-            correlation_id,
-            causation_id,
-            is_event,
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct EventWithMetadata {
-    event_data: EventData,
-    metadata: Metadata,
-}
-
-impl EventWithMetadata {
-    pub fn event_data(&self) -> &EventData {
-        &self.event_data
-    }
-    pub fn metadata(&self) -> &Metadata {
-        &self.metadata
-    }
-
-    pub fn full_event_data(&self) -> EventData {
-        self.event_data
-            .clone()
-            .metadata_as_json(self.metadata())
-            .unwrap()
-    }
-
-    pub fn from_command<C>(
-        command: C,
-        previous_metadata: Option<&Metadata>,
-        state_name: StateName,
-    ) -> Self
-    where
-        C: Command,
-    {
-        let event_data = EventData::json(
-            format!("{}.{}.{}",COMMAND_PREFIX,  state_name, command.command_name()),
-            command,
-        )
-        .unwrap();
-
-        Self::from_event_data(event_data, previous_metadata, false)
-    }
-
-    pub fn from_event<E>(event: E, previous_metadata: &Metadata, state_name: StateName) -> Self
-    where
-        E: Event,
-    {
-        let event_data =
-            EventData::json(format!("{}.{}.{}",EVENT_PREFIX, state_name, event.event_name()), event).unwrap();
-
-        Self::from_event_data(event_data, Some(previous_metadata), true)
-    }
-
-    fn from_event_data(
-        mut event_data: EventData,
-        previous_metadata: Option<&Metadata>,
-        is_event: bool,
-    ) -> Self {
-        let id = Uuid::new_v4();
-
-        event_data = event_data.id(id);
-
-        let metadata = match previous_metadata {
-            None => Metadata {
-                id: Some(id),
-                correlation_id: id,
-                causation_id: id,
-                is_event,
-            },
-            Some(previous) => Metadata {
-                id: Some(id),
-                correlation_id: previous.correlation_id,
-                causation_id: match previous.id {
-                    None => id,
-                    Some(p) => p,
-                },
-                is_event,
-            },
-        };
-
-        Self {
-            event_data,
-            metadata,
-        }
-    }
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone, Eq, PartialEq)]
-pub struct ModelKey {
-    stream_name: String,
-    stream_id: String,
-}
-
-impl ModelKey {
-    pub fn new(stream_name: String, stream_id: String) -> Self {
-        Self {
-            stream_name,
-            stream_id,
-        }
-    }
-
-    fn format(&self) -> String {
-        format!("{}.{}", self.stream_name.replace('.', "_"), self.stream_id)
-    }
-}
-
-impl From<String> for ModelKey {
-    fn from(value: String) -> Self {
-        let mut split = value.split('.');
-        let stream_name = split.next().unwrap_or_default();
-        let stream_id = split.collect();
-        ModelKey {
-            stream_name: stream_name.to_string(),
-            stream_id,
-        }
-    }
-}
 
 #[derive(Clone)]
 pub struct StateRepository {
@@ -235,7 +90,7 @@ impl StateRepository {
             let metadata: Metadata = serde_json::from_slice(
                 original_event.custom_metadata.as_ref()).unwrap();
 
-            if metadata.is_event {
+            if metadata.is_event() {
                 let event = original_event
                     .as_json::<S::Event>()
                     .context(format!("decode event : {:?}", json_event))?;

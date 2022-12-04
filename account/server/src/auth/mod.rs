@@ -6,7 +6,7 @@ use crate::auth::command::handle_anonymous;
 use crate::auth::query::{account, register};
 
 use rocket::Route;
-use state_repository::ModelKey;
+use state_repository::model_key::ModelKey;
 use uuid::Uuid;
 
 const STREAM_NAME: &str = "account";

@@ -4,9 +4,10 @@ use crate::concurrent::{ConcurrentCommand, ConcurrentState};
 use crate::simple::{SimpleCommand, SimpleState};
 
 use eventstore::Client as EventClient;
-use state_repository::{ModelKey, StateRepository};
+use state_repository::StateRepository;
 use std::future::join;
 use uuid::Uuid;
+use state_repository::model_key::ModelKey;
 
 mod concurrent;
 mod simple;

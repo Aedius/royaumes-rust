@@ -1,9 +1,10 @@
 #![feature(future_join)]
 
 use eventstore::Client as EventClient;
-use state_repository::{ModelKey, StateRepository};
+use state_repository::StateRepository;
 use tokio::time::{Duration, sleep};
 use uuid::Uuid;
+use state_repository::model_key::ModelKey;
 use state_repository::waiter::DelayedState;
 use crate::wait::{WaitCommand, WaitState};
 

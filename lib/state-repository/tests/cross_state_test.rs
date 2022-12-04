@@ -1,17 +1,16 @@
 #![feature(future_join)]
 
-use crate::multiple::build::{BuildCommand, BuildState, BuildingCreate};
-use crate::multiple::flow::{AskPayment, Payment};
-use crate::multiple::gold::GoldState;
-use crate::multiple::worker::WorkerState;
-use crate::multiple::Cost;
+use crate::cross_state::build::{BuildCommand, BuildingCreate, BuildState};
+use crate::cross_state::gold::GoldState;
+use crate::cross_state::worker::WorkerState;
+use crate::cross_state::Cost;
 use eventstore::Client as EventClient;
-use state_repository::{ModelKey, StateRepository};
-use tokio::time::{sleep, Duration};
+use state_repository::StateRepository;
+use tokio::time::{Duration, sleep};
 use uuid::Uuid;
-use workflow::Distant;
+use state_repository::model_key::ModelKey;
 
-mod multiple;
+mod cross_state;
 
 #[tokio::test]
 async fn multiple_state_case() {
@@ -23,8 +22,8 @@ async fn multiple_state_case() {
 
     let key_citizen = ModelKey::new("citizen_test".to_string(), Uuid::new_v4().to_string());
 
-    <GoldState as Distant<Payment>>::listen(repo.clone());
-    <BuildState as Distant<AskPayment>>::listen(repo.clone());
+    // <GoldState as Distant<Payment>>::listen(repo.clone());
+    // <BuildState as Distant<AskPayment>>::listen(repo.clone());
 
     sleep(Duration::from_secs(1)).await;
 
