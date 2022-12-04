@@ -1,68 +1,64 @@
 #![feature(future_join)]
 
-use crate::single::{SingleCommand, SingleNotification, SingleState, GROWTH_STARTED};
 use eventstore::Client as EventClient;
 use state_repository::{ModelKey, StateRepository};
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 use uuid::Uuid;
-use waiter::process_wait;
+use state_repository::waiter::DelayedState;
+use crate::wait::{WaitCommand, WaitState};
 
-mod single;
+mod wait;
 
 #[tokio::test]
-async fn single_state_case() {
+async fn wait_case() {
     let repo = get_repository();
-    process_wait::<SingleNotification, SingleState>(repo.clone(), vec![GROWTH_STARTED]).await;
+    WaitState::process_delayed(repo.clone()).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 
-    let model = repo.get_model::<SingleState>(&key).await.unwrap();
+    let model = repo.get_model::<WaitState>(&key).await.unwrap();
 
     assert_eq!(
         model.state(),
-        &SingleState {
+        &WaitState {
             nb: 0,
-            position: None
         }
     );
 
     let added = repo
-        .add_command::<SingleState>(&key, SingleCommand::Add(15), None)
+        .add_command::<WaitState>(&key, WaitCommand::Add(15), None)
         .await
         .unwrap();
 
     assert_eq!(
         added,
-        (SingleState {
+        (WaitState {
             nb: 15,
-            position: None,
         })
     );
 
     let growth = repo
-        .add_command::<SingleState>(&key, SingleCommand::GrowStart(10, 2), None)
+        .add_command::<WaitState>(&key, WaitCommand::Growth(10), None)
         .await
         .unwrap();
 
     assert_eq!(
         growth,
-        (SingleState {
+        (WaitState {
             nb: 5,
-            position: Some(1)
         })
     );
 
-    let secs = Duration::from_secs(4);
+    let secs = Duration::from_secs(3);
 
     sleep(secs).await;
 
-    let waited = repo.get_model::<SingleState>(&key).await.unwrap();
+    let waited = repo.get_model::<WaitState>(&key).await.unwrap();
 
     assert_eq!(
-        waited,
-        SingleState {
+        waited.state(),
+        &WaitState {
             nb: 25,
-            position: Some(6),
         }
     );
 }

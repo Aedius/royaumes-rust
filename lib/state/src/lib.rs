@@ -18,7 +18,7 @@ pub trait Event: Serialize + DeserializeOwned + Debug + Send + Clone {
 
 pub trait State: Default + Serialize + DeserializeOwned + Debug + Send + Clone {
     type Event: Event;
-    type Command: Command;
+    type Command: Command + Sync + Send;
 
     fn name_prefix() -> StateName;
 

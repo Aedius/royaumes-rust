@@ -1,8 +1,7 @@
+pub mod waiter;
+
 use anyhow::{anyhow, Context, Result};
-use eventstore::{
-    AppendToStreamOptions, Client as EventDb, Error, EventData, ExpectedRevision,
-    ReadStreamOptions, StreamPosition,
-};
+use eventstore::{AppendToStreamOptions, Client as EventDb, Error, EventData, ExpectedRevision, ReadStreamOptions, StreamPosition};
 use redis::Client as CacheDb;
 use redis::Commands;
 use serde::de::DeserializeOwned;
@@ -10,6 +9,9 @@ use serde::{Deserialize, Serialize};
 use state::{Command, Event, State, StateName};
 use std::fmt::Debug;
 use uuid::Uuid;
+
+const COMMAND_PREFIX :&'static str = "cmd";
+const EVENT_PREFIX :&'static str = "evt";
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Metadata {
@@ -77,7 +79,7 @@ impl EventWithMetadata {
         C: Command,
     {
         let event_data = EventData::json(
-            format!("cmd.{}.{}", state_name, command.command_name()),
+            format!("{}.{}.{}",COMMAND_PREFIX,  state_name, command.command_name()),
             command,
         )
         .unwrap();
@@ -90,7 +92,7 @@ impl EventWithMetadata {
         E: Event,
     {
         let event_data =
-            EventData::json(format!("evt.{}.{}", state_name, event.event_name()), event).unwrap();
+            EventData::json(format!("{}.{}.{}",EVENT_PREFIX, state_name, event.event_name()), event).unwrap();
 
         Self::from_event_data(event_data, Some(previous_metadata), true)
     }
@@ -227,12 +229,11 @@ impl StateRepository {
         let mut nb_change = 0;
 
         while let Ok(Some(json_event)) = stream.next().await {
+
             let original_event = json_event.get_original_event();
 
-            let metadata: Metadata = serde_json::from_str(
-                std::str::from_utf8(original_event.custom_metadata.as_ref()).unwrap_or_default(),
-            )
-            .unwrap();
+            let metadata: Metadata = serde_json::from_slice(
+                original_event.custom_metadata.as_ref()).unwrap();
 
             if metadata.is_event {
                 let event = original_event
