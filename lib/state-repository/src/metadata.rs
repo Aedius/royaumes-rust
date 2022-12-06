@@ -1,8 +1,8 @@
-use uuid::Uuid;
+use crate::{COMMAND_PREFIX, EVENT_PREFIX};
 use eventstore::EventData;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, StateName};
-use crate::{COMMAND_PREFIX, EVENT_PREFIX};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Metadata {
@@ -17,8 +17,6 @@ pub struct Metadata {
 }
 
 impl Metadata {
-
-
     pub fn correlation_id(&self) -> Uuid {
         self.correlation_id
     }
@@ -71,24 +69,37 @@ impl EventWithMetadata {
         previous_metadata: Option<&Metadata>,
         state_name: StateName,
     ) -> Self
-    where
-        C: Command,
+        where
+            C: Command,
     {
         let event_data = EventData::json(
-            format!("{}.{}.{}",COMMAND_PREFIX,  state_name, command.command_name()),
+            format!(
+                "{}.{}.{}",
+                COMMAND_PREFIX,
+                state_name,
+                command.command_name()
+            ),
             command,
         )
-        .unwrap();
+            .unwrap();
 
         Self::from_event_data(event_data, previous_metadata, false)
     }
 
     pub fn from_event<E>(event: E, previous_metadata: &Metadata, state_name: StateName) -> Self
-    where
-        E: Event,
+        where
+            E: Event,
     {
-        let event_data =
-            EventData::json(format!("{}.{}.{}",EVENT_PREFIX, state_name, event.event_name()), event).unwrap();
+        println!("{:?}", event);
+        println!("{:?}", event.is_state_specific());
+        let key = if event.is_state_specific() {
+            format!("{}.{}.{}", EVENT_PREFIX, state_name, event.event_name())
+        } else {
+            format!("{}.{}", EVENT_PREFIX, event.event_name())
+        };
+        println!("{key:?}");
+
+        let event_data = EventData::json(key, event).unwrap();
 
         Self::from_event_data(event_data, Some(previous_metadata), true)
     }

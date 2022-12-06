@@ -1,9 +1,9 @@
 use anyhow::anyhow;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use state::{Command, CommandName, Event, EventName,  State, StateName};
-use tokio::time::Duration;
+use state::{Command, CommandName, Event, EventName, State, StateName};
 use state_repository::waiter::DelayedState;
+use tokio::time::Duration;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum WaitCommand {
@@ -14,7 +14,6 @@ pub enum WaitCommand {
 
 pub const GROWTH_STARTED: &str = "growth_started";
 const SINLGE_STATE_PREFIX: &'static str = "test-wait";
-
 
 impl Command for WaitCommand {
     fn command_name(&self) -> CommandName {
@@ -41,7 +40,7 @@ impl Event for WaitEvent {
         match &self {
             Added(_) => "added",
             Removed(_) => "removed",
-            GrowthStarted(_, _) => { GROWTH_STARTED }
+            GrowthStarted(_, _) => GROWTH_STARTED,
         }
     }
 }
@@ -85,12 +84,9 @@ impl State for WaitState {
                     Ok(vec![Added(n)])
                 }
             }
-            Growth(n) => {
-                Ok(vec![Removed(n), GrowthStarted(n, Duration::from_secs(2))])
-            }
+            Growth(n) => Ok(vec![Removed(n), GrowthStarted(n, Duration::from_secs(2))]),
         }
     }
-
 
     fn state_cache_interval() -> Option<u64> {
         None
@@ -99,16 +95,14 @@ impl State for WaitState {
 
 impl DelayedState for WaitState {
     fn event_to_delayed() -> Vec<EventName> {
-        vec!(GROWTH_STARTED)
+        vec![GROWTH_STARTED]
     }
 
     fn resolve_command(event: Self::Event) -> (Self::Command, Duration) {
-        use WaitEvent::*;
         use WaitCommand::*;
+        use WaitEvent::*;
         match event {
-            GrowthStarted(n, d) => {
-                (GrowEnd(n * 2), d)
-            }
+            GrowthStarted(n, d) => (GrowEnd(n * 2), d),
             _ => {
                 unimplemented!()
             }

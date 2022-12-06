@@ -1,15 +1,11 @@
-use crate::cross_state::flow::{AskPayment, CrossPayment, PaymentNeeded, PaymentPaid, PaymentPay};
-use crate::cross_state::Cost;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use state::{Command, Event, State};
+use state::{Command, CommandName, Event, EventName, State};
+use state_repository::cross_state::{CrossData, CrossDataProcessor, CrossStateAnswer};
 use state_repository::model_key::ModelKey;
-use std::time::Duration;
-use state_repository::cross_state::{CrossStateAnswer, CrossStateQuestion};
+use eventstore::RecordedEvent;
+use crate::cross_state::build_api::{PaymentQuestion, PublicBuild};
 
-pub const ALLOCATION_NEEDED: &'static str = "allocation_needed";
-pub const BUILD_ENDED: &'static str = "build_ended";
-pub const BUILD_STARTED: &'static str = "build_started";
 pub const BUILD_STATE_NAME: &'static str = "test-tower";
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -21,41 +17,48 @@ pub struct BuildingCreate {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum BuildCommand {
     Create(BuildingCreate),
-    Allocate(u32),
+    Pay(u32),
 }
 
 impl Command for BuildCommand {
-    fn command_name(&self) -> &'static str {
+    fn command_name(&self) -> CommandName {
         use BuildCommand::*;
         match &self {
             Create(_) => "Create",
-            Allocate(_) => "Allocate",
+            Pay(_) => "Pay",
         }
     }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(tag = "type")]
 pub enum BuildEvent {
     Created(BuildingCreate),
-    Allocated(u32),
     Built,
+    Public(PaymentQuestion),
 }
 
 impl Event for BuildEvent {
-    fn event_name(&self) -> &'static str {
+    fn event_name(&self) -> EventName {
         use BuildEvent::*;
         match &self {
             Created(_) => "created",
-            Allocated(_) => "allocated",
             Built => "build",
+            Public(p) => p.event_name(),
+        }
+    }
+
+    fn is_state_specific(&self) -> bool {
+        match &self {
+            BuildEvent::Public(_) => false,
+            _ => true
         }
     }
 }
 
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct BuildState {
     pub cost: u32,
-    pub allocated: u32,
     pub built: bool,
     pub bank: Option<ModelKey>,
 }
@@ -76,21 +79,28 @@ impl State for BuildState {
                 self.cost = create.cost;
                 self.bank = Some(create.bank.clone());
             }
-            Allocated(allocated) => {
-                self.allocated += allocated
-            }
             Built => self.built = true,
+            Public(_) => {}
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
+    fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>> {
         use BuildCommand::*;
         use BuildEvent::*;
-        use BuildNotification::*;
         match command {
-            Create(c) => Ok(vec![Created(c.clone())]),
-            Allocate(c) => {
-                Ok(vec![Allocated(*c)])
+            Create(c) => Ok(vec![
+                Created(c.clone()),
+                Public(PaymentQuestion {
+                    amount: c.cost,
+                    bank: c.bank.clone(),
+                }),
+            ]),
+            Pay(c) => {
+                if c >= self.cost {
+                    Ok(vec![Built])
+                } else {
+                    todo!("in real case it should be handle wink")
+                }
             }
         }
     }
@@ -100,37 +110,14 @@ impl State for BuildState {
     }
 }
 
-impl CrossStateAnswer<CrossPayment> for BuildState{
-    fn resolve_answer(event: CrossPayment::Answer) -> (Self::Command, ModelKey) {
-        todo!()
+impl CrossDataProcessor for BuildState {
+    fn resolve(e: RecordedEvent, _local_key: ModelKey) -> (Self::Command, ModelKey) {
+        Self::resolve_helper(e)
     }
 }
 
-
-// impl Distant<AskPayment> for BuildState {
-//     fn get_command(input: <AskPayment as Flow>::Input) -> Self::Command {
-//         match input {
-//             PaymentPaid::Paid(amount, _) => BuildCommand::Allocate(Cost {
-//                 gold: amount,
-//                 worker: 0,
-//             }),
-//             PaymentPaid::NotPaid(_) => BuildCommand::Allocate(Cost { gold: 0, worker: 0 }),
-//         }
-//     }
-//
-//     fn get_response(output: Self::Notification) -> <AskPayment as Flow>::Output {
-//         match output {
-//             BuildNotification::AllocationNeeded(c) => PaymentPay {
-//                 amount: c.cost.gold,
-//                 target: c.bank,
-//             },
-//             _ => {
-//                 panic!("not implemented");
-//             }
-//         }
-//     }
-//
-//     fn get_notification_response() -> Vec<&'static str> {
-//         vec![ALLOCATION_NEEDED]
-//     }
-// }
+impl CrossStateAnswer<PublicBuild> for BuildState{
+    fn resolve_answer(event: <PublicBuild as CrossData>::Answer) -> Self::Command {
+        BuildCommand::Pay(event.amount)
+    }
+}

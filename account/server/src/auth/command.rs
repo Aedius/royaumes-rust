@@ -2,7 +2,7 @@ use crate::auth::{get_key, JWT_ISSUER, JWT_SECRET};
 use account_state::error::AccountError;
 
 use jsonwebtokens as jwt;
-use jsonwebtokens::{AlgorithmID, encode};
+use jsonwebtokens::{encode, AlgorithmID};
 use jwt::Algorithm;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -13,8 +13,8 @@ use crate::auth::jwt_guard::JwtToken;
 use crate::MariadDb;
 use account_shared::{AccountCommand, CreateAccount, Login};
 use account_state::state::AccountState;
-use state_repository::StateRepository;
 use state_repository::model_key::ModelKey;
+use state_repository::StateRepository;
 
 #[post("/", format = "json", data = "<command>")]
 pub async fn handle_anonymous(

@@ -5,12 +5,12 @@ use uuid::Uuid;
 use account_shared::{AccountCommand, AccountDto};
 use anyhow::{anyhow, Result};
 use rocket::serde::{Deserialize, Serialize};
-use state::{Events, State};
+use state::State;
 
 use crate::event::{Created, LoggedIn};
 use crate::{AccountError, AccountEvent};
 
-#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct AccountState {
     uuid: Uuid,
     pseudo: String,
@@ -48,7 +48,6 @@ impl AccountState {
 impl State for AccountState {
     type Event = AccountEvent;
     type Command = AccountCommand;
-    type Notification = ();
 
     fn name_prefix() -> &'static str {
         "account"
@@ -116,14 +115,6 @@ impl State for AccountState {
                 }
             }
         }
-    }
-
-    fn get_position(&self) -> Option<u64> {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: Option<u64>) {
-        self.position = pos;
     }
 
     fn state_cache_interval() -> Option<u64> {

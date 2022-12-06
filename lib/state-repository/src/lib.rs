@@ -1,21 +1,24 @@
-pub mod waiter;
 pub mod cross_state;
 pub mod metadata;
 pub mod model_key;
+pub mod waiter;
 
 use anyhow::{anyhow, Context, Result};
-use eventstore::{AppendToStreamOptions, Client as EventDb, Error, EventData, ExpectedRevision, ReadStreamOptions, StreamPosition};
+use eventstore::{
+    AppendToStreamOptions, Client as EventDb, Error, EventData, ExpectedRevision,
+    ReadStreamOptions, StreamPosition,
+};
+use metadata::{EventWithMetadata, Metadata};
+use model_key::ModelKey;
 use redis::Client as CacheDb;
 use redis::Commands;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use state::{ State};
+use state::State;
 use std::fmt::Debug;
-use metadata::{EventWithMetadata, Metadata};
-use model_key::ModelKey;
 
-const COMMAND_PREFIX :&'static str = "cmd";
-const EVENT_PREFIX :&'static str = "evt";
+const COMMAND_PREFIX: &'static str = "cmd";
+const EVENT_PREFIX: &'static str = "evt";
 
 #[derive(Clone)]
 pub struct StateRepository {
@@ -84,11 +87,10 @@ impl StateRepository {
         let mut nb_change = 0;
 
         while let Ok(Some(json_event)) = stream.next().await {
-
             let original_event = json_event.get_original_event();
 
-            let metadata: Metadata = serde_json::from_slice(
-                original_event.custom_metadata.as_ref()).unwrap();
+            let metadata: Metadata =
+                serde_json::from_slice(original_event.custom_metadata.as_ref()).unwrap();
 
             if metadata.is_event() {
                 let event = original_event

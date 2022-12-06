@@ -1,12 +1,12 @@
 #![feature(future_join)]
 
+use crate::wait::{WaitCommand, WaitState};
 use eventstore::Client as EventClient;
-use state_repository::StateRepository;
-use tokio::time::{Duration, sleep};
-use uuid::Uuid;
 use state_repository::model_key::ModelKey;
 use state_repository::waiter::DelayedState;
-use crate::wait::{WaitCommand, WaitState};
+use state_repository::StateRepository;
+use tokio::time::{sleep, Duration};
+use uuid::Uuid;
 
 mod wait;
 
@@ -19,36 +19,21 @@ async fn wait_case() {
 
     let model = repo.get_model::<WaitState>(&key).await.unwrap();
 
-    assert_eq!(
-        model.state(),
-        &WaitState {
-            nb: 0,
-        }
-    );
+    assert_eq!(model.state(), &WaitState { nb: 0 });
 
     let added = repo
         .add_command::<WaitState>(&key, WaitCommand::Add(15), None)
         .await
         .unwrap();
 
-    assert_eq!(
-        added,
-        (WaitState {
-            nb: 15,
-        })
-    );
+    assert_eq!(added, (WaitState { nb: 15 }));
 
     let growth = repo
         .add_command::<WaitState>(&key, WaitCommand::Growth(10), None)
         .await
         .unwrap();
 
-    assert_eq!(
-        growth,
-        (WaitState {
-            nb: 5,
-        })
-    );
+    assert_eq!(growth, (WaitState { nb: 5 }));
 
     let secs = Duration::from_secs(3);
 
@@ -56,12 +41,7 @@ async fn wait_case() {
 
     let waited = repo.get_model::<WaitState>(&key).await.unwrap();
 
-    assert_eq!(
-        waited.state(),
-        &WaitState {
-            nb: 25,
-        }
-    );
+    assert_eq!(waited.state(), &WaitState { nb: 25 });
 }
 
 fn get_repository() -> StateRepository {

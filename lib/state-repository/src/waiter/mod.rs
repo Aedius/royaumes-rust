@@ -1,10 +1,10 @@
+use crate::metadata::Metadata;
+use crate::model_key::ModelKey;
+use crate::{StateRepository, EVENT_PREFIX};
 use async_trait::async_trait;
 use eventstore::{StreamPosition, SubscribeToStreamOptions};
 use state::{EventName, State};
-use tokio::time::{Duration, sleep};
-use crate::{EVENT_PREFIX, StateRepository};
-use crate::metadata::Metadata;
-use crate::model_key::ModelKey;
+use tokio::time::{sleep, Duration};
 
 #[async_trait]
 pub trait DelayedState: State {
@@ -14,14 +14,23 @@ pub trait DelayedState: State {
 
     async fn process_delayed(repo: StateRepository) {
         for event_name in Self::event_to_delayed() {
-            let stream_name = format!("$et-{}.{}.{}", EVENT_PREFIX, Self::name_prefix(), event_name);
+            let stream_name = format!(
+                "$et-{}.{}.{}",
+                EVENT_PREFIX,
+                Self::name_prefix(),
+                event_name
+            );
             let repo = repo.clone();
             tokio::spawn(async move {
                 let options = SubscribeToStreamOptions::default()
                     .start_from(StreamPosition::End)
                     .resolve_link_tos();
 
-                let mut stream = repo.event_db.clone().subscribe_to_stream(stream_name, &options).await;
+                let mut stream = repo
+                    .event_db
+                    .clone()
+                    .subscribe_to_stream(stream_name, &options)
+                    .await;
 
                 loop {
                     let event_json = stream.next().await.unwrap();

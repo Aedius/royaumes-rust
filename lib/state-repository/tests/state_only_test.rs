@@ -4,10 +4,10 @@ use crate::concurrent::{ConcurrentCommand, ConcurrentState};
 use crate::simple::{SimpleCommand, SimpleState};
 
 use eventstore::Client as EventClient;
+use state_repository::model_key::ModelKey;
 use state_repository::StateRepository;
 use std::future::join;
 use uuid::Uuid;
-use state_repository::model_key::ModelKey;
 
 mod concurrent;
 mod simple;
@@ -58,12 +58,7 @@ async fn concurrent_case() {
 
     let model = repo.get_model::<ConcurrentState>(&key).await.unwrap();
 
-    assert_eq!(
-        model.state(),
-        &ConcurrentState {
-            names: Vec::new()
-        }
-    );
+    assert_eq!(model.state(), &ConcurrentState { names: Vec::new() });
 
     let add_one = repo.add_command::<ConcurrentState>(
         &key,

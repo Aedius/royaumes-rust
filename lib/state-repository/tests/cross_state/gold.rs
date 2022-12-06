@@ -1,9 +1,11 @@
-use crate::cross_state::flow::{Payment, PaymentPaid};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
 use state_repository::model_key::ModelKey;
 use std::fmt::Debug;
+use eventstore::RecordedEvent;
+use state_repository::cross_state::{CrossData, CrossDataProcessor, CrossStateQuestion};
+use crate::cross_state::build_api::{PaymentResponse, PublicBuild};
 
 pub const PAID: &'static str = "paid";
 pub const GOLD_STATE_NAME: &'static str = "test-gold";
@@ -23,8 +25,10 @@ impl Command for GoldCommand {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(tag = "type")]
 pub enum GoldEvent {
     Paid(u32),
+    Public(PaymentResponse),
 }
 
 impl Event for GoldEvent {
@@ -33,21 +37,27 @@ impl Event for GoldEvent {
 
         match &self {
             Paid(_) => PAID,
+            Public(p) => { p.event_name() }
+        }
+    }
+
+    fn is_state_specific(&self) -> bool {
+        match &self {
+            GoldEvent::Public(_) => false,
+            _ => true
         }
     }
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct GoldState {
     pub nb: u32,
-    pub position: Option<u64>,
 }
 
 impl Default for GoldState {
     fn default() -> Self {
         GoldState {
             nb: 1000,
-            position: None,
         }
     }
 }
@@ -63,12 +73,19 @@ impl State for GoldState {
     fn play_event(&mut self, event: &Self::Event) {
         match event {
             GoldEvent::Paid(c) => self.nb -= c,
+            GoldEvent::Public(_) => {}
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
+    fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>> {
         match command {
-            GoldCommand::Pay(n, k) => Ok(vec![GoldEvent::Paid(*n)]),
+            GoldCommand::Pay(n, k) => Ok(vec![
+                GoldEvent::Paid(n),
+                GoldEvent::Public(PaymentResponse{
+                    amount: n,
+                    response: k,
+                })
+            ]),
         }
     }
 
@@ -77,18 +94,15 @@ impl State for GoldState {
     }
 }
 
-// impl Distant<Payment> for GoldState {
-//     fn get_command(input: <Payment as Flow>::Input) -> Self::Command {
-//         GoldCommand::Pay(input.amount, input.target)
-//     }
-//
-//     fn get_response(output: Self::Notification) -> <Payment as Flow>::Output {
-//         match output {
-//             GoldNotification::Paid(amount, target) => PaymentPaid::Paid(amount, target),
-//         }
-//     }
-//
-//     fn get_notification_response() -> Vec<&'static str> {
-//         vec![PAID]
-//     }
-// }
+impl CrossDataProcessor for GoldState {
+    fn resolve(e: RecordedEvent, local_key: ModelKey) -> (Self::Command, ModelKey) {
+        Self::resolve_helper(e, local_key)
+    }
+}
+
+
+impl CrossStateQuestion<PublicBuild> for GoldState {
+    fn resolve_question(event: <PublicBuild as CrossData>::Question, local_key: ModelKey) -> Self::Command {
+        GoldCommand::Pay(event.amount, local_key)
+    }
+}
