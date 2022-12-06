@@ -3,11 +3,11 @@
 use crate::cross_state::build::{BuildCommand, BuildState, BuildingCreate};
 use crate::cross_state::gold::GoldState;
 use eventstore::Client as EventClient;
+use state_repository::cross_state::{CrossStateAnswer, CrossStateQuestion};
 use state_repository::model_key::ModelKey;
 use state_repository::StateRepository;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
-use state_repository::cross_state::{CrossStateAnswer, CrossStateQuestion};
 
 mod cross_state;
 
@@ -29,7 +29,6 @@ async fn multiple_state_case() {
         bank: key_bank.clone(),
     };
 
-
     let build = repo
         .add_command::<BuildState>(&key, BuildCommand::Create(create), None)
         .await
@@ -38,7 +37,7 @@ async fn multiple_state_case() {
     assert_eq!(
         build,
         (BuildState {
-            cost : 322,
+            cost: 322,
             built: false,
             bank: Some(key_bank.clone()),
         })
@@ -57,20 +56,13 @@ async fn multiple_state_case() {
         }
     );
 
-
     let gold_state = repo.get_model::<GoldState>(&key_bank).await.unwrap();
 
-    assert_eq!(
-        gold_state.state(),
-       &GoldState {
-            nb: 678,
-        }
-    );
+    assert_eq!(gold_state.state(), &GoldState { nb: 678 });
 
     sleep(Duration::from_secs(3)).await;
 
     let state = repo.get_model::<BuildState>(&key).await.unwrap();
-
 
     assert_eq!(
         state.state(),
@@ -81,15 +73,9 @@ async fn multiple_state_case() {
         }
     );
 
-
     let gold_state = repo.get_model::<GoldState>(&key_bank).await.unwrap();
 
-    assert_eq!(
-        gold_state.state(),
-        &GoldState {
-            nb: 678,
-        }
-    );
+    assert_eq!(gold_state.state(), &GoldState { nb: 678 });
 }
 
 fn get_repository() -> StateRepository {

@@ -69,8 +69,8 @@ impl EventWithMetadata {
         previous_metadata: Option<&Metadata>,
         state_name: StateName,
     ) -> Self
-        where
-            C: Command,
+    where
+        C: Command,
     {
         let event_data = EventData::json(
             format!(
@@ -81,14 +81,14 @@ impl EventWithMetadata {
             ),
             command,
         )
-            .unwrap();
+        .unwrap();
 
         Self::from_event_data(event_data, previous_metadata, false)
     }
 
     pub fn from_event<E>(event: E, previous_metadata: &Metadata, state_name: StateName) -> Self
-        where
-            E: Event,
+    where
+        E: Event,
     {
         println!("{:?}", event);
         println!("{:?}", event.is_state_specific());

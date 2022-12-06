@@ -1,11 +1,11 @@
+use crate::cross_state::build_api::{PaymentResponse, PublicBuild};
 use anyhow::Result;
+use eventstore::RecordedEvent;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
+use state_repository::cross_state::{CrossData, CrossDataProcessor, CrossStateQuestion};
 use state_repository::model_key::ModelKey;
 use std::fmt::Debug;
-use eventstore::RecordedEvent;
-use state_repository::cross_state::{CrossData, CrossDataProcessor, CrossStateQuestion};
-use crate::cross_state::build_api::{PaymentResponse, PublicBuild};
 
 pub const PAID: &'static str = "paid";
 pub const GOLD_STATE_NAME: &'static str = "test-gold";
@@ -37,14 +37,14 @@ impl Event for GoldEvent {
 
         match &self {
             Paid(_) => PAID,
-            Public(p) => { p.event_name() }
+            Public(p) => p.event_name(),
         }
     }
 
     fn is_state_specific(&self) -> bool {
         match &self {
             GoldEvent::Public(_) => false,
-            _ => true
+            _ => true,
         }
     }
 }
@@ -56,9 +56,7 @@ pub struct GoldState {
 
 impl Default for GoldState {
     fn default() -> Self {
-        GoldState {
-            nb: 1000,
-        }
+        GoldState { nb: 1000 }
     }
 }
 
@@ -81,10 +79,10 @@ impl State for GoldState {
         match command {
             GoldCommand::Pay(n, k) => Ok(vec![
                 GoldEvent::Paid(n),
-                GoldEvent::Public(PaymentResponse{
+                GoldEvent::Public(PaymentResponse {
                     amount: n,
                     response: k,
-                })
+                }),
             ]),
         }
     }
@@ -100,9 +98,11 @@ impl CrossDataProcessor for GoldState {
     }
 }
 
-
 impl CrossStateQuestion<PublicBuild> for GoldState {
-    fn resolve_question(event: <PublicBuild as CrossData>::Question, local_key: ModelKey) -> Self::Command {
+    fn resolve_question(
+        event: <PublicBuild as CrossData>::Question,
+        local_key: ModelKey,
+    ) -> Self::Command {
         GoldCommand::Pay(event.amount, local_key)
     }
 }

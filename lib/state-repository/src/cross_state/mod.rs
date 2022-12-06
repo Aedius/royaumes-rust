@@ -66,7 +66,8 @@ pub trait CrossDataProcessor: State {
 
 #[async_trait]
 pub trait CrossStateQuestion<C>: CrossDataProcessor
-where C: CrossData
+where
+    C: CrossData,
 {
     fn resolve_question(event: C::Question, local_key: ModelKey) -> Self::Command;
 
@@ -86,7 +87,8 @@ where C: CrossData
 
 #[async_trait]
 pub trait CrossStateAnswer<C>: CrossDataProcessor
-    where C: CrossData
+where
+    C: CrossData,
 {
     fn resolve_answer(event: C::Answer) -> Self::Command;
 

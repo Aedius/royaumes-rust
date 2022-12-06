@@ -1,10 +1,10 @@
+use crate::cross_state::build_api::{PaymentQuestion, PublicBuild};
 use anyhow::Result;
+use eventstore::RecordedEvent;
 use serde::{Deserialize, Serialize};
 use state::{Command, CommandName, Event, EventName, State};
 use state_repository::cross_state::{CrossData, CrossDataProcessor, CrossStateAnswer};
 use state_repository::model_key::ModelKey;
-use eventstore::RecordedEvent;
-use crate::cross_state::build_api::{PaymentQuestion, PublicBuild};
 
 pub const BUILD_STATE_NAME: &'static str = "test-tower";
 
@@ -51,7 +51,7 @@ impl Event for BuildEvent {
     fn is_state_specific(&self) -> bool {
         match &self {
             BuildEvent::Public(_) => false,
-            _ => true
+            _ => true,
         }
     }
 }
@@ -116,7 +116,7 @@ impl CrossDataProcessor for BuildState {
     }
 }
 
-impl CrossStateAnswer<PublicBuild> for BuildState{
+impl CrossStateAnswer<PublicBuild> for BuildState {
     fn resolve_answer(event: <PublicBuild as CrossData>::Answer) -> Self::Command {
         BuildCommand::Pay(event.amount)
     }

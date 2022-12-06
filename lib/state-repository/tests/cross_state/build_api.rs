@@ -1,9 +1,7 @@
-
-use state::{ CommandName, Event, EventName};
+use serde::{Deserialize, Serialize};
+use state::{CommandName, Event, EventName};
 use state_repository::cross_state::{CrossData, HasTarget};
 use state_repository::model_key::ModelKey;
-use serde::{Deserialize, Serialize};
-
 
 pub const PAYMENT_ASKED: &'static str = "payment_asked";
 pub const PAYMENT_DONE: &'static str = "payment_done";
@@ -20,7 +18,7 @@ impl Event for PaymentQuestion {
     }
 }
 
-impl HasTarget for PaymentQuestion{
+impl HasTarget for PaymentQuestion {
     fn get_target(&self) -> ModelKey {
         self.bank.clone()
     }
@@ -38,7 +36,7 @@ impl Event for PaymentResponse {
     }
 }
 
-impl HasTarget for PaymentResponse{
+impl HasTarget for PaymentResponse {
     fn get_target(&self) -> ModelKey {
         self.response.clone()
     }
