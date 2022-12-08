@@ -11,11 +11,7 @@ pub enum AccountEvent {
 }
 
 impl Event for AccountEvent {
-    fn name_prefix() -> &'static str {
-        "account"
-    }
-
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         match self {
             AccountEvent::Logged(_) => "Logged",
             AccountEvent::Created(_) => "Created",

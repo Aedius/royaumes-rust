@@ -1,58 +1,47 @@
 #![feature(future_join)]
 
-use crate::state::{WaitCommand, WaitEvent, WaitState};
+use crate::wait::{WaitCommand, WaitState};
 use eventstore::Client as EventClient;
-use state_repository::{ModelKey, StateRepository};
+use state_repository::model_key::ModelKey;
+use state_repository::waiter::DelayedState;
+use state_repository::StateRepository;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
-use waiter::process_wait;
 
-mod state;
+mod wait;
 
 #[tokio::test]
-async fn waiter_case() {
+async fn wait_case() {
     let repo = get_repository();
-    process_wait::<WaitCommand, WaitState>(repo.clone(), WaitEvent::GrowthStarted(0, 0)).await;
+    WaitState::process_delayed(repo.clone()).await;
 
     let key = ModelKey::new("waiter_test".to_string(), Uuid::new_v4().to_string());
 
     let model = repo.get_model::<WaitState>(&key).await.unwrap();
 
-    assert_eq!(model, WaitState { nb: 0, position: 0 });
+    assert_eq!(model.state(), &WaitState { nb: 0 });
 
     let added = repo
         .add_command::<WaitState>(&key, WaitCommand::Add(15), None)
         .await
         .unwrap();
 
-    assert_eq!(
-        added,
-        WaitState {
-            nb: 15,
-            position: 0
-        }
-    );
+    assert_eq!(added, (WaitState { nb: 15 }));
 
     let growth = repo
-        .add_command::<WaitState>(&key, WaitCommand::GrowStart(10, 2), None)
+        .add_command::<WaitState>(&key, WaitCommand::Growth(10), None)
         .await
         .unwrap();
 
-    assert_eq!(growth, WaitState { nb: 5, position: 1 });
+    assert_eq!(growth, (WaitState { nb: 5 }));
 
-    let secs = Duration::from_secs(4);
+    let secs = Duration::from_secs(3);
 
     sleep(secs).await;
 
     let waited = repo.get_model::<WaitState>(&key).await.unwrap();
 
-    assert_eq!(
-        waited,
-        WaitState {
-            nb: 25,
-            position: 5
-        }
-    );
+    assert_eq!(waited.state(), &WaitState { nb: 25 });
 }
 
 fn get_repository() -> StateRepository {

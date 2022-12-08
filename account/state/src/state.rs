@@ -10,14 +10,14 @@ use state::State;
 use crate::event::{Created, LoggedIn};
 use crate::{AccountError, AccountEvent};
 
-#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct AccountState {
     uuid: Uuid,
     pseudo: String,
     register_at: u64,
     last_login: u64,
     reputation: usize,
-    position: u64,
+    position: Option<u64>,
 }
 
 impl AccountState {
@@ -49,6 +49,10 @@ impl State for AccountState {
     type Event = AccountEvent;
     type Command = AccountCommand;
 
+    fn name_prefix() -> &'static str {
+        "account"
+    }
+
     fn play_event(&mut self, event: &Self::Event) {
         match event {
             AccountEvent::Created(created) => {
@@ -66,7 +70,7 @@ impl State for AccountState {
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> Result<Vec<Self::Event>> {
+    fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>> {
         match command {
             AccountCommand::CreateAccount(create) => {
                 if !self.pseudo.is_empty() {
@@ -78,7 +82,7 @@ impl State for AccountState {
 
                     Ok(vec![AccountEvent::Created(Created {
                         uuid: Uuid::new_v4(),
-                        pseudo: create.pseudo.clone(),
+                        pseudo: create.pseudo,
                         time: now.as_secs(),
                     })])
                 }
@@ -91,34 +95,26 @@ impl State for AccountState {
                 })])
             }
             AccountCommand::AddReputation(nb) => {
-                if self.reputation.checked_add(*nb).is_none() {
+                if self.reputation.checked_add(nb).is_none() {
                     Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot add {} to {}",
                         nb, self.reputation
                     ))))
                 } else {
-                    Ok(vec![AccountEvent::ReputationAdded(*nb)])
+                    Ok(vec![AccountEvent::ReputationAdded(nb)])
                 }
             }
             AccountCommand::RemoveReputation(nb) => {
-                if nb > &self.reputation {
+                if nb > self.reputation {
                     Err(anyhow!(AccountError::WrongQuantity(format!(
                         "cannot remove {} from {}",
                         nb, self.reputation
                     ))))
                 } else {
-                    Ok(vec![AccountEvent::ReputationRemoved(*nb)])
+                    Ok(vec![AccountEvent::ReputationRemoved(nb)])
                 }
             }
         }
-    }
-
-    fn get_position(&self) -> u64 {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: u64) {
-        self.position = pos;
     }
 
     fn state_cache_interval() -> Option<u64> {

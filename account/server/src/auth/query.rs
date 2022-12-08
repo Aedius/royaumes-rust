@@ -18,7 +18,7 @@ pub async fn account(
         .await
         .unwrap();
 
-    Ok(Json(account.dto()))
+    Ok(Json(account.state().dto()))
 }
 
 #[get("/header-count")]

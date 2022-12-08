@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use state::{Command, Event, State};
 
@@ -10,11 +11,7 @@ pub enum SimpleCommand {
 }
 
 impl Command for SimpleCommand {
-    fn name_prefix() -> &'static str {
-        "simple"
-    }
-
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> &'static str {
         match &self {
             SimpleCommand::Add(_) => "Add",
             SimpleCommand::Remove(_) => "Remove",
@@ -23,18 +20,14 @@ impl Command for SimpleCommand {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum SimpleEvent {
     Added(u32),
     Removed(u32),
 }
 
 impl Event for SimpleEvent {
-    fn name_prefix() -> &'static str {
-        "simple"
-    }
-
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> &'static str {
         match &self {
             SimpleEvent::Added(_) => "added",
             SimpleEvent::Removed(_) => "removed",
@@ -42,16 +35,18 @@ impl Event for SimpleEvent {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize, Clone)]
 pub struct SimpleState {
     pub nb: u32,
-    pub position: u64,
 }
 
 impl State for SimpleState {
     type Event = SimpleEvent;
     type Command = SimpleCommand;
 
+    fn name_prefix() -> &'static str {
+        "test-simple"
+    }
     fn play_event(&mut self, event: &Self::Event) {
         match event {
             SimpleEvent::Added(n) => self.nb += n,
@@ -59,37 +54,26 @@ impl State for SimpleState {
         }
     }
 
-    fn try_command(&self, command: &Self::Command) -> anyhow::Result<Vec<Self::Event>> {
+    fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>> {
         match command {
             SimpleCommand::Add(n) => {
-                if self.nb.checked_add(*n).is_none() {
+                if self.nb.checked_add(n).is_none() {
                     Err(anyhow!("{} cannot be added to {}", n, self.nb))
                 } else {
-                    Ok(vec![SimpleEvent::Added(*n)])
+                    Ok(vec![SimpleEvent::Added(n)])
                 }
             }
             SimpleCommand::Remove(n) => {
-                if *n > self.nb {
+                if n > self.nb {
                     Err(anyhow!("{} cannot be removed to {}", n, self.nb))
                 } else {
-                    Ok(vec![SimpleEvent::Removed(*n)])
+                    Ok(vec![SimpleEvent::Removed(n)])
                 }
             }
-            SimpleCommand::Set(n) => {
-                Ok(vec![SimpleEvent::Removed(self.nb), SimpleEvent::Added(*n)])
-            }
+            SimpleCommand::Set(n) => Ok(vec![SimpleEvent::Removed(self.nb), SimpleEvent::Added(n)]),
         }
     }
-
-    fn get_position(&self) -> u64 {
-        self.position
-    }
-
-    fn set_position(&mut self, pos: u64) {
-        self.position = pos;
-    }
-
     fn state_cache_interval() -> Option<u64> {
-        Some(1)
+        None
     }
 }
