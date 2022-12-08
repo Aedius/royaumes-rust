@@ -19,11 +19,11 @@ fn with_number(world: &mut AccountWorld, rep: usize) {
 
 #[when(regex = r"^i try to add (\d+) reputation$")]
 fn add_number(world: &mut AccountWorld, rep: usize) {
-    let events = world.model.try_command(&AddReputation(rep));
+    let events = world.model.try_command(AddReputation(rep));
 
     match events {
         Ok(list) => {
-            for e in list.event() {
+            for e in list {
                 world.model.play_event(&e);
             }
         }
@@ -34,11 +34,11 @@ fn add_number(world: &mut AccountWorld, rep: usize) {
 }
 #[when(regex = r"^i try to remove (\d+) reputation$")]
 fn remove_number(world: &mut AccountWorld, rep: usize) {
-    let events = world.model.try_command(&RemoveReputation(rep));
+    let events = world.model.try_command(RemoveReputation(rep));
 
     match events {
         Ok(list) => {
-            for e in list.event() {
+            for e in list {
                 world.model.play_event(&e);
             }
         }
