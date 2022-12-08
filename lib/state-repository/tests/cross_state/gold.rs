@@ -25,9 +25,14 @@ impl Command for GoldCommand {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct Cost {
+    amount: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(tag = "type")]
 pub enum GoldEvent {
-    Paid(u32),
+    Paid(Cost),
     Public(PaymentResponse),
 }
 
@@ -70,7 +75,7 @@ impl State for GoldState {
 
     fn play_event(&mut self, event: &Self::Event) {
         match event {
-            GoldEvent::Paid(c) => self.nb -= c,
+            GoldEvent::Paid(c) => self.nb -= c.amount,
             GoldEvent::Public(_) => {}
         }
     }
@@ -78,7 +83,7 @@ impl State for GoldState {
     fn try_command(&self, command: Self::Command) -> Result<Vec<Self::Event>> {
         match command {
             GoldCommand::Pay(n, k) => Ok(vec![
-                GoldEvent::Paid(n),
+                GoldEvent::Paid(Cost { amount: n }),
                 GoldEvent::Public(PaymentResponse {
                     amount: n,
                     response: k,

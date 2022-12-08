@@ -51,23 +51,6 @@ async fn multiple_state_case() {
         state.state(),
         &BuildState {
             cost: 322,
-            built: false,
-            bank: Some(key_bank.clone()),
-        }
-    );
-
-    let gold_state = repo.get_model::<GoldState>(&key_bank).await.unwrap();
-
-    assert_eq!(gold_state.state(), &GoldState { nb: 678 });
-
-    sleep(Duration::from_secs(3)).await;
-
-    let state = repo.get_model::<BuildState>(&key).await.unwrap();
-
-    assert_eq!(
-        state.state(),
-        &BuildState {
-            cost: 322,
             built: true,
             bank: Some(key_bank.clone()),
         }

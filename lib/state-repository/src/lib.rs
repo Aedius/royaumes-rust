@@ -17,8 +17,8 @@ use serde::{Deserialize, Serialize};
 use state::State;
 use std::fmt::Debug;
 
-const COMMAND_PREFIX: &'static str = "cmd";
-const EVENT_PREFIX: &'static str = "evt";
+const COMMAND_PREFIX: &str = "cmd";
+const EVENT_PREFIX: &str = "evt";
 
 #[derive(Clone)]
 pub struct StateRepository {
@@ -52,8 +52,7 @@ impl StateRepository {
     where
         S: State + DeserializeOwned,
     {
-        let value: StateWithInfo<S>;
-        if S::state_cache_interval().is_some() {
+        let value = if S::state_cache_interval().is_some() {
             let mut cache_connection = self
                 .cache_db
                 .get_connection()
@@ -62,13 +61,12 @@ impl StateRepository {
                 .get(key.format())
                 .context("get from cache")
                 .unwrap_or_default();
-
-            value = serde_json::from_str(data.as_str()).unwrap_or_default();
+            serde_json::from_str(data.as_str()).unwrap_or_default()
         } else {
-            value = StateWithInfo::default();
-        }
+            StateWithInfo::default()
+        };
 
-        let mut state = value.state;
+        let mut state: S = value.state;
         let mut info = value.info;
 
         let options = ReadStreamOptions::default();
@@ -212,7 +210,7 @@ impl StateRepository {
 
         let appended = self
             .event_db
-            .append_to_stream(key.format(), &options, events)
+            .append_to_stream(key.format(), options, events)
             .await;
 
         let mut retry = false;

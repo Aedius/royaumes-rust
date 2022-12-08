@@ -23,7 +23,6 @@ pub trait CrossDataProcessor: State {
 
         println!("stream_name : {stream_name}");
 
-        let repo = repo.clone();
         tokio::spawn(async move {
             let options = SubscribeToStreamOptions::default()
                 .start_from(StreamPosition::End)
