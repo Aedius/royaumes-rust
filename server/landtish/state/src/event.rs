@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use state::Event;
+use state::{Event, EventName};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum LandtishEvent {
@@ -8,11 +8,8 @@ pub enum LandtishEvent {
 }
 
 impl Event for LandtishEvent {
-    fn name_prefix() -> &'static str {
-        "account"
-    }
 
-    fn event_name(&self) -> &str {
+    fn event_name(&self) -> EventName {
         match self {
             LandtishEvent::Joined => "joined",
             LandtishEvent::Leaved => "leaved",

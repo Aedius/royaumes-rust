@@ -24,4 +24,6 @@ jobs:
       run: cargo clippy
     - name: Run tests account-state
       run: cargo test -p account-state --test account-state --verbose
+    - name: Run tests landtish-state
+      run: cargo test -p landtish-state --test landtish-state --verbose
 

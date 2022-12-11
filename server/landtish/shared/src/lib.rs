@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use state::Command;
+use state::{Command, CommandName};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Info {
@@ -13,11 +13,8 @@ pub enum LandtishCommand {
 }
 
 impl Command for LandtishCommand {
-    fn name_prefix() -> &'static str {
-        "landtish"
-    }
 
-    fn command_name(&self) -> &str {
+    fn command_name(&self) -> CommandName {
         match self {
             LandtishCommand::Join(_) => "join",
             LandtishCommand::Leave(_) => "leave",
