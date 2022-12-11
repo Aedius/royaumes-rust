@@ -15,9 +15,8 @@ struct ComponentWrapper {
 
 impl CustomElement for ComponentWrapper {
     fn inject_children(&mut self, this: &HtmlElement) {
-        self.content = Some(yew::start_app_in_element::<Description>(
-            this.clone().into(),
-        ));
+        self.content = Some(yew::Renderer::<Description>::with_root(this.clone().into()).render());
+
     }
 
     fn shadow() -> bool {

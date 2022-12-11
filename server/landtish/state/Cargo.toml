@@ -25,7 +25,7 @@ sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls","mysql", "migr
 [dev-dependencies]
 tokio = "1.21"
 async-trait = "0.1"
-cucumber = { version = "0.15" }
+cucumber = { version = "0.18" }
 
 [[test]]
 name = "landtish-state" # this should be the same as the filename of your test target

@@ -53,5 +53,5 @@ impl Component for Body {
 }
 
 fn main() {
-    yew::start_app::<Body>();
+    yew::Renderer::<Body>::new().render();
 }
