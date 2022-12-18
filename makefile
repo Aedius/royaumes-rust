@@ -4,12 +4,12 @@ public-serve:
 ## 	account
 
 account-server:
-	cargo watch -w account/server -w account/shared -w account/state -i account/server/web -- cargo run --color=always -p account-server
+	cargo run --color=always -p account-server
 
 ### server Landtish
 
 landtish-server:
-	cargo watch -w server/landtish/server -w server/landtish/shared -w server/landtish/state -i server/landtish/server/web -- cargo run --color=always -p landtish-server
+	cargo run --color=always -p landtish-server
 
 
 ## sqlx

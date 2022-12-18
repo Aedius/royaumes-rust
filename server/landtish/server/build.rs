@@ -9,9 +9,9 @@ fn main() {
         .arg("--target")
         .arg("web")
         .arg("--out-dir")
-        .arg("../server/web")
+        .arg("../server/web/description")
         .arg("--out-name")
-        .arg("landtish")
+        .arg("index")
         .spawn()
         .expect("failed to start wasm build");
 }
