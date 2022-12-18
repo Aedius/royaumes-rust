@@ -1,6 +1,7 @@
 use std::process::Command;
 
 fn main() {
+    println!("cargo:rerun-if-changed=../client");
 
     let _child = Command::new("wasm-pack")
         .arg("build")
