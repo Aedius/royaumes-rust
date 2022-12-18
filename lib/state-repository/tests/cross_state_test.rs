@@ -1,4 +1,3 @@
-#![feature(future_join)]
 
 use crate::cross_state::build::{BuildCommand, BuildState, BuildingCreate};
 use crate::cross_state::gold::GoldState;

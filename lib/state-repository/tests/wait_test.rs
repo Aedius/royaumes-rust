@@ -1,5 +1,3 @@
-#![feature(future_join)]
-
 use crate::wait::{WaitCommand, WaitState};
 use eventstore::Client as EventClient;
 use state_repository::model_key::ModelKey;
