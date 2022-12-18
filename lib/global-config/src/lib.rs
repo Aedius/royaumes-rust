@@ -54,7 +54,7 @@ impl Config {
         scripts.push(
             (
                 account,
-                "account.js".to_string(),
+                "account/index.js".to_string(),
             ),
         );
         scripts.push(

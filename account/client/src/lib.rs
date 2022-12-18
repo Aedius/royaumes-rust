@@ -28,7 +28,7 @@ impl CustomElement for ComponentWrapper {
     }
 
     fn disconnected_callback(&mut self, _this: &HtmlElement) {
-        console_info!("disconnected account");
+        console_info!("disconnected account !");
     }
 }
 
