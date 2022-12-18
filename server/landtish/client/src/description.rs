@@ -13,7 +13,7 @@ impl Component for Description {
     fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <div>
-                {"Some description TBD"}
+                {"Some description will be added here"}
             </div>
         }
     }
