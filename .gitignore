@@ -1,5 +1,4 @@
 /target
 /tmp
 .env
-/account/server/web/
 /public/dist/
