@@ -1,4 +1,3 @@
-#![feature(future_join)]
 
 use crate::concurrent::{ConcurrentCommand, ConcurrentState};
 use crate::simple::{SimpleCommand, SimpleState};
@@ -6,7 +5,7 @@ use crate::simple::{SimpleCommand, SimpleState};
 use eventstore::Client as EventClient;
 use state_repository::model_key::ModelKey;
 use state_repository::StateRepository;
-use std::future::join;
+use futures::join;
 use uuid::Uuid;
 
 mod concurrent;
@@ -72,7 +71,7 @@ async fn concurrent_case() {
         None,
     );
 
-    let (one, two) = join!(add_one, add_two).await;
+    let (one, two) = join!(add_one, add_two);
 
     assert!(one.is_ok());
     assert!(two.is_ok());

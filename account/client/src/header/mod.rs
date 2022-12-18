@@ -93,16 +93,20 @@ impl Component for Header {
             Menu::None => {
                 html! {
                     <ul>
-                        <li><div class="tab-item-content" onclick={login_click}>{ "login" }</div></li>
-                        <li><div class="tab-item-content" onclick={register_click}>{ "register" }</div></li>
+                        <li><div class="call-to-action" onclick={login_click}>{ "login" }</div></li>
+                        <li><div class="call-to-action" onclick={register_click}>{ "register" }</div></li>
                     </ul>
                 }
             }
             Menu::Login => {
                 html! {
                     <ul>
-                        <li class="selected"><div class="tab-item-content" onclick={no_menu_click}>{ "login" }</div></li>
-                        <li><div class="tab-item-content" onclick={register_click}>{ "register" }</div></li>
+                        <li class="selected">
+                            <div class="call-to-action" onclick={no_menu_click}>{ "login" }</div>
+                        </li>
+                        <li>
+                            <div class="call-to-action" onclick={register_click}>{ "register" }</div>
+                        </li>
 
                     </ul>
                 }
@@ -110,8 +114,12 @@ impl Component for Header {
             Menu::Register => {
                 html! {
                     <ul>
-                        <li><div class="tab-item-content" onclick={login_click}>{ "login" }</div></li>
-                        <li class="selected"><div class="tab-item-content" onclick={no_menu_click}>{ "register" }</div></li>
+                        <li>
+                        <div class="call-to-action" onclick={login_click}>{ "login" }</div>
+                        </li>
+                        <li class="selected">
+                            <div class="call-to-action" onclick={no_menu_click}>{ "register" }</div>
+                        </li>
                     </ul>
                 }
             }
@@ -140,8 +148,6 @@ impl Component for Header {
             }
         };
 
-        let data = self.pseudo.as_ref().map(|p| (get_initial(p), p));
-
         html! {
             <BounceRoot>
                 if self.token.is_some(){
@@ -149,31 +155,15 @@ impl Component for Header {
                         <div class="tab-container tabs--right">
                             <ul>
                                 <li>
-                                    if let Some(d) = data.clone(){
-                                        <div class="avatar avatar--sm text-gray-000" data-text={d.0}></div>
+                                    if let Some(d) = self.pseudo.clone(){
+                                        {"Hello "}{d}{" !!"}
                                     }else{
-                                        <div class="card u-flex u-items-center u-justify-center">
-                                            <div class="animated loading hide-text">
-                                                <p>{"🕰 loading 🕰"}</p>
-                                            </div>
-                                        </div>
+                                        <p>{"🕰 loading 🕰"}</p>
                                     }
                                 </li>
-                                <li><div class="tab-item-content" onclick={logout_click}>{ "log out" }</div></li>
+                                <li><div class="call-to-action" onclick={logout_click}>{ "log out" }</div></li>
                             </ul>
                         </div>
-
-                        if let Some(d) = data{
-                            {"Hello "}{d.1}{" !!"}
-                        }else{
-                            <div class="card u-flex u-items-center u-justify-center">
-                                <div class="animated loading hide-text">
-                                    <p>{"🕰 loading 🕰"}</p>
-                                </div>
-                            </div>
-                        }
-
-                        <server-start></server-start>
                     </div>
                 }else{
                     <div>
@@ -189,23 +179,6 @@ impl Component for Header {
     }
 }
 
-fn get_initial(s: &str) -> String {
-    let mut res: Vec<String> = Vec::new();
-
-    let chars: Vec<char> = s.chars().collect();
-    let windows = chars.windows(2);
-
-    for w in windows {
-        println! {"[{}, {}]", w[0], w[1]};
-        if res.is_empty() {
-            res.push(w[0].to_uppercase().to_string());
-        } else if w[0] == ' ' {
-            res.push(w[1].to_lowercase().to_string());
-        }
-    }
-
-    res.join("")
-}
 
 impl Header {
     fn get_account(ctx: &Context<Header>, token: String) {

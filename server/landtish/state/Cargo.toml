@@ -1,13 +1,13 @@
 [package]
-name = "account-state"
+name = "landtish-state"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-state = { path = "../../lib/state" }
-account-shared = { path = "../shared" }
+state = { path = "../../../lib/state" }
+landtish-shared = { path = "../shared" }
 anyhow= "1.0"
 derive_more= "0.99"
 eventstore = "2.1"
@@ -25,8 +25,8 @@ sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls","mysql", "migr
 [dev-dependencies]
 tokio = "1.21"
 async-trait = "0.1"
-cucumber = { version = "0.18" }
+cucumber = { version = "0.19" }
 
 [[test]]
-name = "account-state" # this should be the same as the filename of your test target
+name = "landtish-state" # this should be the same as the filename of your test target
 harness = false  # allows Cucumber to print output instead of libtest

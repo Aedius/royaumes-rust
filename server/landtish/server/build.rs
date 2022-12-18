@@ -8,7 +8,7 @@ fn main() {
         .arg("--target")
         .arg("web")
         .arg("--out-dir")
-        .arg("../server/web/account")
+        .arg("../server/web/description")
         .arg("--out-name")
         .arg("index")
         .spawn()

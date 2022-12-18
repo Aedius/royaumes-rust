@@ -7,9 +7,9 @@ edition = "2021"
 
 [dependencies]
 global-config = { path = "../lib/global-config" }
-yew = "0.19"
-bounce = {version="0.3", features = ["helmet"]}
-stylist = {version = "0.10", features = ["yew_integration"] }
+yew = { version="0.20", features=["csr"] }
+bounce = {version="0.6", features = ["helmet"]}
+stylist = {version = "0.11", features = ["yew_integration"] }
 js-sys="0.3"
 weblog = "0.3.0"
 wasm-bindgen = "0.2"

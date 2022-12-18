@@ -1,18 +1,14 @@
-use crate::auth::{get_key, JWT_ISSUER, JWT_SECRET};
+use crate::auth::get_key;
 use account_state::error::AccountError;
 
-use jsonwebtokens as jwt;
-use jsonwebtokens::{encode, AlgorithmID};
-use jwt::Algorithm;
 use rocket::serde::json::Json;
 use rocket::State;
-use serde_json::json;
 use uuid::Uuid;
 
-use crate::auth::jwt_guard::JwtToken;
-use crate::MariadDb;
+use crate::{AccountIssuer, MariadDb};
 use account_shared::{AccountCommand, CreateAccount, Login};
 use account_state::state::AccountState;
+use auth_lib::JwtToken;
 use state_repository::model_key::ModelKey;
 use state_repository::StateRepository;
 
@@ -21,7 +17,7 @@ pub async fn handle_anonymous(
     state_repository: &State<StateRepository>,
     maria_db: &State<MariadDb>,
     command: Json<AccountCommand>,
-    token: Option<JwtToken>,
+    token: Option<JwtToken<AccountIssuer>>,
 ) -> Result<String, AccountError> {
     match token {
         None => match command.0 {
@@ -42,14 +38,14 @@ pub async fn handle_anonymous(
                 Err(AccountError::Other("cannot login with id".to_string()))
             }
             AccountCommand::AddReputation(cmd) => {
-                let key = ModelKey::new("account".to_string(), token.uuid.clone());
+                let key = ModelKey::new("account".to_string(), token.uuid().to_string());
                 state_repository
                     .add_command::<AccountState>(&key, AccountCommand::AddReputation(cmd), None)
                     .await?;
                 Ok("added".to_string())
             }
             AccountCommand::RemoveReputation(cmd) => {
-                let key = ModelKey::new("account".to_string(), token.uuid.clone());
+                let key = ModelKey::new("account".to_string(), token.uuid().to_string());
                 state_repository
                     .add_command::<AccountState>(&key, AccountCommand::RemoveReputation(cmd), None)
                     .await?;
@@ -90,7 +86,7 @@ SELECT uuid, pseudo FROM `user` WHERE email like ? and password like ? limit 1;
         .add_command::<AccountState>(&get_key(Some(exists.uuid.clone())), command, None)
         .await?;
 
-    Ok(create_token(exists.uuid))
+    Ok(JwtToken::<AccountIssuer>::create(exists.uuid))
 }
 
 async fn create(
@@ -167,15 +163,5 @@ VALUES (?, ?, ?, ?, ?);
         .add_command::<AccountState>(&key, command, None)
         .await?;
 
-    Ok(create_token(id))
-}
-
-fn create_token(id: String) -> String {
-    let alg = Algorithm::new_hmac(AlgorithmID::HS256, JWT_SECRET).unwrap();
-    let header = json!({ "alg": alg.name() });
-    let claims = json!(JwtToken {
-        uuid: id,
-        issuer: JWT_ISSUER.to_string()
-    });
-    encode(&header, &claims, &alg).unwrap()
+    Ok(JwtToken::<AccountIssuer>::create(id))
 }

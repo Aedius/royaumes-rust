@@ -4,4 +4,5 @@ members = [
     "account/*",
     "lib/*",
     "public",
+    "server/landtish/*"
 ]

@@ -9,21 +9,7 @@ use rocket::fs::{relative, FileServer};
 use rocket::http::Method;
 use rocket::response::content;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use sqlx::mysql::MySqlPool;
-use sqlx::{MySql, Pool};
 use state_repository::StateRepository;
-
-mod auth;
-
-pub struct MariadDb {
-    pub db: Pool<MySql>,
-}
-
-impl MariadDb {
-    pub fn new(db: Pool<MySql>) -> MariadDb {
-        MariadDb { db }
-    }
-}
 
 pub struct AccountIssuer {}
 
@@ -54,9 +40,6 @@ fn rocket() -> _ {
 
     let state_repository = StateRepository::new(event_db, cache_db);
 
-    let mariadb_url = format!("{}/account", config.mysql());
-    let pool = MySqlPool::connect_lazy(&mariadb_url).unwrap();
-
     let allowed_origins = AllowedOrigins::some_exact(&config.get_hosts());
 
     let cors = rocket_cors::CorsOptions {
@@ -72,12 +55,10 @@ fn rocket() -> _ {
     .to_cors()
     .unwrap();
 
-    let figment = rocket::Config::figment().merge(("port", 8000));
+    let figment = rocket::Config::figment().merge(("port", 8001));
 
     rocket::custom(figment)
         .manage(state_repository)
-        .manage(MariadDb::new(pool))
-        .mount("/api", auth::get_route())
         .mount("/", FileServer::from(relative!("web")))
         .attach(cors)
         .register("/", catchers![general_not_found])

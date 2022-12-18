@@ -25,12 +25,16 @@ impl Component for Body {
             <Global css={css!(
             r#"
                 html, body {
-
+                    background-color: #515F84;
+                    color: #7E88AB;
+                }
+                a, button, .call-to-action {
+                    color: white
                 }
             "#
             )} />
             <account-login />
-
+            <landtish-description />
             <p>
                 {"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque nec euismod urna. Integer ac vehicula nisi. Donec placerat risus ut justo placerat aliquet. Pellentesque imperdiet arcu sit amet mauris cursus tempor. In nisl mauris, porta et purus sit amet, lacinia congue ex. Maecenas eget eleifend ligula, ut volutpat diam. Cras libero leo, porta id auctor et, cursus vel libero. In hac habitasse platea dictumst. Vivamus eu commodo ipsum. Maecenas vulputate turpis quis elit feugiat pulvinar. Duis ac gravida velit. Duis eu eros odio. Nullam at quam nisl. Mauris at magna augue."}
             </p><p>
@@ -49,5 +53,5 @@ impl Component for Body {
 }
 
 fn main() {
-    yew::start_app::<Body>();
+    yew::Renderer::<Body>::new().render();
 }

@@ -110,7 +110,7 @@ pub fn login_setter(props: &Props) -> Html {
                 </div>
                 <div class="col-xs-9 level-item">
                     if can_login{
-                        <button class="outline btn-primary" onclick={on_login}>{"log me in"}</button>
+                        <button class="call-to-action" onclick={on_login}>{"log me in"}</button>
                     }
                 </div>
             </div>

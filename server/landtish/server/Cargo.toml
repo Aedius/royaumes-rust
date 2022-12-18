@@ -1,17 +1,17 @@
 [package]
-name = "account-server"
+name = "landtish-server"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-account-shared = { path = "../shared" }
-account-state = { path = "../state" }
-state = { path = "../../lib/state" }
-state-repository = { path = "../../lib/state-repository" }
-global-config = { path = "../../lib/global-config" }
-auth-lib ={ path="../../lib/auth"}
+landtish-shared = { path = "../shared" }
+landtish-state = { path = "../state" }
+state = { path = "../../../lib/state" }
+state-repository = { path = "../../../lib/state-repository" }
+global-config = { path = "../../../lib/global-config" }
+auth-lib ={ path="../../../lib/auth"}
 
 anyhow = "1.0"
 chrono = "0.4"

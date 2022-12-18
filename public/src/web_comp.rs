@@ -1,6 +1,7 @@
 use bounce::helmet::Helmet;
 use global_config::Config;
 use yew::prelude::*;
+
 pub struct WebComp {
     scripts: Vec<String>,
 }
@@ -19,6 +20,7 @@ impl Component for WebComp {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let scrips: Vec<Html> = self.scripts.iter().map(|s| Self::script(s)).collect();
+
         html! {
             <Helmet>
                 { scrips }
