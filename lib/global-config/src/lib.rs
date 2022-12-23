@@ -47,9 +47,15 @@ impl Config {
             host: "127.0.0.1".to_string(),
             port: Some(8000u16),
         };
+        let bank  = Parts {
+            is_https: false,
+            host: "127.0.0.1".to_string(),
+            port: Some(8002u16),
+        };
 
         hosts.push(public);
         hosts.push(landtish.clone());
+        hosts.push(bank.clone());
 
         scripts.push(
             (
@@ -61,6 +67,12 @@ impl Config {
             (
                 landtish,
                 "description/index.js".to_string(),
+            ),
+        );
+        scripts.push(
+            (
+                bank,
+                "resume/index.js".to_string(),
             ),
         );
 

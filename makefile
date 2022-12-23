@@ -1,10 +1,15 @@
 public-serve:
 	trunk --config public/Trunk.toml serve public/index.html
 
-## 	account
+### account
 
 account-server:
 	cargo run --color=always -p account-server
+
+### bank
+
+bank-server:
+	cargo run --color=always -p bank-server
 
 ### server Landtish
 

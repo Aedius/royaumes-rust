@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "account/*",
+    "bank/*",
     "lib/*",
     "public",
     "server/landtish/*"

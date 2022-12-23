@@ -245,6 +245,83 @@ dependencies = [
 ]
 
 [[package]]
+name = "bank-client"
+version = "0.1.0"
+dependencies = [
+ "bank-shared",
+ "bounce",
+ "custom-elements",
+ "gloo-storage",
+ "reqwasm",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "weblog",
+ "yew",
+]
+
+[[package]]
+name = "bank-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "auth-lib",
+ "bank-shared",
+ "bank-state",
+ "chrono",
+ "dotenvy",
+ "eventstore",
+ "global-config",
+ "jsonwebtokens",
+ "redis",
+ "reqwest",
+ "rocket",
+ "rocket_cors",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "sqlx-cli",
+ "state 0.1.0",
+ "state-repository",
+ "uuid",
+]
+
+[[package]]
+name = "bank-shared"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "state 0.1.0",
+ "state-repository",
+ "uuid",
+]
+
+[[package]]
+name = "bank-state"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bank-shared",
+ "cucumber 0.19.0",
+ "derive_more",
+ "eventstore",
+ "jsonwebtokens",
+ "reqwest",
+ "rocket",
+ "rocket_cors",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "state 0.1.0",
+ "tokio",
+ "urlencoding",
+ "uuid",
+]
+
+[[package]]
 name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
