@@ -1,5 +1,8 @@
 # royaumes-rust
-implementing an old school webgame
+
+this project was an attempt to recreate an old school web mmorpg, but if i loved the tech, i didnt planned tyo play to it.
+
+i will reboot a real game that i want to play in https://github.com/galakhygame
 
 ## lib:
 
